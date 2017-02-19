@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">NitroShare</string>
+
+    <!-- Share activity -->
+    <string name="activity_share">Send with NitroShare</string>
+    <string name="activity_share_label">Select a device from the list below to receive the file:</string>
+</resources>
