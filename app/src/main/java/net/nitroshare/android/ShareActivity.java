@@ -4,7 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.ListView;
 
-import net.nitroshare.android.discovery.DeviceAdapter;
+import net.nitroshare.android.discovery.DiscoveryAdapter;
 
 /**
  * Display a list of devices available for receiving a transfer
@@ -14,10 +14,20 @@ import net.nitroshare.android.discovery.DeviceAdapter;
  */
 public class ShareActivity extends Activity {
 
+    private DiscoveryAdapter mAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_share);
-        ((ListView)findViewById(R.id.selectList)).setAdapter(new DeviceAdapter(this));
+
+        mAdapter = new DiscoveryAdapter(this);
+        ((ListView) findViewById(R.id.selectList)).setAdapter(mAdapter);
+        mAdapter.start();
+    }
+
+    @Override
+    protected void onDestroy() {
+        mAdapter.stop();
     }
 }

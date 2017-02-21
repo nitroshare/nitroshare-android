@@ -5,6 +5,9 @@
     <!-- Internet required for mDNS and transfer -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Enables the broadcast and transfer services to run at boot -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -27,10 +30,29 @@
             android:label="@string/activity_share">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+
+        <!-- Service for device discovery -->
+        <service
+            android:name=".discovery.DiscoveryService"
+            android:exported="false" />
+
+        <!-- Receiver for boot completion events -->
+        <receiver android:name=".discovery.BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".transfer.TransferService"
+            android:enabled="true"
+            android:exported="false"></service>
     </application>
 
 </manifest>
