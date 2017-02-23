@@ -41,7 +41,6 @@ public class Device {
      * Create a device from the provided information
      * @param uuid unique identifier for the device
      * @param attributes attributes, such as device name
-     * @param host IP address of host
      * @param port port for the service
      */
     public Device(String uuid, Map<String, String> attributes, int port) {

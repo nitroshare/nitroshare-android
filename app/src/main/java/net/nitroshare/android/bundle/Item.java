@@ -1,21 +1,24 @@
 package net.nitroshare.android.bundle;
 
+import java.io.IOException;
+import java.util.Map;
+
 /**
  * Individual item for transfer
  *
- * Every individual file, URL, etc. for transfer must be an instance of an
- * Item-derived class. Items can have any number of properties, but they must
- * implement TYPE, NAME, and SIZE at a minimum.
+ * Every individual file, URL, etc. for transfer must be an instance of a
+ * class that implements Item. Items can have any number of properties, but
+ * they must implement TYPE, NAME, and SIZE at a minimum.
  *
  * If items contain content (SIZE is nonzero), the I/O functions are used to
  * read and write the contents.
  */
-abstract public class Item {
+public interface Item {
 
     /**
      * Unique identifier for the type of item
      */
-    public static final String TYPE = "type";
+    String TYPE = "type";
 
     /**
      * Name of the item
@@ -23,7 +26,7 @@ abstract public class Item {
      * This value is displayed in some clients during transfer. Files, for
      * example, also use this property for the relative filename.
      */
-    public static final String NAME = "name";
+    String NAME = "name";
 
     /**
      * Size of the item content during transmission
@@ -31,19 +34,18 @@ abstract public class Item {
      * This number is sent over-the-wire as a string to avoid problems with
      * large integers in JSON. This number can be zero if there is no payload.
      */
-    public static final String SIZE = "size";
+    String SIZE = "size";
 
     /**
-     * Retrieve the value for the specified key
-     * @param key name of property
-     * @return value for the property
+     * Retrieve a map of properties
+     * @return property map
      */
-    abstract public Object getProperty(String key);
+    Map<String, Object> getProperties();
 
     /**
      * Mode for opening items
      */
-    public enum Mode {
+    enum Mode {
         Read,
         Write,
     }
@@ -51,28 +53,30 @@ abstract public class Item {
     /**
      * Open the item for reading or writing
      * @param mode open mode
-     * @return true if the item was opened
+     * @throws IOException
      */
-    abstract public boolean open(Mode mode);
+    void open(Mode mode) throws IOException;
 
     /**
      * Read data from the item
-     * @return array of bytes from the item
+     * @param data array of bytes to read
+     * @return number of bytes read or -1 if EOF
+     * @throws IOException
      *
      * This method is invoked multiple times until all content has been read.
-     * Avoid returning very large chunks of data since this causes excess
-     * memory usage.
      */
-    abstract public byte[] read();
+    int read(byte[] data) throws IOException;
 
     /**
      * Write data to the item
      * @param data array of bytes to write
+     * @throws IOException
      */
-    abstract public void write(byte[] data);
+    void write(byte[] data) throws IOException;
 
     /**
      * Close the item
+     * @throws IOException
      */
-    abstract public void close();
+    void close() throws IOException;
 }
