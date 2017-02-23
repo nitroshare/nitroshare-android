@@ -2,7 +2,6 @@ package net.nitroshare.android.bundle;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
@@ -14,7 +13,7 @@ import java.util.Map;
  * Note that Android's Java doesn't include java.nio.file so only the
  * last_modified property is usable on the platform.
  */
-public class FileItem implements Item {
+public class FileItem extends Item {
 
     // Additional properties for files
     private static final String READ_ONLY = "read_only";
@@ -22,7 +21,7 @@ public class FileItem implements Item {
     private static final String LAST_MODIFIED = "last_modified";
 
     private File mFile;
-    private String mFilename;
+    private Map<String, Object> mProperties;
 
     /**
      * Create a new file item from the specified path and filename
@@ -30,20 +29,19 @@ public class FileItem implements Item {
      * @param filename filename relative to path
      */
     public FileItem(String path, String filename) {
-        mFile = new File(filename);
-        mFilename = filename;
+        mFile = new File(new File(path), filename);
+        mProperties = new HashMap<>();
+        mProperties.put(TYPE, "file");
+        mProperties.put(NAME, filename);
+        mProperties.put(SIZE, Long.toString(mFile.length()));
+        mProperties.put(READ_ONLY, !mFile.canWrite());
+        mProperties.put(EXECUTABLE, mFile.canExecute());
+        mProperties.put(LAST_MODIFIED, mFile.lastModified());
     }
 
     @Override
     public Map<String, Object> getProperties() {
-        Map<String, Object> map = new HashMap<>();
-        map.put(TYPE, "file");
-        map.put(NAME, mFilename);
-        map.put(SIZE, Long.toString(mFile.length()));
-        map.put(READ_ONLY, !mFile.canWrite());
-        map.put(EXECUTABLE, mFile.canExecute());
-        map.put(LAST_MODIFIED, mFile.lastModified());
-        return map;
+        return mProperties;
     }
 
     private FileInputStream mInputStream;

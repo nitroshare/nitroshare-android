@@ -13,12 +13,12 @@ import java.util.Map;
  * If items contain content (SIZE is nonzero), the I/O functions are used to
  * read and write the contents.
  */
-public interface Item {
+abstract public class Item {
 
     /**
      * Unique identifier for the type of item
      */
-    String TYPE = "type";
+    static final String TYPE = "type";
 
     /**
      * Name of the item
@@ -26,7 +26,7 @@ public interface Item {
      * This value is displayed in some clients during transfer. Files, for
      * example, also use this property for the relative filename.
      */
-    String NAME = "name";
+    static final String NAME = "name";
 
     /**
      * Size of the item content during transmission
@@ -34,18 +34,39 @@ public interface Item {
      * This number is sent over-the-wire as a string to avoid problems with
      * large integers in JSON. This number can be zero if there is no payload.
      */
-    String SIZE = "size";
+    static final String SIZE = "size";
 
     /**
      * Retrieve a map of properties
      * @return property map
      */
-    Map<String, Object> getProperties();
+    abstract public Map<String, Object> getProperties();
+
+    /**
+     * Retrieve the unique type identifier for the item
+     */
+    public String getType() {
+        return (String) getProperties().get(TYPE);
+    }
+
+    /**
+     * Retrieve the name of the item
+     */
+    public String getName() {
+        return (String) getProperties().get(NAME);
+    }
+
+    /**
+     * Retrieve the size of the item's content in bytes
+     */
+    public long getSize() {
+        return Long.parseLong((String) getProperties().get(SIZE));
+    }
 
     /**
      * Mode for opening items
      */
-    enum Mode {
+    public enum Mode {
         Read,
         Write,
     }
@@ -55,7 +76,7 @@ public interface Item {
      * @param mode open mode
      * @throws IOException
      */
-    void open(Mode mode) throws IOException;
+    abstract public void open(Mode mode) throws IOException;
 
     /**
      * Read data from the item
@@ -65,18 +86,18 @@ public interface Item {
      *
      * This method is invoked multiple times until all content has been read.
      */
-    int read(byte[] data) throws IOException;
+    abstract public int read(byte[] data) throws IOException;
 
     /**
      * Write data to the item
      * @param data array of bytes to write
      * @throws IOException
      */
-    void write(byte[] data) throws IOException;
+    abstract public void write(byte[] data) throws IOException;
 
     /**
      * Close the item
      * @throws IOException
      */
-    void close() throws IOException;
+    abstract public void close() throws IOException;
 }
