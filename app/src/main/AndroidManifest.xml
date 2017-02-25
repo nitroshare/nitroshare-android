@@ -5,6 +5,9 @@
     <!-- Internet required for mDNS and transfer -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Storage access required for transferring files -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <!-- Enables the broadcast and transfer services to run at boot -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
@@ -52,7 +55,7 @@
         <service
             android:name=".transfer.TransferService"
             android:enabled="true"
-            android:exported="false"></service>
+            android:exported="false"/>
     </application>
 
 </manifest>
