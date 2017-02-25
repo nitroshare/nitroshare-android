@@ -20,7 +20,7 @@ class Packet {
      * This packet is sent by the receiver to indicate the transfer succeeded
      * and the connection may be closed.
      */
-    public static final int SUCCESS = 0;
+    static final int SUCCESS = 0;
 
     /**
      * Transfer failed
@@ -28,17 +28,17 @@ class Packet {
      * This packet is sent by either end to indicate an error. The content of
      * packet describes the error.
      */
-    public static final int ERROR = 1;
+    static final int ERROR = 1;
 
     /**
      * JSON data
      */
-    public static final int JSON = 2;
+    static final int JSON = 2;
 
     /**
      * Binary data
      */
-    public static final int BINARY = 3;
+    static final int BINARY = 3;
 
     private int mType;
     private ByteBuffer mBuffer;
@@ -48,7 +48,7 @@ class Packet {
      * Retrieve the packet type
      * @return packet type
      */
-    public int getType() {
+    int getType() {
         return mType;
     }
 
@@ -56,7 +56,7 @@ class Packet {
      * Retrieve the buffer for the packet
      * @return byte array
      */
-    public ByteBuffer getBuffer() {
+    ByteBuffer getBuffer() {
         return mBuffer;
     }
 
@@ -64,16 +64,14 @@ class Packet {
      * Determine if the buffer is full
      * @return true if full
      */
-    public boolean isFull() {
+    boolean isFull() {
         return mBuffer.position() == mBuffer.capacity();
     }
 
     /**
-     * Create an empty packet of the specified type
-     * @param type
+     * Create an empty packet
      */
-    public Packet(int type) {
-        mType = type;
+    Packet() {
         mBuffer = ByteBuffer.allocate(5);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
@@ -81,17 +79,20 @@ class Packet {
     /**
      * Create a packet of the specified type with the specified data
      */
-    public Packet(int type, byte[] data) {
+    Packet(int type, byte[] data) {
+        this(type, data, data.length);
+    }
+
+    Packet(int type, byte[] data, int length) {
         mBuffer = ByteBuffer.allocate(5 + data.length);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        mBuffer.putInt(data.length + 1).put((byte) mType).put(data);
+        mBuffer.putInt(data.length + 1).put((byte) type).put(data, 0, length);
     }
 
     /**
      * Read a packet from a socket channel
-     * @param socketChannel
      */
-    public void read(SocketChannel socketChannel) throws IOException {
+    void read(SocketChannel socketChannel) throws IOException {
 
         // If the 32-bit size hasn't yet been read, do so
         if (!mHaveSize) {
