@@ -59,7 +59,11 @@ public class FileItem extends Item {
 
     @Override
     public int read(byte[] data) throws IOException {
-        return mInputStream.read(data);
+        int numBytes = mInputStream.read(data);
+        if (numBytes == -1) {
+            numBytes = 0;
+        }
+        return numBytes;
     }
 
     @Override

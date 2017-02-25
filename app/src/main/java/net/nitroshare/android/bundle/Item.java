@@ -81,7 +81,7 @@ abstract public class Item {
     /**
      * Read data from the item
      * @param data array of bytes to read
-     * @return number of bytes read or -1 if EOF
+     * @return number of bytes read
      * @throws IOException
      *
      * This method is invoked multiple times until all content has been read.
