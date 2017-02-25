@@ -36,7 +36,7 @@ public class FileItem extends Item {
         mProperties.put(SIZE, Long.toString(mFile.length()));
         mProperties.put(READ_ONLY, !mFile.canWrite());
         mProperties.put(EXECUTABLE, mFile.canExecute());
-        mProperties.put(LAST_MODIFIED, mFile.lastModified());
+        mProperties.put(LAST_MODIFIED, Long.toString(mFile.lastModified()));
     }
 
     @Override
@@ -52,8 +52,10 @@ public class FileItem extends Item {
         switch (mode) {
             case Read:
                 mInputStream = new FileInputStream(mFile);
+                break;
             case Write:
                 mOutputStream = new FileOutputStream(mFile);
+                break;
         }
     }
 
