@@ -66,12 +66,27 @@ public class DiscoveryAdapter extends ArrayAdapter<String> {
         mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
     }
 
+    /**
+     * Start service discovery
+     */
     public void start() {
         mNsdManager.discoverServices(Device.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
     }
 
+    /**
+     * Stop service discovery
+     */
     public void stop() {
         mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+    }
+
+    /**
+     * Retrieve the specified device
+     * @param position device index
+     * @return device at the specified position
+     */
+    public Device getDevice(int position) {
+        return mDevices.get(getItem(position));
     }
 
     @Override

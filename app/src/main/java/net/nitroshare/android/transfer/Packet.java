@@ -84,9 +84,10 @@ class Packet {
     }
 
     Packet(int type, byte[] data, int length) {
-        mBuffer = ByteBuffer.allocate(5 + data.length);
+        mBuffer = ByteBuffer.allocate(5 + length);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        mBuffer.putInt(data.length + 1).put((byte) type).put(data, 0, length);
+        mBuffer.putInt(length + 1).put((byte) type).put(data, 0, length);
+        mBuffer.flip();
     }
 
     /**
