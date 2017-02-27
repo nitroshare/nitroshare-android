@@ -1,6 +1,14 @@
 <resources>
     <string name="app_name">NitroShare</string>
 
+    <!-- Transfer service -->
+    <string name="transfer_title">NitroShare Transfer</string>
+    <string name="transfer_status_connecting">Connecting to host...</string>
+    <string name="transfer_status_transferring">Transferring...</string>
+
+    <string name="transfer_status_success">Transfer with %1$s finished</string>
+    <string name="transfer_status_error">Transfer with %1$s failed: %2$s</string>
+
     <!-- Share activity -->
     <string name="activity_share">Send with NitroShare</string>
     <string name="activity_share_label">Select a device from the list below to receive the file:</string>

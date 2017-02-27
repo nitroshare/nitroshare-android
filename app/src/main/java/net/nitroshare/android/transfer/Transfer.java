@@ -44,7 +44,7 @@ public class Transfer implements Runnable {
     /**
      * Receive notification for events that occur during transfer
      */
-    public interface Listener {
+    interface Listener {
 
         /**
          * Name of remote device is provided
@@ -59,10 +59,20 @@ public class Transfer implements Runnable {
         void onProgress(int progress);
 
         /**
+         * Transfer completed successfully
+         */
+        void onSuccess();
+
+        /**
          * Error has occurred during transfer
          * @param message error message
          */
         void onError(String message);
+
+        /**
+         * Transfer has completed
+         */
+        void onFinish();
     }
 
     private final Gson mGson = new Gson();
@@ -70,9 +80,9 @@ public class Transfer implements Runnable {
     private Direction mDirection;
     private State mState;
 
-    private Listener mListener;
     private Device mDevice;
     private Bundle mBundle;
+    private Listener mListener;
 
     private SocketChannel mSocketChannel;
 
@@ -89,12 +99,12 @@ public class Transfer implements Runnable {
     /**
      * Send the specified bundle to the specified device
      */
-    public Transfer(Listener listener, Device device, Bundle bundle) {
+    public Transfer(Device device, Bundle bundle, Listener listener) {
         mDirection = Direction.Send;
         mState = State.TransferHeader;
-        mListener = listener;
         mDevice = device;
         mBundle = bundle;
+        mListener = listener;
         mIterator = bundle.iterator();
         mBytesTotal = bundle.getTotalSize();
     }
@@ -123,6 +133,7 @@ public class Transfer implements Runnable {
      */
     private void writeTransferHeader() throws IOException {
         Map<String, String> map = new HashMap<>();
+        map.put("name", "Android");
         map.put("count", Integer.toString(mBundle.size()));
         map.put("size", Long.toString(mBundle.getTotalSize()));
         Packet packet = new Packet(Packet.JSON, mGson.toJson(map).getBytes(StandardCharsets.UTF_8));
@@ -144,6 +155,8 @@ public class Transfer implements Runnable {
             mState = State.ItemContent;
             mCurrentItemBytesTransferred = 0;
             mCurrentItem.open(Item.Mode.Read);
+        } else if(!mIterator.hasNext()) {
+            mState = State.Finished;
         }
     }
 
@@ -190,7 +203,17 @@ public class Transfer implements Runnable {
                 selector.select();
                 if (selectionKey.isReadable()) {
                     Packet packet = readNextPacket();
-                    if (mState == State.Finished && packet.getType() == Packet.SUCCESS) {
+                    if (packet != null) {
+                        switch (packet.getType()) {
+                            case Packet.ERROR:
+                                throw new IOException(new String(packet.getBuffer().array(), StandardCharsets.UTF_8));
+                            case Packet.SUCCESS:
+                                if (mState == State.Finished) {
+                                    break;
+                                }
+                            default:
+                                throw new IOException("unexpected packet");
+                        }
                         break;
                     }
                 }
@@ -205,6 +228,10 @@ public class Transfer implements Runnable {
                         case ItemContent:
                             writeItemContent();
                             break;
+                        default:
+                            // Avoid a spin loop
+                            selectionKey.interestOps(SelectionKey.OP_READ);
+                            break;
                     }
                 }
             }
@@ -212,8 +239,12 @@ public class Transfer implements Runnable {
             // Close the socket
             mSocketChannel.close();
 
+            mListener.onSuccess();
+
         } catch (IOException e) {
             mListener.onError(e.getMessage());
         }
+
+        mListener.onFinish();
     }
 }

@@ -27,6 +27,7 @@ public class FileItem extends Item {
      * Create a new file item from the specified file
      */
     public FileItem(File file) {
+        mFile = file;
         mProperties = new HashMap<>();
         mProperties.put(TYPE, "file");
         mProperties.put(NAME, file.getName());

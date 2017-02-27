@@ -94,7 +94,7 @@ public class DiscoveryAdapter extends ArrayAdapter<String> {
         convertView = super.getView(position, convertView, parent);
         Device device = mDevices.get(getItem(position));
         ((TextView) convertView.findViewById(android.R.id.text1)).setText(device.getName());
-        ((TextView) convertView.findViewById(android.R.id.text2)).setText(device.getHost().toString());
+        ((TextView) convertView.findViewById(android.R.id.text2)).setText(device.getHost().getHostAddress());
         return convertView;
     }
 }

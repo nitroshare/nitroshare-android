@@ -1,10 +1,14 @@
 package net.nitroshare.android.discovery;
 
 import android.net.nsd.NsdServiceInfo;
-import android.util.ArrayMap;
 
+import com.google.gson.Gson;
+
+import java.io.IOException;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -12,14 +16,14 @@ import java.util.Map;
  *
  * The device UUID is also used as the service name
  */
-public class Device {
+public class Device implements Serializable {
 
     public static final String SERVICE_TYPE = "_nitroshare._tcp";
 
     public static final String NAME = "name";
 
     private String mUuid;
-    private Map<String, String> mAttributes;
+    private HashMap<String, String> mAttributes;
     private InetAddress mHost;
     private int mPort;
 
@@ -29,7 +33,7 @@ public class Device {
      */
     public Device(NsdServiceInfo serviceInfo) {
         mUuid = serviceInfo.getServiceName();
-        mAttributes = new ArrayMap<>();
+        mAttributes = new HashMap<>();
         for(Map.Entry<String, byte[]> entry : serviceInfo.getAttributes().entrySet()){
             mAttributes.put(entry.getKey(), new String(entry.getValue(), StandardCharsets.UTF_8));
         }
@@ -45,7 +49,7 @@ public class Device {
      */
     public Device(String uuid, Map<String, String> attributes, int port) {
         mUuid = uuid;
-        mAttributes = new ArrayMap<>();
+        mAttributes = new HashMap<>();
         mPort = port;
     }
 
