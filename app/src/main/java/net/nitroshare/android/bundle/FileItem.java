@@ -24,19 +24,30 @@ public class FileItem extends Item {
     private Map<String, Object> mProperties;
 
     /**
+     * Create a new file item from the specified file
+     */
+    public FileItem(File file) {
+        mProperties = new HashMap<>();
+        mProperties.put(TYPE, "file");
+        mProperties.put(NAME, file.getName());
+        mProperties.put(SIZE, Long.toString(mFile.length()));
+        mProperties.put(READ_ONLY, !mFile.canWrite());
+        mProperties.put(EXECUTABLE, mFile.canExecute());
+        mProperties.put(LAST_MODIFIED, Long.toString(mFile.lastModified()));
+
+        // TODO: these are used for temporary compatibility with 0.3.x
+        mProperties.put("created", 0);
+        mProperties.put("last_read", 0);
+        mProperties.put("directory", false);
+    }
+
+    /**
      * Create a new file item from the specified path and filename
      * @param path absolute path
      * @param filename filename relative to path
      */
     public FileItem(String path, String filename) {
-        mFile = new File(new File(path), filename);
-        mProperties = new HashMap<>();
-        mProperties.put(TYPE, "file");
-        mProperties.put(NAME, filename);
-        mProperties.put(SIZE, Long.toString(mFile.length()));
-        mProperties.put(READ_ONLY, !mFile.canWrite());
-        mProperties.put(EXECUTABLE, mFile.canExecute());
-        mProperties.put(LAST_MODIFIED, Long.toString(mFile.lastModified()));
+        this(new File(new File(path), filename));
     }
 
     @Override
