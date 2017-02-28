@@ -1,5 +1,7 @@
 package net.nitroshare.android.transfer;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 
 import net.nitroshare.android.bundle.Bundle;
@@ -48,12 +50,14 @@ public class Transfer implements Runnable {
 
         /**
          * Name of remote device is provided
+         *
          * @param name device name
          */
         void onDeviceName(String name);
 
         /**
          * Progress of transfer has changed
+         *
          * @param progress number between 0 and 100 inclusive
          */
         void onProgress(int progress);
@@ -65,6 +69,7 @@ public class Transfer implements Runnable {
 
         /**
          * Error has occurred during transfer
+         *
          * @param message error message
          */
         void onError(String message);
@@ -89,12 +94,11 @@ public class Transfer implements Runnable {
     private Iterator<Item> mIterator;
     private Item mCurrentItem;
 
-    private Packet mPacket;
+    private Packet mReceivingPacket;
+    private Packet mSendingPacket;
 
-    private long mBytesTransferred = 0;
-    private long mBytesTotal;
-    private long mCurrentItemBytesTransferred;
-    private long mCurrentItemBytesTotal;
+    private long mCurrentItemBytesRemaining;
+    private long mTotalBytesTransferred = 0;
 
     /**
      * Send the specified bundle to the specified device
@@ -106,139 +110,181 @@ public class Transfer implements Runnable {
         mBundle = bundle;
         mListener = listener;
         mIterator = bundle.iterator();
-        mBytesTotal = bundle.getTotalSize();
+        mTotalBytesTransferred = bundle.getTotalSize();
     }
 
     /**
-     Attempt to read the next packet
-     * @return new packet or null if none was read
-     * @throws IOException
+     * Update the current transfer progress
      */
-    private Packet readNextPacket() throws IOException {
-        Packet packet = null;
-        if (mPacket == null) {
-            mPacket = new Packet();
-        }
-        mPacket.read(mSocketChannel);
-        if (mPacket.isFull()) {
-            packet = mPacket;
-            mPacket = null;
-        }
-        return packet;
+    private void updateProgress() {
+        mListener.onProgress((int) (100.0 * (mBundle.getTotalSize() != 0 ?
+                (double) mTotalBytesTransferred / (double) mBundle.getTotalSize() : 0.0)));
     }
 
+    // TODO: use actual device name in transfer header
+
     /**
-     * Write the transfer header
-     * @throws IOException
+     * Sent the transfer header
      */
-    private void writeTransferHeader() throws IOException {
+    private void sendTransferHeader() {
+        Log.d(TAG, "writing transfer header");
         Map<String, String> map = new HashMap<>();
         map.put("name", "Android");
         map.put("count", Integer.toString(mBundle.size()));
         map.put("size", Long.toString(mBundle.getTotalSize()));
-        Packet packet = new Packet(Packet.JSON, mGson.toJson(map).getBytes(StandardCharsets.UTF_8));
-        mSocketChannel.write(packet.getBuffer());
-        mState = State.ItemHeader;
+        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(StandardCharsets.UTF_8));
+        mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
     }
 
     /**
-     * Write the header for an item
+     * Send the header for the next item
+     *
      * @throws IOException
      */
-    private void writeItemHeader() throws IOException {
+    private void sendItemHeader() throws IOException {
+        Log.d(TAG, "writing item header");
         mCurrentItem = mIterator.next();
-        Packet packet = new Packet(Packet.JSON, mGson.toJson(
+        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
                 mCurrentItem.getProperties()).getBytes(StandardCharsets.UTF_8));
-        mSocketChannel.write(packet.getBuffer());
-        mCurrentItemBytesTotal = mCurrentItem.getSize();
-        if (mCurrentItemBytesTotal != 0) {
+        if (mCurrentItem.getSize() != 0) {
             mState = State.ItemContent;
-            mCurrentItemBytesTransferred = 0;
             mCurrentItem.open(Item.Mode.Read);
-        } else if(!mIterator.hasNext()) {
-            mState = State.Finished;
+            mCurrentItemBytesRemaining = mCurrentItem.getSize();
+        } else {
+            mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
         }
     }
 
     /**
-     * Write item content
+     * Send data from the current item
+     *
      * @throws IOException
      */
-    private void writeItemContent() throws IOException {
+    private void sendItemContent() throws IOException {
+        Log.d(TAG, "writing item content");
         byte buffer[] = new byte[CHUNK_SIZE];
         int numBytes = mCurrentItem.read(buffer);
-        Packet packet = new Packet(Packet.BINARY, buffer, numBytes);
-        mSocketChannel.write(packet.getBuffer());
-        mCurrentItemBytesTransferred += numBytes;
-        mBytesTransferred += numBytes;
+        mSendingPacket = new Packet(Packet.BINARY, buffer, numBytes);
+        mCurrentItemBytesRemaining -= numBytes;
+        mTotalBytesTransferred += numBytes;
         updateProgress();
-        if (mCurrentItemBytesTransferred == mCurrentItemBytesTotal) {
+        if (mCurrentItemBytesRemaining <= 0) {
             mCurrentItem.close();
             mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
         }
     }
 
     /**
-     * Provide a progress update for the transfer
+     * Send the next packet to the remote device (send only)
+     *
+     * @return false is there are no more packets to write
+     * @throws IOException
      */
-    private void updateProgress() {
-        mListener.onProgress((int) (100.0 * (mBytesTotal != 0 ?
-                (double) mBytesTransferred / (double) mBytesTotal : 0.0)));
+    private boolean sendNext() throws IOException {
+        if (mSendingPacket == null) {
+            switch (mState) {
+                case TransferHeader:
+                    sendTransferHeader();
+                    break;
+                case ItemHeader:
+                    sendItemHeader();
+                    break;
+                case ItemContent:
+                    sendItemContent();
+                    break;
+                case Finished:
+                    return false;
+            }
+        }
+        mSocketChannel.write(mSendingPacket.getBuffer());
+        if (mSendingPacket.isFull()) {
+            mSendingPacket = null;
+        }
+        return true;
     }
 
+    private void processTransferHeader() {
+        //...
+    }
+
+    private void processItemHeader() {
+        //...
+    }
+
+    private void processItemContent() {
+        //...
+    }
+
+    /**
+     * Process the next packet
+     *
+     * @return false is there are no more packets to read
+     * @throws IOException
+     */
+    private boolean processNext() throws IOException {
+        if (mReceivingPacket == null) {
+            mReceivingPacket = new Packet();
+        }
+        mReceivingPacket.read(mSocketChannel);
+        if (mReceivingPacket.isFull()) {
+            if (mReceivingPacket.getType() == Packet.ERROR) {
+                throw new IOException(new String(mReceivingPacket.getBuffer().array(),
+                        StandardCharsets.UTF_8));
+            }
+            switch (mDirection) {
+                case Send:
+                    switch (mReceivingPacket.getType()) {
+                        case Packet.SUCCESS:
+                            return false;
+                        default:
+                            throw new IOException("unexpected packet");
+                    }
+            }
+            mReceivingPacket = null;
+        }
+        return true;
+    }
+
+    /**
+     * Run the transfer
+     */
     @Override
     public void run() {
         try {
-            mSocketChannel = SocketChannel.open();
-            mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
 
-            // Switch the channel into non-blocking mode so that reads and
-            // writes can be done asynchronously
+            // For a sending transfer, connect to the remote device first
+            if (mDirection == Direction.Send) {
+                mSocketChannel = SocketChannel.open();
+                mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
+            }
+
+            // Ensure that all operations are non-blocking
             mSocketChannel.configureBlocking(false);
+
+            // We want notifications for reads and writes
             Selector selector = Selector.open();
             SelectionKey selectionKey = mSocketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-            // Wait for data to be read or written
             while (true) {
                 selector.select();
                 if (selectionKey.isReadable()) {
-                    Packet packet = readNextPacket();
-                    if (packet != null) {
-                        switch (packet.getType()) {
-                            case Packet.ERROR:
-                                throw new IOException(new String(packet.getBuffer().array(), StandardCharsets.UTF_8));
-                            case Packet.SUCCESS:
-                                if (mState == State.Finished) {
-                                    break;
-                                }
-                            default:
-                                throw new IOException("unexpected packet");
-                        }
+
+                    // If no more data can be read, exit the loop
+                    if (!processNext()) {
                         break;
                     }
                 }
                 if (selectionKey.isWritable()) {
-                    switch (mState) {
-                        case TransferHeader:
-                            writeTransferHeader();
-                            break;
-                        case ItemHeader:
-                            writeItemHeader();
-                            break;
-                        case ItemContent:
-                            writeItemContent();
-                            break;
-                        default:
-                            // Avoid a spin loop
-                            selectionKey.interestOps(SelectionKey.OP_READ);
-                            break;
+
+                    // If no more data will be written, remove it from select()
+                    if (!sendNext()) {
+                        selectionKey.interestOps(SelectionKey.OP_READ);
                     }
                 }
             }
 
-            // Close the socket
+            // Close the socket and indicate success
             mSocketChannel.close();
-
             mListener.onSuccess();
 
         } catch (IOException e) {
