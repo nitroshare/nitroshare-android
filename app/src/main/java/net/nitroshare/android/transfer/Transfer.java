@@ -99,6 +99,7 @@ public class Transfer implements Runnable {
 
     private long mCurrentItemBytesRemaining;
     private long mTotalBytesTransferred = 0;
+    private int mProgress = 0;
 
     /**
      * Send the specified bundle to the specified device
@@ -110,15 +111,18 @@ public class Transfer implements Runnable {
         mBundle = bundle;
         mListener = listener;
         mIterator = bundle.iterator();
-        mTotalBytesTransferred = bundle.getTotalSize();
     }
 
     /**
      * Update the current transfer progress
      */
     private void updateProgress() {
-        mListener.onProgress((int) (100.0 * (mBundle.getTotalSize() != 0 ?
-                (double) mTotalBytesTransferred / (double) mBundle.getTotalSize() : 0.0)));
+        int oldProgress = mProgress;
+        mProgress = (int) (100.0 * (mBundle.getTotalSize() != 0 ?
+                (double) mTotalBytesTransferred / (double) mBundle.getTotalSize() : 0.0));
+        if (mProgress != oldProgress) {
+            mListener.onProgress(mProgress);
+        }
     }
 
     // TODO: use actual device name in transfer header
@@ -161,7 +165,6 @@ public class Transfer implements Runnable {
      * @throws IOException
      */
     private void sendItemContent() throws IOException {
-        Log.d(TAG, "writing item content");
         byte buffer[] = new byte[CHUNK_SIZE];
         int numBytes = mCurrentItem.read(buffer);
         mSendingPacket = new Packet(Packet.BINARY, buffer, numBytes);

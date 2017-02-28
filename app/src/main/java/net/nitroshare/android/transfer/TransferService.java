@@ -26,7 +26,7 @@ public class TransferService extends Service {
 
     private NotificationManager mNotificationManager;
 
-    private int mNotificationId = 0;
+    private final AtomicInteger mNotificationId = new AtomicInteger(0);
     private final AtomicInteger mNumActiveTransfers = new AtomicInteger(0);
 
     /**
@@ -48,15 +48,14 @@ public class TransferService extends Service {
 
     /**
      * Create a notification indicating a transfer has succeeded
-     * @param transferId ID for the transfer
      * @param device remote device used for the transfer
      */
-    private void showSuccessNotification(int transferId, Device device) {
+    private void showSuccessNotification(Device device) {
         String contentText = String.format(
                 getString(R.string.transfer_status_success),
                 device.getName()
         );
-        mNotificationManager.notify(transferId, new Notification.Builder(this)
+        mNotificationManager.notify(mNotificationId.incrementAndGet(), new Notification.Builder(this)
                 .setCategory(Notification.CATEGORY_STATUS)
                 .setContentTitle(getText(R.string.transfer_title))
                 .setContentText(contentText)
@@ -70,17 +69,16 @@ public class TransferService extends Service {
 
     /**
      * Create a notification indicating that a transfer failed
-     * @param transferId ID of the transfer
      * @param device remote device used for the transfer
      * @param errorMessage description of the error that occurred
      */
-    private void showErrorNotification(int transferId, Device device, String errorMessage) {
+    private void showErrorNotification(Device device, String errorMessage) {
         String contentText = String.format(
                 getString(R.string.transfer_status_error),
                 device.getName(),
                 errorMessage
         );
-        mNotificationManager.notify(transferId, new Notification.Builder(this)
+        mNotificationManager.notify(mNotificationId.incrementAndGet(), new Notification.Builder(this)
                 .setCategory(Notification.CATEGORY_ERROR)
                 .setContentTitle(getText(R.string.transfer_title))
                 .setContentText(contentText)
@@ -129,7 +127,7 @@ public class TransferService extends Service {
         final Notification.Builder builder = buildSendTransferNotification(device);
 
         // Generate a unique ID for the transfer and show the notification
-        final int transferId = mNotificationId++;
+        final int transferId = mNotificationId.incrementAndGet();
         startForeground(transferId, builder.build());
 
         Log.i(TAG, String.format("starting transfer %d (%d items to %s)",
@@ -146,20 +144,20 @@ public class TransferService extends Service {
                     public void onProgress(int progress) {
                         builder.setContentText(getText(R.string.transfer_status_transferring));
                         builder.setProgress(100, progress, false);
-                        startForeground(transferId, builder.build());
+                        mNotificationManager.notify(transferId, builder.build());
                     }
 
                     @Override
                     public void onSuccess() {
                         Log.i(TAG, String.format("transfer %d succeeded", transferId));
-                        showSuccessNotification(transferId, device);
+                        showSuccessNotification(device);
                     }
 
                     @Override
                     public void onError(String message) {
                         Log.e(TAG, String.format("transfer %d failed: %s",
                                 transferId, message));
-                        showErrorNotification(transferId, device, message);
+                        showErrorNotification(device, message);
                     }
 
                     @Override
