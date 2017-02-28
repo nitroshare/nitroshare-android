@@ -15,10 +15,7 @@ public class Bundle extends ArrayList<Item> {
      */
     public void addItem(Item item) {
         add(item);
-        String size = (String) item.getProperties().get(Item.SIZE);
-        if (size != null) {
-            mTotalSize += Long.parseLong(size);
-        }
+        mTotalSize += item.getSize();
     }
 
     /**

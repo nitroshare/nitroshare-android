@@ -107,7 +107,7 @@ public class TransferService extends Service {
         }
         if (filenames != null) {
             for (String filename : filenames) {
-                bundle.add(new FileItem(new File(filename)));
+                bundle.addItem(new FileItem(new File(filename)));
             }
         }
         return bundle;
@@ -151,7 +151,7 @@ public class TransferService extends Service {
 
                     @Override
                     public void onSuccess() {
-                        Log.e(TAG, String.format("transfer %d succeeded", transferId));
+                        Log.i(TAG, String.format("transfer %d succeeded", transferId));
                         showSuccessNotification(transferId, device);
                     }
 

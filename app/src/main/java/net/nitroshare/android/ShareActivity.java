@@ -35,7 +35,6 @@ public class ShareActivity extends Activity {
      * @return list of absolute filenames
      */
     private String[] resolveIntent(Intent intent) {
-        Log.d(TAG, "resolving URIs for bundle");
         ArrayList<Uri> unresolvedUris = new ArrayList<>();
         switch (intent.getAction()) {
             case "android.intent.action.SEND":
@@ -45,6 +44,7 @@ public class ShareActivity extends Activity {
                 unresolvedUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
                 break;
         }
+        Log.i(TAG, String.format("received intent with %d URIs", unresolvedUris.size()));
         ArrayList<String> resolvedFilenames = new ArrayList<>();
         for (Uri uri : unresolvedUris) {
             switch (uri.getScheme()) {
@@ -62,6 +62,7 @@ public class ShareActivity extends Activity {
                     break;
             }
         }
+        Log.i(TAG, String.format("successfully resolved %d URIs", resolvedFilenames.size()));
         return resolvedFilenames.toArray(new String[resolvedFilenames.size()]);
     }
 
