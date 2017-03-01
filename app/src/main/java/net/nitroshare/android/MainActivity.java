@@ -1,33 +1,38 @@
 package net.nitroshare.android;
 
-import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.os.Build;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-
-import net.nitroshare.android.discovery.DiscoveryService;
+import android.preference.PreferenceManager;
+import android.util.Log;
 
 public class MainActivity extends Activity {
+
+    public static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Ensure we have write access to external storage
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            int permission = checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-            if (permission != PackageManager.PERMISSION_GRANTED) {
-                String[] permissions = {
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                };
-                requestPermissions(permissions, 0);
-            }
-        }
+        SharedPreferences sharedPreferences =
+                PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
-        // TODO: error handling!
+        // Launch the intro if the user hasn't seen it yet
+        boolean introShown = sharedPreferences.getBoolean(
+                getString(R.string.setting_first_start), false);
+
+        if (!introShown) {
+            Log.d(TAG, "intro has not been shown; launching activity");
+
+            Intent introIntent = new Intent(this, MainIntroActivity.class);
+            startActivity(introIntent);
+
+            // Remember that the intro has been seen
+            sharedPreferences.edit().putBoolean(
+                    getString(R.string.setting_first_start), true).apply();
+        }
 
         // Start the discovery service
         Intent startIntent = new Intent(this, DiscoveryService.class);
