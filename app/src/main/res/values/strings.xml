@@ -6,7 +6,7 @@
     <string name="activity_intro_intro_description">NitroShare makes it easy to send files to other devices on your local network.</string>
     <string name="activity_intro_perms_title">Permission</string>
     <string name="activity_intro_perms_description">In order to send and receive files, NitroShare needs your permission to read and write files on your Android device.</string>
-    <string name="setting_first_start" translatable="false">firstStart</string>
+    <string name="setting_intro_shown" translatable="false">introShown</string>
 
     <!-- Transfer service -->
     <string name="transfer_title">NitroShare Transfer</string>

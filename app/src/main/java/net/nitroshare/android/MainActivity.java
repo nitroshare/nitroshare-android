@@ -9,34 +9,48 @@ import android.util.Log;
 
 public class MainActivity extends Activity {
 
-    public static final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity";
+    private static final int INTRO_REQUEST = 1;
+
+    private SharedPreferences mSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        SharedPreferences sharedPreferences =
-                PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
 
         // Launch the intro if the user hasn't seen it yet
-        boolean introShown = sharedPreferences.getBoolean(
-                getString(R.string.setting_first_start), false);
+        boolean introShown = mSharedPreferences.getBoolean(
+                getString(R.string.setting_intro_shown), false);
 
         if (!introShown) {
             Log.d(TAG, "intro has not been shown; launching activity");
 
             Intent introIntent = new Intent(this, MainIntroActivity.class);
-            startActivity(introIntent);
-
-            // Remember that the intro has been seen
-            sharedPreferences.edit().putBoolean(
-                    getString(R.string.setting_first_start), true).apply();
+            startActivityForResult(introIntent, INTRO_REQUEST);
         }
 
         // Start the discovery service
         Intent startIntent = new Intent(this, DiscoveryService.class);
         startIntent.setAction(DiscoveryService.ACTION_START);
         startService(startIntent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == INTRO_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                // Remember that the intro has been seen
+                mSharedPreferences.edit().putBoolean(
+                        getString(R.string.setting_intro_shown), true).apply();
+            }
+            else {
+                // Intro wasn't finished, so close this activity
+                finish();
+            }
+        }
     }
 }
