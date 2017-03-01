@@ -18,6 +18,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- Intro activity -->
+        <activity
+            android:name=".MainIntroActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Intro">
+        </activity>
+
         <!-- Main activity -->
         <activity android:name=".MainActivity">
             <intent-filter>
