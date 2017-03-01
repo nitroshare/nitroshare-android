@@ -27,10 +27,17 @@ public class FileItem extends Item {
      * Create a new file item from the specified file
      */
     public FileItem(File file) {
+        this(file, file.getName());
+    }
+
+    /**
+     * Create a new file item with the specified filename
+     */
+    public FileItem(File file, String filename) {
         mFile = file;
         mProperties = new HashMap<>();
         mProperties.put(TYPE, "file");
-        mProperties.put(NAME, file.getName());
+        mProperties.put(NAME, filename);
         mProperties.put(SIZE, Long.toString(mFile.length()));
         mProperties.put(READ_ONLY, !mFile.canWrite());
         mProperties.put(EXECUTABLE, mFile.canExecute());
@@ -40,15 +47,6 @@ public class FileItem extends Item {
         mProperties.put("created", 0);
         mProperties.put("last_read", 0);
         mProperties.put("directory", false);
-    }
-
-    /**
-     * Create a new file item from the specified path and filename
-     * @param path absolute path
-     * @param filename filename relative to path
-     */
-    public FileItem(String path, String filename) {
-        this(new File(new File(path), filename));
     }
 
     @Override

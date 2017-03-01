@@ -13,6 +13,7 @@ import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.discovery.Device;
 
 import java.io.File;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class TransferService extends Service {
@@ -86,9 +87,27 @@ public class TransferService extends Service {
                 .build());
     }
 
-    // TODO: it makes more sense to create the bundle and pass it to the intent
-    //   however, the bundle would need to be serializable, which is not
-    //   possible currently, given the way it is implemented
+    /**
+     * Traverse a directory tree and add all files to the bundle
+     * @param root the directory to which all filenames will be relative
+     * @param bundle target for all files that are found
+     */
+    private void traverseDirectory(File root, Bundle bundle) {
+        Stack<File> stack = new Stack<>();
+        stack.push(root);
+        while (stack.empty()) {
+            File topOfStack = stack.pop();
+            for (File f : topOfStack.listFiles()) {
+                if (f.isDirectory()) {
+                    stack.push(f);
+                } else {
+                    String relativeFilename = f.getAbsolutePath().substring(
+                            root.getAbsolutePath().length() + 1);
+                    bundle.addItem(new FileItem(f, relativeFilename));
+                }
+            }
+        }
+    }
 
     /**
      * Create a bundle from the provided list of URLs and files
@@ -105,7 +124,12 @@ public class TransferService extends Service {
         }
         if (filenames != null) {
             for (String filename : filenames) {
-                bundle.addItem(new FileItem(new File(filename)));
+                File file = new File(filename);
+                if (file.isDirectory()) {
+                    traverseDirectory(file, bundle);
+                } else {
+                    bundle.addItem(new FileItem(file));
+                }
             }
         }
         return bundle;
