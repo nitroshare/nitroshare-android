@@ -88,6 +88,9 @@ public class ShareActivity extends Activity {
                 startTransfer.putExtra(TransferService.EXTRA_DEVICE, device);
                 startTransfer.putExtra(TransferService.EXTRA_FILENAMES, filenames);
                 startService(startTransfer);
+
+                // Close the activity
+                ShareActivity.this.finish();
             }
         });
     }

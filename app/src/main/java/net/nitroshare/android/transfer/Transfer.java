@@ -131,7 +131,7 @@ public class Transfer implements Runnable {
      * Sent the transfer header
      */
     private void sendTransferHeader() {
-        Log.d(TAG, "writing transfer header");
+        Log.v(TAG, "writing transfer header");
         Map<String, String> map = new HashMap<>();
         map.put("name", "Android");
         map.put("count", Integer.toString(mBundle.size()));
@@ -146,7 +146,7 @@ public class Transfer implements Runnable {
      * @throws IOException
      */
     private void sendItemHeader() throws IOException {
-        Log.d(TAG, "writing item header");
+        Log.v(TAG, "writing item header");
         mCurrentItem = mIterator.next();
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
                 mCurrentItem.getProperties()).getBytes(StandardCharsets.UTF_8));

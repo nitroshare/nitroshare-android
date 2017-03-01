@@ -1,11 +1,17 @@
 <resources>
     <string name="app_name">NitroShare</string>
 
+    <!-- Intro activity -->
+    <string name="activity_intro_intro_title">Introduction</string>
+    <string name="activity_intro_intro_description">NitroShare makes it easy to send files to other devices on your local network.</string>
+    <string name="activity_intro_perms_title">Permission</string>
+    <string name="activity_intro_perms_description">In order to send and receive files, NitroShare needs your permission to read and write files on your Android device.</string>
+    <string name="setting_first_start" translatable="false">firstStart</string>
+
     <!-- Transfer service -->
     <string name="transfer_title">NitroShare Transfer</string>
     <string name="transfer_status_connecting">Connecting to host...</string>
     <string name="transfer_status_transferring">Transferring...</string>
-
     <string name="transfer_status_success">Transfer with %1$s finished</string>
     <string name="transfer_status_error">Transfer with %1$s failed: %2$s</string>
 

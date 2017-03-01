@@ -37,7 +37,8 @@
         <!-- Activity for sending files -->
         <activity
             android:name=".ShareActivity"
-            android:label="@string/activity_share">
+            android:label="@string/activity_share"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SEND_MULTIPLE" />
