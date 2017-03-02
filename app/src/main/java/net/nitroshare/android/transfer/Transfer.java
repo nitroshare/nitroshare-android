@@ -55,15 +55,16 @@ public class Transfer implements Runnable {
         Finished,
     }
 
-    private String mDeviceName;
+    private SocketChannel mSocketChannel;
+
     private Device mDevice;
+    private String mDeviceName;
     private Bundle mBundle;
     private Listener mListener;
 
     private Direction mDirection;
     private State mState = State.TransferHeader;
 
-    private SocketChannel mSocketChannel;
     private Packet mReceivingPacket;
     private Packet mSendingPacket;
 
@@ -80,25 +81,26 @@ public class Transfer implements Runnable {
     /**
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
-     * @param deviceName default device name
+     * @param defaultDeviceName default device name
      * @param listener listener for transfer events
      */
-    public Transfer(SocketChannel socketChannel, String deviceName, Listener listener) {
-        mDeviceName = deviceName;
+    public Transfer(SocketChannel socketChannel, String defaultDeviceName, Listener listener) {
+        mSocketChannel = socketChannel;
+        mDeviceName = defaultDeviceName;
         mListener = listener;
         mDirection = Direction.Receive;
-        mSocketChannel = socketChannel;
     }
 
     /**
      * Create a transfer for sending items
      * @param device device to connect to
+     * @param deviceName device name to send to the remote device
      * @param bundle bundle to transfer
      * @param listener listener for transfer events
      */
-    public Transfer(Device device, Bundle bundle, Listener listener) {
-        mDeviceName = device.getName();
+    public Transfer(Device device, String deviceName, Bundle bundle, Listener listener) {
         mDevice = device;
+        mDeviceName = deviceName;
         mBundle = bundle;
         mListener = listener;
         mDirection = Direction.Send;
@@ -110,8 +112,8 @@ public class Transfer implements Runnable {
      * Retrieve the name of the remote device
      * @return remote device name
      */
-    public String deviceName() {
-        return mDeviceName;
+    public String getRemoteDeviceName() {
+        return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
     }
 
     /**
@@ -225,14 +227,12 @@ public class Transfer implements Runnable {
         return true;
     }
 
-    // TODO: use actual device name in transfer header
-
     /**
      * Send the transfer header
      */
     private void sendTransferHeader() {
         Map<String, String> map = new HashMap<>();
-        map.put("name", "Android Device");
+        map.put("name", mDeviceName);
         map.put("count", Integer.toString(mBundle.size()));
         map.put("size", Long.toString(mBundle.getTotalSize()));
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(
