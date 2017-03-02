@@ -1,21 +1,21 @@
 package net.nitroshare.android.transfer;
 
-import android.util.Log;
-
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import net.nitroshare.android.bundle.Bundle;
+import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.bundle.Item;
 import net.nitroshare.android.discovery.Device;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
@@ -26,12 +26,24 @@ import java.util.Map;
  */
 public class Transfer implements Runnable {
 
-    private static final String TAG = "Transfer";
-
     private static final int CHUNK_SIZE = 65536;
+    private static final Gson mGson = new Gson();
+
+    /**
+     * Receive notification for transfer events
+     */
+    interface Listener {
+        void onConnected();
+        void onDeviceName();
+        void onProgress(int progress);
+        void onSuccess();
+        void onError(String message);
+        void onFinish();
+    }
 
     // Direction of transfer relative to the current device
     private enum Direction {
+        Receive,
         Send,
     }
 
@@ -43,188 +55,145 @@ public class Transfer implements Runnable {
         Finished,
     }
 
-    /**
-     * Receive notification for events that occur during transfer
-     */
-    interface Listener {
-
-        /**
-         * Name of remote device is provided
-         *
-         * @param name device name
-         */
-        void onDeviceName(String name);
-
-        /**
-         * Progress of transfer has changed
-         *
-         * @param progress number between 0 and 100 inclusive
-         */
-        void onProgress(int progress);
-
-        /**
-         * Transfer completed successfully
-         */
-        void onSuccess();
-
-        /**
-         * Error has occurred during transfer
-         *
-         * @param message error message
-         */
-        void onError(String message);
-
-        /**
-         * Transfer has completed
-         */
-        void onFinish();
-    }
-
-    private final Gson mGson = new Gson();
-
-    private Direction mDirection;
-    private State mState;
-
+    private String mDeviceName;
     private Device mDevice;
     private Bundle mBundle;
     private Listener mListener;
 
+    private Direction mDirection;
+    private State mState = State.TransferHeader;
+
     private SocketChannel mSocketChannel;
-
-    private Iterator<Item> mIterator;
-    private Item mCurrentItem;
-
     private Packet mReceivingPacket;
     private Packet mSendingPacket;
 
-    private long mCurrentItemBytesRemaining;
-    private long mTotalBytesTransferred = 0;
-    private int mProgress = 0;
+    private int mTransferItems;
+    private long mTransferBytesTotal;
+    private long mTransferBytesTransferred;
+
+    private Item mItem;
+    private int mItemIndex;
+    private long mItemBytesRemaining;
+
+    private int mProgress;
 
     /**
-     * Send the specified bundle to the specified device
+     * Create a transfer for receiving items
+     * @param socketChannel incoming channel
+     * @param deviceName default device name
+     * @param listener listener for transfer events
      */
-    public Transfer(Device device, Bundle bundle, Listener listener) {
-        mDirection = Direction.Send;
-        mState = State.TransferHeader;
-        mDevice = device;
-        mBundle = bundle;
+    public Transfer(SocketChannel socketChannel, String deviceName, Listener listener) {
+        mDeviceName = deviceName;
         mListener = listener;
-        mIterator = bundle.iterator();
+        mDirection = Direction.Receive;
+        mSocketChannel = socketChannel;
     }
 
     /**
-     * Update the current transfer progress
+     * Create a transfer for sending items
+     * @param device device to connect to
+     * @param bundle bundle to transfer
+     * @param listener listener for transfer events
+     */
+    public Transfer(Device device, Bundle bundle, Listener listener) {
+        mDeviceName = device.getName();
+        mDevice = device;
+        mBundle = bundle;
+        mListener = listener;
+        mDirection = Direction.Send;
+        mTransferItems = mBundle.size();
+        mTransferBytesTotal = mBundle.getTotalSize();
+    }
+
+    /**
+     * Retrieve the name of the remote device
+     * @return remote device name
+     */
+    public String deviceName() {
+        return mDeviceName;
+    }
+
+    /**
+     * Update the progress notification
      */
     private void updateProgress() {
         int oldProgress = mProgress;
-        mProgress = (int) (100.0 * (mBundle.getTotalSize() != 0 ?
-                (double) mTotalBytesTransferred / (double) mBundle.getTotalSize() : 0.0));
+        mProgress = (int) (100.0 * (mTransferBytesTotal != 0 ?
+                (double) mTransferBytesTransferred / (double) mTransferBytesTotal : 0.0));
         if (mProgress != oldProgress) {
             mListener.onProgress(mProgress);
         }
     }
 
-    // TODO: use actual device name in transfer header
-
     /**
-     * Sent the transfer header
+     * Process the transfer header
      */
-    private void sendTransferHeader() {
-        Log.v(TAG, "writing transfer header");
-        Map<String, String> map = new HashMap<>();
-        map.put("name", "Android");
-        map.put("count", Integer.toString(mBundle.size()));
-        map.put("size", Long.toString(mBundle.getTotalSize()));
-        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(StandardCharsets.UTF_8));
-        mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
-    }
-
-    /**
-     * Send the header for the next item
-     *
-     * @throws IOException
-     */
-    private void sendItemHeader() throws IOException {
-        Log.v(TAG, "writing item header");
-        mCurrentItem = mIterator.next();
-        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
-                mCurrentItem.getProperties()).getBytes(StandardCharsets.UTF_8));
-        if (mCurrentItem.getSize() != 0) {
-            mState = State.ItemContent;
-            mCurrentItem.open(Item.Mode.Read);
-            mCurrentItemBytesRemaining = mCurrentItem.getSize();
-        } else {
-            mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
-        }
-    }
-
-    /**
-     * Send data from the current item
-     *
-     * @throws IOException
-     */
-    private void sendItemContent() throws IOException {
-        byte buffer[] = new byte[CHUNK_SIZE];
-        int numBytes = mCurrentItem.read(buffer);
-        mSendingPacket = new Packet(Packet.BINARY, buffer, numBytes);
-        mCurrentItemBytesRemaining -= numBytes;
-        mTotalBytesTransferred += numBytes;
-        updateProgress();
-        if (mCurrentItemBytesRemaining <= 0) {
-            mCurrentItem.close();
-            mState = mIterator.hasNext() ? State.ItemHeader : State.Finished;
-        }
-    }
-
-    /**
-     * Send the next packet to the remote device (send only)
-     *
-     * @return false is there are no more packets to write
-     * @throws IOException
-     */
-    private boolean sendNext() throws IOException {
-        if (mSendingPacket == null) {
-            switch (mState) {
-                case TransferHeader:
-                    sendTransferHeader();
-                    break;
-                case ItemHeader:
-                    sendItemHeader();
-                    break;
-                case ItemContent:
-                    sendItemContent();
-                    break;
-                case Finished:
-                    return false;
-            }
-        }
-        mSocketChannel.write(mSendingPacket.getBuffer());
-        if (mSendingPacket.isFull()) {
-            mSendingPacket = null;
-        }
-        return true;
-    }
-
     private void processTransferHeader() {
-        //...
-    }
-
-    private void processItemHeader() {
-        //...
-    }
-
-    private void processItemContent() {
-        //...
+        @SuppressWarnings("unused")
+        class TransferHeader {
+            private String name;
+            private String count;
+            private String size;
+        }
+        TransferHeader transferHeader = mGson.fromJson(new String(
+                mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8),
+                TransferHeader.class);
+        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        mDeviceName = transferHeader.name;
+        mTransferItems = Integer.parseInt(transferHeader.count);
+        mTransferBytesTotal = Long.parseLong(transferHeader.size);
+        mListener.onDeviceName();
     }
 
     /**
-     * Process the next packet
-     *
-     * @return false is there are no more packets to read
+     * Process the header for an individual item
      * @throws IOException
      */
-    private boolean processNext() throws IOException {
+    private void processItemHeader() throws IOException {
+        Type type = new TypeToken<Map<String, Object>>(){}.getType();
+        Map<String, Object> map = mGson.fromJson(new String(
+                mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8), type);
+        switch ((String) map.get(Item.TYPE)) {
+            case FileItem.TYPE_NAME:
+                mItem = new FileItem(map);
+                break;
+            default:
+                throw new IOException("unrecognized item type");
+        }
+        if (mItem.getSize() != 0) {
+            mState = State.ItemContent;
+            mItem.open(Item.Mode.Write);
+            mItemBytesRemaining = mItem.getSize();
+        } else {
+            mItemIndex += 1;
+            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        }
+    }
+
+    /**
+     * Process item contents
+     * @throws IOException
+     */
+    private void processItemContent() throws IOException {
+        mItem.write(mReceivingPacket.getBuffer().array());
+        int numBytes = mReceivingPacket.getBuffer().capacity();
+        mTransferBytesTransferred += numBytes;
+        mItemBytesRemaining -= numBytes;
+        updateProgress();
+        if (mItemBytesRemaining <= 0) {
+            mItem.close();
+            mItemIndex += 1;
+            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        }
+    }
+
+    /**
+     * Process the next packet by reading it and then invoking the correct method
+     * @return true if there are more packets expected
+     * @throws IOException
+     */
+    private boolean processNextPacket() throws IOException {
         if (mReceivingPacket == null) {
             mReceivingPacket = new Packet();
         }
@@ -234,22 +203,112 @@ public class Transfer implements Runnable {
                 throw new IOException(new String(mReceivingPacket.getBuffer().array(),
                         StandardCharsets.UTF_8));
             }
-            switch (mDirection) {
-                case Send:
-                    switch (mReceivingPacket.getType()) {
-                        case Packet.SUCCESS:
-                            return false;
-                        default:
-                            throw new IOException("unexpected packet");
-                    }
+            if (mDirection == Direction.Receive) {
+                if (mState == State.TransferHeader && mReceivingPacket.getType() == Packet.JSON) {
+                    processTransferHeader();
+                } else if (mState == State.ItemHeader && mReceivingPacket.getType() == Packet.JSON) {
+                    processItemHeader();
+                } else if (mState == State.ItemContent && mReceivingPacket.getType() == Packet.BINARY) {
+                    processItemContent();
+                } else {
+                    throw new IOException("unexpected packet");
+                }
+            } else {
+                if (mState == State.Finished && mReceivingPacket.getType() == Packet.SUCCESS) {
+                    return false;
+                } else {
+                    throw new IOException("unexpected packet");
+                }
             }
             mReceivingPacket = null;
         }
         return true;
     }
 
+    // TODO: use actual device name in transfer header
+
     /**
-     * Run the transfer
+     * Send the transfer header
+     */
+    private void sendTransferHeader() {
+        Map<String, String> map = new HashMap<>();
+        map.put("name", "Android Device");
+        map.put("count", Integer.toString(mBundle.size()));
+        map.put("size", Long.toString(mBundle.getTotalSize()));
+        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(
+                StandardCharsets.UTF_8));
+        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+    }
+
+    /**
+     * Send the header for an individual item
+     * @throws IOException
+     */
+    private void sendItemHeader() throws IOException {
+        mItem = mBundle.get(mItemIndex);
+        mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
+                mItem.getProperties()).getBytes(StandardCharsets.UTF_8));
+        if (mItem.getSize() != 0) {
+            mState = State.ItemContent;
+            mItem.open(Item.Mode.Read);
+            mItemBytesRemaining = mItem.getSize();
+        } else {
+            mItemIndex += 1;
+            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        }
+    }
+
+    /**
+     * Send item contents
+     * @throws IOException
+     */
+    private void sendItemContent() throws IOException {
+        byte buffer[] = new byte[CHUNK_SIZE];
+        int numBytes = mItem.read(buffer);
+        mSendingPacket = new Packet(Packet.BINARY, buffer, numBytes);
+        mTransferBytesTransferred += numBytes;
+        mItemBytesRemaining -= numBytes;
+        updateProgress();
+        if (mItemBytesRemaining <= 0) {
+            mItem.close();
+            mItemIndex += 1;
+            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        }
+    }
+
+    /**
+     * Send the next packet by evaluating the current state
+     * @return true if there are more packets to send
+     * @throws IOException
+     */
+    private boolean sendNextPacket() throws IOException {
+        if (mSendingPacket == null) {
+            if (mDirection == Direction.Receive) {
+                mSendingPacket = new Packet(Packet.SUCCESS);
+            } else {
+                switch (mState) {
+                    case TransferHeader:
+                        sendTransferHeader();
+                        break;
+                    case ItemHeader:
+                        sendItemHeader();
+                        break;
+                    case ItemContent:
+                        sendItemContent();
+                        break;
+                }
+            }
+        }
+        mSocketChannel.write(mSendingPacket.getBuffer());
+        if (mSendingPacket.isFull()) {
+            mSendingPacket = null;
+            return mState != State.Finished;
+        }
+        return true;
+    }
+
+    /**
+     * Perform the transfer until it completes or an error occurs
      */
     @Override
     public void run() {
@@ -259,29 +318,37 @@ public class Transfer implements Runnable {
             if (mDirection == Direction.Send) {
                 mSocketChannel = SocketChannel.open();
                 mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
+                mListener.onConnected();
             }
 
             // Ensure that all operations are non-blocking
             mSocketChannel.configureBlocking(false);
 
-            // We want notifications for reads and writes
+            // Indicate which operations select() should select for
             Selector selector = Selector.open();
-            SelectionKey selectionKey = mSocketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+            SelectionKey selectionKey = mSocketChannel.register(selector,
+                    mDirection == Direction.Receive ? SelectionKey.OP_READ :
+                            SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
+            // Continue to process events from the socket until terminated
             while (true) {
                 selector.select();
                 if (selectionKey.isReadable()) {
-
-                    // If no more data can be read, exit the loop
-                    if (!processNext()) {
-                        break;
+                    if (!processNextPacket()) {
+                        if (mDirection == Direction.Receive) {
+                            selectionKey.interestOps(SelectionKey.OP_WRITE);
+                        } else {
+                            break;
+                        }
                     }
                 }
                 if (selectionKey.isWritable()) {
-
-                    // If no more data will be written, remove it from select()
-                    if (!sendNext()) {
-                        selectionKey.interestOps(SelectionKey.OP_READ);
+                    if (!sendNextPacket()) {
+                        if (mDirection == Direction.Receive) {
+                            break;
+                        } else {
+                            selectionKey.interestOps(SelectionKey.OP_READ);
+                        }
                     }
                 }
             }
