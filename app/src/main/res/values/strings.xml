@@ -1,21 +1,33 @@
 <resources>
     <string name="app_name">NitroShare</string>
 
+    <!-- TODO: eventually move the settings out of here -->
+
+    <!-- Settings -->
+    <string name="setting_intro_shown" translatable="false">introShown</string>
+
     <!-- Intro activity -->
     <string name="activity_intro_intro_title">Introduction</string>
     <string name="activity_intro_intro_description">NitroShare makes it easy to send files to other devices on your local network.</string>
     <string name="activity_intro_perms_title">Permission</string>
     <string name="activity_intro_perms_description">In order to send and receive files, NitroShare needs your permission to read and write files on your Android device.</string>
-    <string name="setting_intro_shown" translatable="false">introShown</string>
-
-    <!-- Transfer service -->
-    <string name="transfer_title">NitroShare Transfer</string>
-    <string name="transfer_status_connecting">Connecting to host...</string>
-    <string name="transfer_status_transferring">Transferring...</string>
-    <string name="transfer_status_success">Transfer with %1$s finished</string>
-    <string name="transfer_status_error">Transfer with %1$s failed: %2$s</string>
 
     <!-- Share activity -->
     <string name="activity_share">Send with NitroShare</string>
     <string name="activity_share_label">Select a device from the list below to receive the file:</string>
+
+    <!-- Settings activity -->
+    <string name="activity_settings">Settings</string>
+
+    <!-- Transfer service -->
+    <string name="service_transfer_title">NitroShare Transfer</string>
+    <string name="service_transfer_action_stop">Stop</string>
+    <string name="service_transfer_action_retry">Retry</string>
+    <string name="service_transfer_status_connecting">Connecting to %1$s…</string>
+    <string name="service_transfer_status_receiving">Receiving items from %1$s…</string>
+    <string name="service_transfer_status_sending">Sending items to %1$s…</string>
+    <string name="service_transfer_status_success">Transfer with %1$s completed</string>
+    <string name="service_transfer_status_error">Transfer with %1$s failed: %2$s</string>
+    <string name="service_transfer_unknown_device">[unknown]</string>
+
 </resources>
