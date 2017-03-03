@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="@string/activity_settings_category_general">
+
+        <EditTextPreference
+            android:key="@string/setting_device_name"
+            android:title="@string/activity_settings_pref_device_name" />
+
+        <EditTextPreference
+            android:key="@string/setting_transfer_directory"
+            android:title="@string/activity_settings_pref_transfer_directory" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
