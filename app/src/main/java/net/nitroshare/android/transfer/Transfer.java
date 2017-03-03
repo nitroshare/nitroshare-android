@@ -33,7 +33,7 @@ public class Transfer implements Runnable {
      * Receive notification for transfer events
      */
     interface Listener {
-        void onConnected();
+        void onConnect();
         void onDeviceName();
         void onProgress(int progress);
         void onSuccess();
@@ -42,7 +42,7 @@ public class Transfer implements Runnable {
     }
 
     // Direction of transfer relative to the current device
-    private enum Direction {
+    enum Direction {
         Receive,
         Send,
     }
@@ -82,12 +82,10 @@ public class Transfer implements Runnable {
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
      * @param defaultDeviceName default device name
-     * @param listener listener for transfer events
      */
-    public Transfer(SocketChannel socketChannel, String defaultDeviceName, Listener listener) {
+    public Transfer(SocketChannel socketChannel, String defaultDeviceName) {
         mSocketChannel = socketChannel;
         mDeviceName = defaultDeviceName;
-        mListener = listener;
         mDirection = Direction.Receive;
     }
 
@@ -96,24 +94,46 @@ public class Transfer implements Runnable {
      * @param device device to connect to
      * @param deviceName device name to send to the remote device
      * @param bundle bundle to transfer
-     * @param listener listener for transfer events
      */
-    public Transfer(Device device, String deviceName, Bundle bundle, Listener listener) {
+    public Transfer(Device device, String deviceName, Bundle bundle) {
         mDevice = device;
         mDeviceName = deviceName;
         mBundle = bundle;
-        mListener = listener;
         mDirection = Direction.Send;
         mTransferItems = mBundle.size();
         mTransferBytesTotal = mBundle.getTotalSize();
     }
 
     /**
+     * Retrieve the direction of the transfer
+     * @return transfer direction
+     */
+    Direction getDirection() {
+        return mDirection;
+    }
+
+    /**
      * Retrieve the name of the remote device
      * @return remote device name
      */
-    public String getRemoteDeviceName() {
+    String getRemoteDeviceName() {
         return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
+    }
+
+    /**
+     * Specify the listener that will receive transfer events
+     * @param listener listener for transfer events
+     */
+    void setListener(Listener listener) {
+        mListener = listener;
+    }
+
+    /**
+     * Close the socket, effectively aborting the transfer
+     * @throws IOException
+     */
+    void close() throws IOException {
+        mSocketChannel.close();
     }
 
     /**
@@ -296,6 +316,8 @@ public class Transfer implements Runnable {
                     case ItemContent:
                         sendItemContent();
                         break;
+                    default:
+                        throw new IOException("unreachable code");
                 }
             }
         }
@@ -318,7 +340,7 @@ public class Transfer implements Runnable {
             if (mDirection == Direction.Send) {
                 mSocketChannel = SocketChannel.open();
                 mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
-                mListener.onConnected();
+                mListener.onConnect();
             }
 
             // Ensure that all operations are non-blocking
