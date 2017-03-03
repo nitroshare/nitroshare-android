@@ -76,6 +76,10 @@ class Packet {
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
+    Packet(int type) {
+        this(type, null);
+    }
+
     /**
      * Create a packet of the specified type with the specified data
      */
@@ -86,7 +90,10 @@ class Packet {
     Packet(int type, byte[] data, int length) {
         mBuffer = ByteBuffer.allocate(5 + length);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
-        mBuffer.putInt(length + 1).put((byte) type).put(data, 0, length);
+        mBuffer.putInt(length + 1).put((byte) type);
+        if (data != null) {
+            mBuffer.put(data, 0, length);
+        }
         mBuffer.flip();
     }
 

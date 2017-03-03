@@ -34,7 +34,7 @@ class TransferWrapper {
 
     /**
      * Stop the transfer with the specified ID
-     * @param transferId
+     * @param transferId ID of service to stop
      */
     static void stopTransfer(int transferId) {
         TransferWrapper transferWrapper = sActiveTransfers.get(transferId);

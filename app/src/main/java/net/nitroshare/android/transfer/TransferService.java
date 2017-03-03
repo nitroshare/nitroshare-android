@@ -155,7 +155,6 @@ public class TransferService extends Service {
 
     /**
      * Start a transfer using the provided intent
-     * @param intent
      */
     private void startTransfer(Intent intent) {
 
@@ -177,7 +176,6 @@ public class TransferService extends Service {
 
     /**
      * Stop a transfer in progress
-     * @param intent
      */
     private void stopTransfer(Intent intent) {
         TransferWrapper.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
