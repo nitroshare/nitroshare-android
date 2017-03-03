@@ -55,9 +55,9 @@ public class Transfer implements Runnable {
         Finished,
     }
 
+    private volatile boolean mStop = false;
     private Selector mSelector = Selector.open();
     private SocketChannel mSocketChannel;
-    private boolean mStop = false;
 
     private Device mDevice;
     private String mDeviceName;

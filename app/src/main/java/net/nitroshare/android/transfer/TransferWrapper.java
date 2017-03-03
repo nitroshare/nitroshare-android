@@ -2,7 +2,9 @@ package net.nitroshare.android.transfer;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Intent;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -30,6 +32,17 @@ class TransferWrapper {
      */
     private static final SparseArray<TransferWrapper> sActiveTransfers = new SparseArray<>();
 
+    /**
+     * Stop the transfer with the specified ID
+     * @param transferId
+     */
+    static void stopTransfer(int transferId) {
+        TransferWrapper transferWrapper = sActiveTransfers.get(transferId);
+        if (transferWrapper != null) {
+            transferWrapper.mTransfer.stop();
+        }
+    }
+
     private int mId = sNotificationId.incrementAndGet();
     private Service mService;
     private Transfer mTransfer;
@@ -37,26 +50,22 @@ class TransferWrapper {
     private NotificationManager mNotificationManager;
 
     /**
-     * Return a localized string with the remote device name interpolated
-     * @param resId resource ID
-     * @return localized string
+     * Create a notification using the provided text
+     * @return newly created notification
      */
-    private String localize(int resId) {
-        return mService.getString(resId, mTransfer.getRemoteDeviceName());
+    private Notification.Builder createNotification() {
+        return new Notification.Builder(mService)
+                .setCategory(Notification.CATEGORY_STATUS)
+                .setContentTitle(mService.getString(R.string.service_transfer_title))
+                .setSmallIcon(R.drawable.ic_stat_transfer);
     }
 
     /**
      * Use this transfer for the foreground notification
      */
     private void setForeground() {
+        Log.d(TAG, String.format("setting #%d as the foreground transfer", mId));
         mService.startForeground(mId, mNotificationBuilder.build());
-    }
-
-    /**
-     * Update the ongoing notification displayed for the transfer
-     */
-    private void updateNotification(int id) {
-        mNotificationManager.notify(id, mNotificationBuilder.build());
     }
 
     /**
@@ -66,37 +75,53 @@ class TransferWrapper {
 
         @Override
         public void onConnect() {
-            mNotificationBuilder.setContentText(localize(
-                    R.string.service_transfer_status_sending));
-            updateNotification(mId);
+            mNotificationBuilder.setContentText(
+                    mService.getString(
+                        R.string.service_transfer_status_sending,
+                        mTransfer.getRemoteDeviceName()
+                    )
+            );
+            mNotificationManager.notify(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onDeviceName() {
-            updateNotification(mId);
+            mNotificationManager.notify(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onProgress(int progress) {
             mNotificationBuilder.setProgress(100, progress, false);
-            updateNotification(mId);
+            mNotificationManager.notify(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onSuccess() {
-            mNotificationBuilder
-                    .setProgress(0, 0, false)
-                    .setContentText(localize(R.string.service_transfer_status_success));
-            updateNotification(sNotificationId.incrementAndGet());
+            Log.i(TAG, String.format("transfer #%d succeeded", mId));
+            mNotificationManager.notify(
+                    sNotificationId.incrementAndGet(),
+                    createNotification().setContentText(
+                            mService.getString(
+                                    R.string.service_transfer_status_success,
+                                    mTransfer.getRemoteDeviceName()
+                            )
+                    ).build()
+            );
         }
 
         @Override
         public void onError(String message) {
-            mNotificationBuilder
-                    .setProgress(0, 0, false)
-                    .setContentText(localize(
-                            R.string.service_transfer_status_error) + " " + message);
-            updateNotification(sNotificationId.incrementAndGet());
+            Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
+            mNotificationManager.notify(
+                    sNotificationId.incrementAndGet(),
+                    createNotification().setContentText(
+                            mService.getString(
+                                    R.string.service_transfer_status_error,
+                                    mTransfer.getRemoteDeviceName(),
+                                    message
+                            )
+                    ).build()
+            );
         }
 
         @Override
@@ -115,6 +140,22 @@ class TransferWrapper {
     }
 
     /**
+     * Create an action for stopping the transfer
+     * @return newly created action
+     */
+    private Notification.Action createStopAction() {
+        Intent stopIntent = new Intent(mService, TransferService.class)
+                .setAction(TransferService.ACTION_STOP_TRANSFER)
+                .putExtra(TransferService.EXTRA_TRANSFER, mId);
+        PendingIntent pendingIntent =  PendingIntent.getService(
+                mService, 0, stopIntent, 0);
+        //noinspection deprecation
+        return new Notification.Action.Builder(R.drawable.ic_action_stop,
+                mService.getString(R.string.service_transfer_action_stop),
+                pendingIntent).build();
+    }
+
+    /**
      * Create a wrapper for the provided transfer
      * @param service service hosting the transfer
      * @param transfer transfer to wrap
@@ -123,17 +164,19 @@ class TransferWrapper {
         mService = service;
         mTransfer = transfer;
         mTransfer.setListener(new TransferListener());
-        mNotificationBuilder = new Notification.Builder(mService)
-                .setCategory(Notification.CATEGORY_STATUS)
-                .setContentTitle(mService.getString(R.string.service_transfer_title))
-                .setContentText(localize(
-                        mTransfer.getDirection() == Transfer.Direction.Receive ?
-                                R.string.service_transfer_status_receiving :
-                                R.string.service_transfer_status_connecting))
-                .setSmallIcon(R.drawable.ic_stat_transfer)
+        mNotificationBuilder = createNotification()
+                .addAction(createStopAction())
+                .setContentText(
+                        mService.getString(
+                                mTransfer.getDirection() == Transfer.Direction.Receive ?
+                                        R.string.service_transfer_status_receiving :
+                                        R.string.service_transfer_status_connecting
+                        )
+                )
                 .setProgress(0, 0, true);
         mNotificationManager = (NotificationManager) mService.getSystemService(
                 Service.NOTIFICATION_SERVICE);
+        Log.i(TAG, String.format("created transfer #%d", mId));
         synchronized (sActiveTransfers) {
             sActiveTransfers.put(mId, this);
             setForeground();
