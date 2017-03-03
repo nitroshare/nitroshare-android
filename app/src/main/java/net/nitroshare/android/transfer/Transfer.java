@@ -55,7 +55,9 @@ public class Transfer implements Runnable {
         Finished,
     }
 
+    private Selector mSelector = Selector.open();
     private SocketChannel mSocketChannel;
+    private boolean mStop = false;
 
     private Device mDevice;
     private String mDeviceName;
@@ -82,9 +84,11 @@ public class Transfer implements Runnable {
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
      * @param defaultDeviceName default device name
+     * @throws IOException
      */
-    public Transfer(SocketChannel socketChannel, String defaultDeviceName) {
+    public Transfer(SocketChannel socketChannel, String defaultDeviceName) throws IOException {
         mSocketChannel = socketChannel;
+        mSocketChannel.configureBlocking(false);
         mDeviceName = defaultDeviceName;
         mDirection = Direction.Receive;
     }
@@ -94,8 +98,11 @@ public class Transfer implements Runnable {
      * @param device device to connect to
      * @param deviceName device name to send to the remote device
      * @param bundle bundle to transfer
+     * @throws IOException
      */
-    public Transfer(Device device, String deviceName, Bundle bundle) {
+    public Transfer(Device device, String deviceName, Bundle bundle) throws IOException {
+        mSocketChannel = SocketChannel.open();
+        mSocketChannel.configureBlocking(false);
         mDevice = device;
         mDeviceName = deviceName;
         mBundle = bundle;
@@ -130,10 +137,10 @@ public class Transfer implements Runnable {
 
     /**
      * Close the socket, effectively aborting the transfer
-     * @throws IOException
      */
-    void close() throws IOException {
-        mSocketChannel.close();
+    void stop() {
+        mStop = true;
+        mSelector.wakeup();
     }
 
     /**
@@ -335,26 +342,30 @@ public class Transfer implements Runnable {
     @Override
     public void run() {
         try {
+            // Indicate which operations select() should select for
+            SelectionKey selectionKey = mSocketChannel.register(
+                    mSelector,
+                    mDirection == Direction.Receive ?
+                            SelectionKey.OP_READ :
+                            SelectionKey.OP_CONNECT | SelectionKey.OP_READ |
+                                    SelectionKey.OP_WRITE
+            );
 
-            // For a sending transfer, connect to the remote device first
+            // For a sending transfer, connect to the remote device
             if (mDirection == Direction.Send) {
-                mSocketChannel = SocketChannel.open();
                 mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
-                mListener.onConnect();
             }
 
-            // Ensure that all operations are non-blocking
-            mSocketChannel.configureBlocking(false);
-
-            // Indicate which operations select() should select for
-            Selector selector = Selector.open();
-            SelectionKey selectionKey = mSocketChannel.register(selector,
-                    mDirection == Direction.Receive ? SelectionKey.OP_READ :
-                            SelectionKey.OP_READ | SelectionKey.OP_WRITE);
-
-            // Continue to process events from the socket until terminated
             while (true) {
-                selector.select();
+                mSelector.select();
+                if (mStop) {
+                    break;
+                }
+                if (selectionKey.isConnectable()) {
+                    mSocketChannel.finishConnect();
+                    mListener.onConnect();
+                    selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                }
                 if (selectionKey.isReadable()) {
                     if (!processNextPacket()) {
                         if (mDirection == Direction.Receive) {
@@ -375,8 +386,15 @@ public class Transfer implements Runnable {
                 }
             }
 
-            // Close the socket and indicate success
+            // Close the socket
             mSocketChannel.close();
+
+            // If interrupted, throw an error
+            if (mStop) {
+                throw new IOException("transfer was cancelled");
+            }
+
+            // Indicate success
             mListener.onSuccess();
 
         } catch (IOException e) {
