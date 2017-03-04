@@ -1,11 +1,14 @@
 package net.nitroshare.android.transfer;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import net.nitroshare.android.MainActivity;
 import net.nitroshare.android.R;
 
 import java.io.IOException;
@@ -71,10 +74,13 @@ class TransferServer implements Runnable {
     @Override
     public void run() {
         Log.i(TAG, "starting server...");
+        PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
+                new Intent(mContext, MainActivity.class), 0);
         mTransferNotificationManager.start(
                 NOTIFICATION_ID,
                 new Notification.Builder(mContext)
                         .setCategory(Notification.CATEGORY_SERVICE)
+                        .setContentIntent(mainIntent)
                         .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
                         .setContentText(mContext.getString(R.string.service_transfer_server_text))
                         .setSmallIcon(R.drawable.ic_stat_transfer)
@@ -84,6 +90,7 @@ class TransferServer implements Runnable {
             // Create a server and attempt to bind to a port
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.socket().bind(new InetSocketAddress(40818));
+            serverSocketChannel.configureBlocking(false);
 
             Log.i(TAG, String.format("server bound to port %d",
                     serverSocketChannel.socket().getLocalPort()));
