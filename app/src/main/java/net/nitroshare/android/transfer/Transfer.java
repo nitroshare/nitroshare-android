@@ -198,7 +198,11 @@ public class Transfer implements Runnable {
         Type type = new TypeToken<Map<String, Object>>(){}.getType();
         Map<String, Object> map = mGson.fromJson(new String(
                 mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8), type);
-        switch ((String) map.get(Item.TYPE)) {
+        String itemType = (String) map.get(Item.TYPE);
+        if (itemType == null) {
+            itemType = FileItem.TYPE_NAME;
+        }
+        switch (itemType) {
             case FileItem.TYPE_NAME:
                 mItem = new FileItem(mTransferDirectory, map);
                 break;
