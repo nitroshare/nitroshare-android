@@ -5,11 +5,15 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import net.nitroshare.android.MainActivity;
 import net.nitroshare.android.R;
+import net.nitroshare.android.discovery.Device;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -17,6 +21,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Listen for new connections and create TransferWrappers for them
@@ -33,6 +40,28 @@ class TransferServer implements Runnable {
     private TransferNotificationManager mTransferNotificationManager;
     private SharedPreferences mSharedPreferences;
     private Selector mSelector = Selector.open();
+
+    private NsdManager.RegistrationListener mRegistrationListener =
+            new NsdManager.RegistrationListener() {
+        @Override
+        public void onServiceRegistered(NsdServiceInfo serviceInfo) {
+            Log.i(TAG, "service registered");
+        }
+
+        @Override
+        public void onServiceUnregistered(NsdServiceInfo serviceInfo) {
+            Log.i(TAG, "service unregistered");
+        }
+        @Override
+        public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+            Log.e(TAG, String.format("registration failed: %d", errorCode));
+        }
+
+        @Override
+        public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+            Log.e(TAG, String.format("unregistration failed: %d", errorCode));
+        }
+    };
 
     /**
      * Create a new transfer server
@@ -71,9 +100,27 @@ class TransferServer implements Runnable {
         }
     }
 
+    // TODO: this method could use some refactoring
+
     @Override
     public void run() {
         Log.i(TAG, "starting server...");
+
+        // Retrieve the UUID (generating a new one if necessary) and name
+        String deviceUuidKey = mContext.getString(R.string.setting_device_uuid);
+        String deviceUuid = mSharedPreferences.getString(deviceUuidKey, "");
+        if (deviceUuid.isEmpty()) {
+            deviceUuid = String.format("{%s}", UUID.randomUUID().toString());
+            mSharedPreferences.edit().putString(deviceUuidKey, deviceUuid).apply();
+        }
+        String deviceName = mSharedPreferences.getString(mContext.getString(
+                R.string.setting_device_name), "");
+        if (deviceName.isEmpty()) {
+            deviceName = Build.MODEL;
+        }
+        NsdManager nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
+
+        // Create the notification shown while the server is running
         PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
                 new Intent(mContext, MainActivity.class), 0);
         mTransferNotificationManager.start(
@@ -86,6 +133,7 @@ class TransferServer implements Runnable {
                         .setSmallIcon(R.drawable.ic_stat_transfer)
                         .build()
         );
+
         try {
             // Create a server and attempt to bind to a port
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -94,6 +142,15 @@ class TransferServer implements Runnable {
 
             Log.i(TAG, String.format("server bound to port %d",
                     serverSocketChannel.socket().getLocalPort()));
+
+            // Register the service
+            Map<String, String> attributes = new HashMap<>();
+            attributes.put(Device.NAME, deviceName);
+            nsdManager.registerService(
+                    new Device(deviceUuid, attributes, 40818).toServiceInfo(),
+                    NsdManager.PROTOCOL_DNS_SD,
+                    mRegistrationListener
+            );
 
             // Register the server with the selector
             SelectionKey selectionKey = serverSocketChannel.register(mSelector,
@@ -129,6 +186,9 @@ class TransferServer implements Runnable {
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
+
+        // Unregister the service and close the notification
+        nsdManager.unregisterService(mRegistrationListener);
         mTransferNotificationManager.stop(NOTIFICATION_ID);
         Log.i(TAG, "server stopped");
     }
