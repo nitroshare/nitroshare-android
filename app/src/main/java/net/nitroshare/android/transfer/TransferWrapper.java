@@ -1,9 +1,8 @@
 package net.nitroshare.android.transfer;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 import android.util.SparseArray;
@@ -25,7 +24,7 @@ class TransferWrapper {
     /**
      * Simplify the process of generating unique IDs for notifications
      */
-    private static AtomicInteger sNotificationId = new AtomicInteger(0);
+    private static AtomicInteger sNotificationId = new AtomicInteger(1);
 
     /**
      * Maintain a list of active transfers
@@ -37,35 +36,29 @@ class TransferWrapper {
      * @param transferId ID of service to stop
      */
     static void stopTransfer(int transferId) {
-        TransferWrapper transferWrapper = sActiveTransfers.get(transferId);
-        if (transferWrapper != null) {
-            transferWrapper.mTransfer.stop();
+        synchronized (sActiveTransfers) {
+            TransferWrapper transferWrapper = sActiveTransfers.get(transferId);
+            if (transferWrapper != null) {
+                transferWrapper.mTransfer.stop();
+            }
         }
     }
 
     private int mId = sNotificationId.incrementAndGet();
-    private Service mService;
+    private Context mContext;
     private Transfer mTransfer;
+    private TransferNotificationManager mTransferNotificationManager;
     private Notification.Builder mNotificationBuilder;
-    private NotificationManager mNotificationManager;
 
     /**
      * Create a notification using the provided text
      * @return newly created notification
      */
     private Notification.Builder createNotification() {
-        return new Notification.Builder(mService)
+        return new Notification.Builder(mContext)
                 .setCategory(Notification.CATEGORY_STATUS)
-                .setContentTitle(mService.getString(R.string.service_transfer_title))
+                .setContentTitle(mContext.getString(R.string.service_transfer_title))
                 .setSmallIcon(R.drawable.ic_stat_transfer);
-    }
-
-    /**
-     * Use this transfer for the foreground notification
-     */
-    private void setForeground() {
-        Log.d(TAG, String.format("setting #%d as the foreground transfer", mId));
-        mService.startForeground(mId, mNotificationBuilder.build());
     }
 
     /**
@@ -76,32 +69,38 @@ class TransferWrapper {
         @Override
         public void onConnect() {
             mNotificationBuilder.setContentText(
-                    mService.getString(
-                        R.string.service_transfer_status_sending,
-                        mTransfer.getRemoteDeviceName()
+                    mContext.getString(
+                            R.string.service_transfer_status_sending,
+                            mTransfer.getRemoteDeviceName()
                     )
             );
-            mNotificationManager.notify(mId, mNotificationBuilder.build());
+            mTransferNotificationManager.update(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onDeviceName() {
-            mNotificationManager.notify(mId, mNotificationBuilder.build());
+            mNotificationBuilder.setContentText(
+                    mContext.getString(
+                            R.string.service_transfer_status_receiving,
+                            mTransfer.getRemoteDeviceName()
+                    )
+            );
+            mTransferNotificationManager.update(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onProgress(int progress) {
             mNotificationBuilder.setProgress(100, progress, false);
-            mNotificationManager.notify(mId, mNotificationBuilder.build());
+            mTransferNotificationManager.update(mId, mNotificationBuilder.build());
         }
 
         @Override
         public void onSuccess() {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
-            mNotificationManager.notify(
+            mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
                     createNotification().setContentText(
-                            mService.getString(
+                            mContext.getString(
                                     R.string.service_transfer_status_success,
                                     mTransfer.getRemoteDeviceName()
                             )
@@ -112,10 +111,10 @@ class TransferWrapper {
         @Override
         public void onError(String message) {
             Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
-            mNotificationManager.notify(
+            mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
                     createNotification().setContentText(
-                            mService.getString(
+                            mContext.getString(
                                     R.string.service_transfer_status_error,
                                     mTransfer.getRemoteDeviceName(),
                                     message
@@ -128,14 +127,8 @@ class TransferWrapper {
         public void onFinish() {
             synchronized (sActiveTransfers) {
                 sActiveTransfers.remove(mId);
-                if (sActiveTransfers.size() > 0) {
-                    sActiveTransfers.valueAt(0).setForeground();
-                    mNotificationManager.cancel(mId);
-                } else {
-                    Log.i(TAG, "all transfers finished; stopping service");
-                    mService.stopSelf();
-                }
             }
+            mTransferNotificationManager.stop(mId);
         }
     }
 
@@ -144,43 +137,40 @@ class TransferWrapper {
      * @return newly created action
      */
     private Notification.Action createStopAction() {
-        Intent stopIntent = new Intent(mService, TransferService.class)
+        Intent stopIntent = new Intent(mContext, TransferService.class)
                 .setAction(TransferService.ACTION_STOP_TRANSFER)
                 .putExtra(TransferService.EXTRA_TRANSFER, mId);
         PendingIntent pendingIntent =  PendingIntent.getService(
-                mService, 0, stopIntent, 0);
+                mContext, 0, stopIntent, 0);
         //noinspection deprecation
         return new Notification.Action.Builder(R.drawable.ic_action_stop,
-                mService.getString(R.string.service_transfer_action_stop),
+                mContext.getString(R.string.service_transfer_action_stop),
                 pendingIntent).build();
     }
 
     /**
      * Create a wrapper for the provided transfer
-     * @param service service hosting the transfer
+     * @param context context for retrieving string resources
      * @param transfer transfer to wrap
+     * @param transferNotificationManager notification manager
      */
-    TransferWrapper(Service service, Transfer transfer) {
-        mService = service;
+    TransferWrapper(Context context, Transfer transfer, TransferNotificationManager transferNotificationManager) {
+        mContext = context;
         mTransfer = transfer;
         mTransfer.setListener(new TransferListener());
+        mTransferNotificationManager = transferNotificationManager;
         mNotificationBuilder = createNotification()
                 .addAction(createStopAction())
                 .setContentText(
-                        mService.getString(
+                        mContext.getString(
                                 mTransfer.getDirection() == Transfer.Direction.Receive ?
                                         R.string.service_transfer_status_receiving :
                                         R.string.service_transfer_status_connecting
                         )
                 )
                 .setProgress(0, 0, true);
-        mNotificationManager = (NotificationManager) mService.getSystemService(
-                Service.NOTIFICATION_SERVICE);
+        mTransferNotificationManager.start(mId, mNotificationBuilder.build());
         Log.i(TAG, String.format("created transfer #%d", mId));
-        synchronized (sActiveTransfers) {
-            sActiveTransfers.put(mId, this);
-            setForeground();
-        }
     }
 
     /**

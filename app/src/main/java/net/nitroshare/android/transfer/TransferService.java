@@ -2,22 +2,20 @@ package net.nitroshare.android.transfer;
 
 import android.app.Service;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.bundle.Bundle;
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.discovery.Device;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.nio.channels.SelectionKey;
-import java.nio.channels.Selector;
-import java.nio.channels.ServerSocketChannel;
-import java.nio.channels.SocketChannel;
 import java.util.Stack;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Receive incoming transfers and initiate outgoing transfers
@@ -41,68 +39,42 @@ public class TransferService extends Service {
     public static final String ACTION_STOP_TRANSFER = "stop_transfer";
     public static final String EXTRA_TRANSFER = "transfer";
 
-    private static int STATE_STOPPED = 0;
-    private static int STATE_STARTED = 1;
-    private static int STATE_STOP = 2;
-    private static int STATE_STOPPING = 3;
-
-    private ServerSocketChannel mServerSocketChannel;
-    private AtomicInteger mSocketState = new AtomicInteger(STATE_STOPPED);
+    private TransferNotificationManager mTransferNotificationManager;
+    private TransferServer mTransferServer;
+    private SharedPreferences mSharedPreferences;
 
     /**
-     * Start listening for new incoming connections
-     *
-     * If the socket is already listening for new connections, then this method
-     * does nothing. It will continue to listen until stopped.
+     * Initialize the service
      */
-    private void startListening() {
-        if (mSocketState.compareAndSet(STATE_STOPPED, STATE_STARTED)) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        mServerSocketChannel = ServerSocketChannel.open();
-                        mServerSocketChannel.socket().bind(new InetSocketAddress(40818));
+    public TransferService() {
+        mTransferNotificationManager = new TransferNotificationManager(this);
+    }
 
-                        Log.i(TAG, String.format("server bound to %d",
-                                mServerSocketChannel.socket().getLocalPort()));
-
-                        // Create the selector that will
-                        Selector selector = Selector.open();
-                        SelectionKey selectionKey = mServerSocketChannel.register(
-                                selector, SelectionKey.OP_ACCEPT);
-
-                        // Create new transfers for new connections
-                        while (true) {
-                            selector.select();
-                            if (mSocketState.compareAndSet(STATE_STOP, STATE_STOPPING)) {
-                                Log.i(TAG, "server shutting down");
-                                break;
-                            }
-                            if (selectionKey.isAcceptable()) {
-                                SocketChannel socketChannel = mServerSocketChannel.accept();
-                                new TransferWrapper(TransferService.this, new Transfer(
-                                        socketChannel, "Unknown")).run();
-                            }
-                        }
-
-                        // Shut down the server and indicate this is complete
-                        mServerSocketChannel.close();
-                        mSocketState.set(STATE_STOPPED);
-
-                    } catch (IOException e) {
-                        Log.e(TAG, e.getMessage());
-                    }
-                }
-            }).start();
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        try {
+            mTransferServer = new TransferServer(this, mTransferNotificationManager);
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
         }
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     /**
-     * Shut down the server if it is running
+     * Start the transfer server
      */
-    private void stopListening() {
-        mSocketState.compareAndSet(STATE_STARTED, STATE_STOP);
+    private int startListening() {
+        mTransferServer.start();
+        return START_REDELIVER_INTENT;
+    }
+
+    /**
+     * Stop the transfer server
+     */
+    private int stopListening() {
+        mTransferServer.stop();
+        return START_NOT_STICKY;
     }
 
     /**
@@ -156,47 +128,57 @@ public class TransferService extends Service {
     /**
      * Start a transfer using the provided intent
      */
-    private void startTransfer(Intent intent) {
+    private int startTransfer(Intent intent) {
 
         // Retrieve the parameters from the intent
         final Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
         String[] urls = intent.getStringArrayExtra(EXTRA_URLS);
         String[] filenames = intent.getStringArrayExtra(EXTRA_FILENAMES);
 
+        // Retrieve the name for the device
+        String deviceName = mSharedPreferences.getString(
+                getString(R.string.setting_device_name), "");
+        if (deviceName.isEmpty()) {
+            deviceName = Build.MODEL;
+        }
+
         // Create the bundle
         Bundle bundle = createBundle(urls, filenames);
 
         // Create the transfer and transfer wrapper
         try {
-            new TransferWrapper(this, new Transfer(device, "Android", bundle)).run();
+            new TransferWrapper(
+                    this,
+                    new Transfer(device, deviceName, bundle),
+                    mTransferNotificationManager
+            ).run();
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return START_NOT_STICKY;
     }
 
     /**
      * Stop a transfer in progress
      */
-    private void stopTransfer(Intent intent) {
+    private int stopTransfer(Intent intent) {
         TransferWrapper.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        return START_NOT_STICKY;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case ACTION_START_LISTENING:
-                startListening();
-                break;
+                return startListening();
             case ACTION_STOP_LISTENING:
-                stopListening();
-                break;
+                return stopListening();
             case ACTION_START_TRANSFER:
-                startTransfer(intent);
-                break;
+                return startTransfer(intent);
             case ACTION_STOP_TRANSFER:
-                stopTransfer(intent);
+                return stopTransfer(intent);
         }
-        return START_STICKY;
+        return 0;
     }
 
     @Override

@@ -61,6 +61,7 @@ public class Transfer implements Runnable {
 
     private Device mDevice;
     private String mDeviceName;
+    private String mTransferDirectory;
     private Bundle mBundle;
     private Listener mListener;
 
@@ -83,13 +84,15 @@ public class Transfer implements Runnable {
     /**
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
-     * @param defaultDeviceName default device name
+     * @param transferDirectory directory for incoming files
+     * @param unknownDeviceName device name shown before being received
      * @throws IOException
      */
-    public Transfer(SocketChannel socketChannel, String defaultDeviceName) throws IOException {
+    public Transfer(SocketChannel socketChannel, String transferDirectory, String unknownDeviceName) throws IOException {
         mSocketChannel = socketChannel;
         mSocketChannel.configureBlocking(false);
-        mDeviceName = defaultDeviceName;
+        mDeviceName = unknownDeviceName;
+        mTransferDirectory = transferDirectory;
         mDirection = Direction.Receive;
     }
 
@@ -185,7 +188,7 @@ public class Transfer implements Runnable {
                 mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8), type);
         switch ((String) map.get(Item.TYPE)) {
             case FileItem.TYPE_NAME:
-                mItem = new FileItem(map);
+                mItem = new FileItem(mTransferDirectory, map);
                 break;
             default:
                 throw new IOException("unrecognized item type");

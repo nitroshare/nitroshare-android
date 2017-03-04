@@ -107,8 +107,15 @@ class TransferServer implements Runnable {
                     );
                     String unknownDeviceName = mContext.getString(
                             R.string.service_transfer_unknown_device);
-                    new TransferWrapper(mContext, new Transfer(
-                            socketChannel, transferDirectory, unknownDeviceName));
+                    new TransferWrapper(
+                            mContext,
+                            new Transfer(
+                                    socketChannel,
+                                    transferDirectory,
+                                    unknownDeviceName
+                            ),
+                            mTransferNotificationManager
+                    ).run();
                 }
             }
 
