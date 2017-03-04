@@ -15,6 +15,8 @@ import java.util.Map;
  */
 public class FileItem extends Item {
 
+    public static final String TYPE_NAME = "file";
+
     // Additional properties for files
     private static final String READ_ONLY = "read_only";
     private static final String EXECUTABLE = "executable";
@@ -22,6 +24,20 @@ public class FileItem extends Item {
 
     private File mFile;
     private Map<String, Object> mProperties;
+
+    private FileInputStream mInputStream;
+    private FileOutputStream mOutputStream;
+
+    /**
+     * Create a new file item using the provided properties
+     * @param transferDirectory directory for the file
+     * @param properties map of properties for the file
+     * @throws IOException
+     */
+    public FileItem(String transferDirectory, Map<String, Object> properties) throws IOException {
+        mProperties = properties;
+        mFile = new File(new File(transferDirectory), getStringProperty(NAME));
+    }
 
     /**
      * Create a new file item from the specified file
@@ -36,7 +52,7 @@ public class FileItem extends Item {
     public FileItem(File file, String filename) {
         mFile = file;
         mProperties = new HashMap<>();
-        mProperties.put(TYPE, "file");
+        mProperties.put(TYPE, TYPE_NAME);
         mProperties.put(NAME, filename);
         mProperties.put(SIZE, Long.toString(mFile.length()));
         mProperties.put(READ_ONLY, !mFile.canWrite());
@@ -54,9 +70,6 @@ public class FileItem extends Item {
         return mProperties;
     }
 
-    private FileInputStream mInputStream;
-    private FileOutputStream mOutputStream;
-
     @Override
     public void open(Mode mode) throws IOException {
         switch (mode) {
@@ -64,6 +77,9 @@ public class FileItem extends Item {
                 mInputStream = new FileInputStream(mFile);
                 break;
             case Write:
+                if (!mFile.getParentFile().mkdirs()) {
+                    throw new IOException("unable to create parent directory");
+                }
                 mOutputStream = new FileOutputStream(mFile);
                 break;
         }
@@ -90,6 +106,12 @@ public class FileItem extends Item {
         }
         if (mOutputStream != null) {
             mOutputStream.close();
+            //noinspection ResultOfMethodCallIgnored
+            mFile.setWritable(getBooleanProperty(READ_ONLY));
+            //noinspection ResultOfMethodCallIgnored
+            mFile.setExecutable(getBooleanProperty(EXECUTABLE));
+            //noinspection ResultOfMethodCallIgnored
+            mFile.setLastModified(getLongProperty(LAST_MODIFIED));
         }
     }
 }

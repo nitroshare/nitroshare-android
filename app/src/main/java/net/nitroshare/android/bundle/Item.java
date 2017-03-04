@@ -18,7 +18,7 @@ abstract public class Item {
     /**
      * Unique identifier for the type of item
      */
-    static final String TYPE = "type";
+    public static final String TYPE = "type";
 
     /**
      * Name of the item
@@ -26,7 +26,7 @@ abstract public class Item {
      * This value is displayed in some clients during transfer. Files, for
      * example, also use this property for the relative filename.
      */
-    static final String NAME = "name";
+    public static final String NAME = "name";
 
     /**
      * Size of the item content during transmission
@@ -34,7 +34,15 @@ abstract public class Item {
      * This number is sent over-the-wire as a string to avoid problems with
      * large integers in JSON. This number can be zero if there is no payload.
      */
-    static final String SIZE = "size";
+    public static final String SIZE = "size";
+
+    /**
+     * Mode for opening items
+     */
+    public enum Mode {
+        Read,
+        Write,
+    }
 
     /**
      * Retrieve a map of properties
@@ -43,32 +51,52 @@ abstract public class Item {
     abstract public Map<String, Object> getProperties();
 
     /**
-     * Retrieve the unique type identifier for the item
+     * Retrieve the value of the specified property
+     * @param key property to retrieve
+     * @param <T> type of value
+     * @return value of the key
+     * @throws IOException
      */
-    public String getType() {
-        return (String) getProperties().get(TYPE);
+    private <T> T getProperty(String key, Class<T> class_) throws IOException {
+        try {
+            return class_.cast(getProperties().get(key));
+        } catch (ClassCastException e) {
+            throw new IOException(String.format("cannot read \"%s\" property", key));
+        }
     }
 
     /**
-     * Retrieve the name of the item
+     * Retrieve the value of a string property
+     * @param key property to retrieve
+     * @return value of the key
+     * @throws IOException
      */
-    public String getName() {
-        return (String) getProperties().get(NAME);
+    public String getStringProperty(String key) throws IOException {
+        return getProperty(key, String.class);
     }
 
     /**
-     * Retrieve the size of the item's content in bytes
+     * Retrieve the value of a long property
+     * @param key property to retrieve
+     * @return value of the key
+     * @throws IOException
      */
-    public long getSize() {
-        return Long.parseLong((String) getProperties().get(SIZE));
+    public long getLongProperty(String key) throws IOException {
+        try {
+            return Long.parseLong(getProperty(key, String.class));
+        } catch (NumberFormatException e) {
+            throw new IOException(String.format("\"%s\" is not an integer", key));
+        }
     }
 
     /**
-     * Mode for opening items
+     * Retrieve the value of a boolean property
+     * @param key property to retrieve
+     * @return value of the key
+     * @throws IOException
      */
-    public enum Mode {
-        Read,
-        Write,
+    public boolean getBooleanProperty(String key) throws IOException {
+        return getProperty(key, Boolean.class);
     }
 
     /**

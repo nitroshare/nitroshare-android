@@ -1,5 +1,6 @@
 package net.nitroshare.android.bundle;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -11,11 +12,10 @@ public class Bundle extends ArrayList<Item> {
 
     /**
      * Add the specified item to the bundle for transfer
-     * @param item
      */
-    public void addItem(Item item) {
+    public void addItem(Item item) throws IOException {
         add(item);
-        mTotalSize += item.getSize();
+        mTotalSize += item.getLongProperty(Item.SIZE);
     }
 
     /**
