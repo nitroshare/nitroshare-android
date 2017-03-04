@@ -67,7 +67,7 @@
             android:exported="false"/>
 
         <!-- Receiver for boot completion events -->
-        <receiver android:name=".discovery.BootReceiver">
+        <receiver android:name=".BootReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
             </intent-filter>
