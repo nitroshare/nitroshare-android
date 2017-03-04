@@ -26,7 +26,7 @@ abstract public class Item {
      * This value is displayed in some clients during transfer. Files, for
      * example, also use this property for the relative filename.
      */
-    static final String NAME = "name";
+    public static final String NAME = "name";
 
     /**
      * Size of the item content during transmission
@@ -34,7 +34,7 @@ abstract public class Item {
      * This number is sent over-the-wire as a string to avoid problems with
      * large integers in JSON. This number can be zero if there is no payload.
      */
-    static final String SIZE = "size";
+    public static final String SIZE = "size";
 
     /**
      * Mode for opening items
