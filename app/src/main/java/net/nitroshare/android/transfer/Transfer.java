@@ -1,6 +1,7 @@
 package net.nitroshare.android.transfer;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import net.nitroshare.android.bundle.Bundle;
@@ -41,10 +42,21 @@ public class Transfer implements Runnable {
         void onFinish();
     }
 
-    // Direction of transfer relative to the current device
+    /**
+     * Direction of transfer relative to the current device
+     */
     enum Direction {
         Receive,
         Send,
+    }
+
+    /**
+     * Transfer header
+     */
+    private class TransferHeader {
+        String name;
+        String count;
+        String size;
     }
 
     // State of the transfer
@@ -160,21 +172,21 @@ public class Transfer implements Runnable {
 
     /**
      * Process the transfer header
+     * @throws IOException
      */
-    private void processTransferHeader() {
-        @SuppressWarnings("unused")
-        class TransferHeader {
-            private String name;
-            private String count;
-            private String size;
+    private void processTransferHeader() throws IOException {
+        TransferHeader transferHeader;
+        try {
+            transferHeader = mGson.fromJson(new String(
+                    mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8),
+                    TransferHeader.class);
+        } catch (JsonSyntaxException e) {
+            throw new IOException(e.getMessage());
         }
-        TransferHeader transferHeader = mGson.fromJson(new String(
-                mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8),
-                TransferHeader.class);
-        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
         mDeviceName = transferHeader.name;
         mTransferItems = Integer.parseInt(transferHeader.count);
         mTransferBytesTotal = Long.parseLong(transferHeader.size);
+        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
         mListener.onDeviceName();
     }
 
@@ -193,10 +205,11 @@ public class Transfer implements Runnable {
             default:
                 throw new IOException("unrecognized item type");
         }
-        if (mItem.getSize() != 0) {
+        long itemSize = mItem.getLongProperty(Item.SIZE);
+        if (itemSize != 0) {
             mState = State.ItemContent;
             mItem.open(Item.Mode.Write);
-            mItemBytesRemaining = mItem.getSize();
+            mItemBytesRemaining = itemSize;
         } else {
             mItemIndex += 1;
             mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
@@ -278,10 +291,11 @@ public class Transfer implements Runnable {
         mItem = mBundle.get(mItemIndex);
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
                 mItem.getProperties()).getBytes(StandardCharsets.UTF_8));
-        if (mItem.getSize() != 0) {
+        long itemSize = mItem.getLongProperty(Item.SIZE);
+        if (itemSize != 0) {
             mState = State.ItemContent;
             mItem.open(Item.Mode.Read);
-            mItemBytesRemaining = mItem.getSize();
+            mItemBytesRemaining = itemSize;
         } else {
             mItemIndex += 1;
             mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
