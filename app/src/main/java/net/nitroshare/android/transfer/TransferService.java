@@ -43,16 +43,10 @@ public class TransferService extends Service {
     private TransferServer mTransferServer;
     private SharedPreferences mSharedPreferences;
 
-    /**
-     * Initialize the service
-     */
-    public TransferService() {
-        mTransferNotificationManager = new TransferNotificationManager(this);
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
+        mTransferNotificationManager = new TransferNotificationManager(this);
         try {
             mTransferServer = new TransferServer(this, mTransferNotificationManager);
         } catch (IOException e) {
@@ -81,8 +75,9 @@ public class TransferService extends Service {
      * Traverse a directory tree and add all files to the bundle
      * @param root the directory to which all filenames will be relative
      * @param bundle target for all files that are found
+     * @throws IOException
      */
-    private void traverseDirectory(File root, Bundle bundle) {
+    private void traverseDirectory(File root, Bundle bundle) throws IOException {
         Stack<File> stack = new Stack<>();
         stack.push(root);
         while (stack.empty()) {
@@ -104,8 +99,9 @@ public class TransferService extends Service {
      * @param urls list of URLs
      * @param filenames list of filenames
      * @return newly created bundle
+     * @throws IOException
      */
-    private Bundle createBundle(String[] urls, String[] filenames) {
+    private Bundle createBundle(String[] urls, String[] filenames) throws IOException {
         Bundle bundle = new Bundle();
         if (urls != null) {
             for (String url : urls) {
@@ -142,18 +138,17 @@ public class TransferService extends Service {
             deviceName = Build.MODEL;
         }
 
-        // Create the bundle
-        Bundle bundle = createBundle(urls, filenames);
-
         // Create the transfer and transfer wrapper
         try {
+            Bundle bundle = createBundle(urls, filenames);
             new TransferWrapper(
                     this,
                     new Transfer(device, deviceName, bundle),
                     mTransferNotificationManager
             ).run();
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e(TAG, e.getMessage());
+            mTransferNotificationManager.stop();
         }
         return START_NOT_STICKY;
     }
