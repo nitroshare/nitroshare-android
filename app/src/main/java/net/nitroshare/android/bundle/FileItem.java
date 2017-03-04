@@ -36,7 +36,7 @@ public class FileItem extends Item {
      */
     public FileItem(String transferDirectory, Map<String, Object> properties) throws IOException {
         mProperties = properties;
-        mFile = new File(new File(transferDirectory), getStringProperty(NAME));
+        mFile = new File(new File(transferDirectory), getStringProperty(NAME, true));
     }
 
     /**

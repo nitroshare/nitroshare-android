@@ -209,7 +209,7 @@ public class Transfer implements Runnable {
             default:
                 throw new IOException("unrecognized item type");
         }
-        long itemSize = mItem.getLongProperty(Item.SIZE);
+        long itemSize = mItem.getLongProperty(Item.SIZE, true);
         if (itemSize != 0) {
             mState = State.ItemContent;
             mItem.open(Item.Mode.Write);
@@ -295,7 +295,7 @@ public class Transfer implements Runnable {
         mItem = mBundle.get(mItemIndex);
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
                 mItem.getProperties()).getBytes(StandardCharsets.UTF_8));
-        long itemSize = mItem.getLongProperty(Item.SIZE);
+        long itemSize = mItem.getLongProperty(Item.SIZE, true);
         if (itemSize != 0) {
             mState = State.ItemContent;
             mItem.open(Item.Mode.Read);

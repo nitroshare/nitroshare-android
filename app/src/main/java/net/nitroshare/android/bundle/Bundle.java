@@ -15,7 +15,7 @@ public class Bundle extends ArrayList<Item> {
      */
     public void addItem(Item item) throws IOException {
         add(item);
-        mTotalSize += item.getLongProperty(Item.SIZE);
+        mTotalSize += item.getLongProperty(Item.SIZE, true);
     }
 
     /**

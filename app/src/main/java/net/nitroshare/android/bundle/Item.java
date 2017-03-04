@@ -26,7 +26,7 @@ abstract public class Item {
      * This value is displayed in some clients during transfer. Files, for
      * example, also use this property for the relative filename.
      */
-    public static final String NAME = "name";
+    static final String NAME = "name";
 
     /**
      * Size of the item content during transmission
@@ -34,7 +34,7 @@ abstract public class Item {
      * This number is sent over-the-wire as a string to avoid problems with
      * large integers in JSON. This number can be zero if there is no payload.
      */
-    public static final String SIZE = "size";
+    static final String SIZE = "size";
 
     /**
      * Mode for opening items
@@ -53,13 +53,23 @@ abstract public class Item {
     /**
      * Retrieve the value of the specified property
      * @param key property to retrieve
+     * @param defaultValue default value or null if required
+     * @param class_ type for conversion
      * @param <T> type of value
      * @return value of the key
      * @throws IOException
      */
-    private <T> T getProperty(String key, Class<T> class_) throws IOException {
+    private <T> T getProperty(String key, T defaultValue, Class<T> class_) throws IOException {
         try {
-            return class_.cast(getProperties().get(key));
+            T value = class_.cast(getProperties().get(key));
+            if (value == null) {
+                if (defaultValue == null) {
+                    throw new IOException(String.format("missing \"%s\" property", key));
+                } else {
+                    value = defaultValue;
+                }
+            }
+            return value;
         } catch (ClassCastException e) {
             throw new IOException(String.format("cannot read \"%s\" property", key));
         }
@@ -68,22 +78,24 @@ abstract public class Item {
     /**
      * Retrieve the value of a string property
      * @param key property to retrieve
+     * @param required true to require a value
      * @return value of the key
      * @throws IOException
      */
-    public String getStringProperty(String key) throws IOException {
-        return getProperty(key, String.class);
+    String getStringProperty(String key, boolean required) throws IOException {
+        return getProperty(key, required ? "" : null, String.class);
     }
 
     /**
      * Retrieve the value of a long property
      * @param key property to retrieve
+     * @param required true to require a value
      * @return value of the key
      * @throws IOException
      */
-    public long getLongProperty(String key) throws IOException {
+    public long getLongProperty(String key, boolean required) throws IOException {
         try {
-            return Long.parseLong(getProperty(key, String.class));
+            return Long.parseLong(getProperty(key, required ? "0" : null, String.class));
         } catch (NumberFormatException e) {
             throw new IOException(String.format("\"%s\" is not an integer", key));
         }
@@ -92,11 +104,12 @@ abstract public class Item {
     /**
      * Retrieve the value of a boolean property
      * @param key property to retrieve
+     * @param required true to require a value
      * @return value of the key
      * @throws IOException
      */
-    public boolean getBooleanProperty(String key) throws IOException {
-        return getProperty(key, Boolean.class);
+    boolean getBooleanProperty(String key, boolean required) throws IOException {
+        return getProperty(key, required ? null : false, Boolean.class);
     }
 
     /**
