@@ -7,6 +7,7 @@
     <string name="setting_device_name_default">Not set - use device model name</string>
     <string name="setting_transfer_directory" translatable="false">transferDirectory</string>
     <string name="setting_transfer_directory_default" translatable="false">/sdcard/Download/NitroShare</string>
+    <string name="setting_behavior_receive" translatable="false">behaviorReceive</string>
 
     <!-- Intro activity -->
     <string name="activity_intro_intro_title">Introduction</string>
@@ -23,11 +24,15 @@
     <string name="activity_settings_category_general">General</string>
     <string name="activity_settings_pref_device_name">Device Name</string>
     <string name="activity_settings_pref_transfer_directory">Transfer Directory</string>
+    <string name="activity_settings_pref_behavior_receive">Receive Transfers</string>
+    <string name="activity_settings_pref_behavior_receive_summary">Accept incoming transfers from other devices</string>
 
     <!-- Transfer service -->
     <string name="service_transfer_title">NitroShare Transfer</string>
     <string name="service_transfer_action_stop">Stop</string>
     <string name="service_transfer_action_retry">Retry</string>
+    <string name="service_transfer_server_title">NitroShare Service</string>
+    <string name="service_transfer_server_text">Listening for incoming transfers</string>
     <string name="service_transfer_status_connecting">Connecting to %1$s…</string>
     <string name="service_transfer_status_receiving">Receiving items from %1$s…</string>
     <string name="service_transfer_status_sending">Sending items to %1$s…</string>
