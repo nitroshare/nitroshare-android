@@ -56,11 +56,6 @@
             android:label="@string/activity_settings"
             android:parentActivityName=".MainActivity"/>
 
-        <!-- Service for device discovery -->
-        <service
-            android:name=".discovery.DiscoveryService"
-            android:exported="false"/>
-
         <!-- Service for transfers -->
         <service
             android:name=".transfer.TransferService"
