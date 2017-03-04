@@ -41,7 +41,7 @@ class TransferNotificationManager {
      * @param notificationId unique ID for the notification
      * @param notification notification to be shown
      */
-    void begin(int notificationId, Notification notification) {
+    void start(int notificationId, Notification notification) {
         synchronized (mNotifications) {
             mService.startForeground(notificationId, notification);
             mNotifications.append(notificationId, notification);
@@ -74,6 +74,7 @@ class TransferNotificationManager {
                         mNotifications.keyAt(mNotifications.size() - 1),
                         mNotifications.valueAt(mNotifications.size() - 1)
                 );
+                mNotificationManager.cancel(notificationId);
             }
         }
     }
