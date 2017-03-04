@@ -57,8 +57,19 @@ class TransferWrapper {
     private Notification.Builder createNotification() {
         return new Notification.Builder(mContext)
                 .setCategory(Notification.CATEGORY_STATUS)
-                .setContentTitle(mContext.getString(R.string.service_transfer_title))
-                .setSmallIcon(R.drawable.ic_stat_transfer);
+                .setContentTitle(mContext.getString(R.string.service_transfer_title));
+    }
+
+    /**
+     * Retrieve the correct icon to display for transfers
+     * @param done if the transfer is completed
+     */
+    private int icon(boolean done) {
+        return mTransfer.getDirection() == Transfer.Direction.Receive ?
+                (done ? android.R.drawable.stat_sys_download_done :
+                        android.R.drawable.stat_sys_download) :
+                (done ? android.R.drawable.stat_sys_upload_done :
+                        android.R.drawable.stat_sys_upload);
     }
 
     /**
@@ -99,12 +110,15 @@ class TransferWrapper {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
-                    createNotification().setContentText(
-                            mContext.getString(
-                                    R.string.service_transfer_status_success,
-                                    mTransfer.getRemoteDeviceName()
+                    createNotification()
+                            .setContentText(
+                                    mContext.getString(
+                                            R.string.service_transfer_status_success,
+                                            mTransfer.getRemoteDeviceName()
+                                    )
                             )
-                    ).build()
+                            .setSmallIcon(icon(true))
+                            .build()
             );
         }
 
@@ -113,13 +127,16 @@ class TransferWrapper {
             Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
-                    createNotification().setContentText(
-                            mContext.getString(
-                                    R.string.service_transfer_status_error,
-                                    mTransfer.getRemoteDeviceName(),
-                                    message
+                    createNotification()
+                            .setContentText(
+                                    mContext.getString(
+                                            R.string.service_transfer_status_error,
+                                            mTransfer.getRemoteDeviceName(),
+                                            message
+                                    )
                             )
-                    ).build()
+                            .setSmallIcon(icon(true))
+                            .build()
             );
         }
 
@@ -168,7 +185,11 @@ class TransferWrapper {
                                         R.string.service_transfer_status_connecting
                         )
                 )
+                .setSmallIcon(icon(false))
                 .setProgress(0, 0, true);
+        synchronized (sActiveTransfers) {
+            sActiveTransfers.append(mId, this);
+        }
         mTransferNotificationManager.start(mId, mNotificationBuilder.build());
         Log.i(TAG, String.format("created transfer #%d", mId));
     }
