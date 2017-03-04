@@ -84,7 +84,7 @@ class Packet {
      * Create a packet of the specified type with the specified data
      */
     Packet(int type, byte[] data) {
-        this(type, data, data.length);
+        this(type, data, data == null ? 0 : data.length);
     }
 
     Packet(int type, byte[] data, int length) {

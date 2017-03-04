@@ -77,6 +77,8 @@ class TransferWrapper {
      */
     private class TransferListener implements Transfer.Listener {
 
+        private long mLastTimestamp = 0;
+
         @Override
         public void onConnect() {
             mNotificationBuilder.setContentText(
@@ -101,8 +103,12 @@ class TransferWrapper {
 
         @Override
         public void onProgress(int progress) {
-            mNotificationBuilder.setProgress(100, progress, false);
-            mTransferNotificationManager.update(mId, mNotificationBuilder.build());
+            long currentTimestamp = System.currentTimeMillis();
+            if (currentTimestamp - mLastTimestamp >= 1000) {
+                mNotificationBuilder.setProgress(100, progress, false);
+                mTransferNotificationManager.update(mId, mNotificationBuilder.build());
+                mLastTimestamp = currentTimestamp;
+            }
         }
 
         @Override

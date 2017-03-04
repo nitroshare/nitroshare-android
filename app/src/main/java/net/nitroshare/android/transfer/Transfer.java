@@ -262,6 +262,8 @@ public class Transfer implements Runnable {
                 } else {
                     throw new IOException("unexpected packet");
                 }
+                mReceivingPacket = null;
+                return mState != State.Finished;
             } else {
                 if (mState == State.Finished && mReceivingPacket.getType() == Packet.SUCCESS) {
                     return false;
@@ -269,7 +271,6 @@ public class Transfer implements Runnable {
                     throw new IOException("unexpected packet");
                 }
             }
-            mReceivingPacket = null;
         }
         return true;
     }
