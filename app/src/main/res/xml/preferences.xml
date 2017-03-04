@@ -12,6 +12,12 @@
             android:key="@string/setting_transfer_directory"
             android:title="@string/activity_settings_pref_transfer_directory" />
 
+        <SwitchPreference
+            android:key="@string/setting_behavior_receive"
+            android:title="@string/activity_settings_pref_behavior_receive"
+            android:summary="@string/activity_settings_pref_behavior_receive_summary"
+            android:defaultValue="true"/>
+
     </PreferenceCategory>
 
 </PreferenceScreen>
