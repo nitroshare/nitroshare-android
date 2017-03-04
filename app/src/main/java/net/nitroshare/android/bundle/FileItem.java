@@ -77,9 +77,8 @@ public class FileItem extends Item {
                 mInputStream = new FileInputStream(mFile);
                 break;
             case Write:
-                if (!mFile.getParentFile().mkdirs()) {
-                    throw new IOException("unable to create parent directory");
-                }
+                //noinspection ResultOfMethodCallIgnored
+                mFile.getParentFile().mkdirs();
                 mOutputStream = new FileOutputStream(mFile);
                 break;
         }
@@ -107,11 +106,14 @@ public class FileItem extends Item {
         if (mOutputStream != null) {
             mOutputStream.close();
             //noinspection ResultOfMethodCallIgnored
-            mFile.setWritable(getBooleanProperty(READ_ONLY));
+            mFile.setWritable(getBooleanProperty(READ_ONLY, false));
             //noinspection ResultOfMethodCallIgnored
-            mFile.setExecutable(getBooleanProperty(EXECUTABLE));
-            //noinspection ResultOfMethodCallIgnored
-            mFile.setLastModified(getLongProperty(LAST_MODIFIED));
+            mFile.setExecutable(getBooleanProperty(EXECUTABLE, false));
+            long lastModified = getLongProperty(LAST_MODIFIED, false);
+            if (lastModified != 0) {
+                //noinspection ResultOfMethodCallIgnored
+                mFile.setLastModified(lastModified);
+            }
         }
     }
 }
