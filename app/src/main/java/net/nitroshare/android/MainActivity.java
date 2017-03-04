@@ -10,12 +10,29 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebView;
 
+import net.nitroshare.android.transfer.TransferService;
+
 public class MainActivity extends Activity {
 
     private static final String TAG = "MainActivity";
     private static final int INTRO_REQUEST = 1;
 
     private SharedPreferences mSharedPreferences;
+
+    /**
+     * Finish initializing the activity
+     */
+    private void finishInit() {
+
+        // Display the README
+        WebView webView = (WebView) findViewById(R.id.webview);
+        webView.loadUrl("file:///android_asset/readme.html");
+
+        // Launch the transfer service if it isn't already running
+        Intent startIntent = new Intent(this, TransferService.class);
+        startIntent.setAction(TransferService.ACTION_START_LISTENING);
+        startService(startIntent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,19 +46,12 @@ public class MainActivity extends Activity {
                 getString(R.string.setting_intro_shown), false);
 
         if (!introShown) {
-            Log.d(TAG, "intro has not been shown; launching activity");
-
+            Log.i(TAG, "intro has not been shown; launching activity");
             Intent introIntent = new Intent(this, MainIntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
+        } else {
+            finishInit();
         }
-
-        WebView webView = (WebView) findViewById(R.id.webview);
-        webView.loadUrl("file:///android_asset/readme.html");
-
-        // Start the discovery service
-        Intent startIntent = new Intent(this, DiscoveryService.class);
-        startIntent.setAction(DiscoveryService.ACTION_START);
-        startService(startIntent);
     }
 
     @Override
@@ -65,12 +75,12 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == INTRO_REQUEST) {
             if (resultCode == RESULT_OK) {
-                // Remember that the intro has been seen
+                Log.i(TAG, "intro finished");
                 mSharedPreferences.edit().putBoolean(
                         getString(R.string.setting_intro_shown), true).apply();
+                finishInit();
             }
             else {
-                // Intro wasn't finished, so close this activity
                 finish();
             }
         }

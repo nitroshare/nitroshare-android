@@ -84,7 +84,7 @@ public class ShareActivity extends Activity {
                 Device device = (Device) mAdapter.getDevice(position);
 
                 Intent startTransfer = new Intent(ShareActivity.this, TransferService.class);
-                startTransfer.setAction(TransferService.ACTION_INITIATE_TRANSFER);
+                startTransfer.setAction(TransferService.ACTION_START_TRANSFER);
                 startTransfer.putExtra(TransferService.EXTRA_DEVICE, device);
                 startTransfer.putExtra(TransferService.EXTRA_FILENAMES, filenames);
                 startService(startTransfer);

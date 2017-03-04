@@ -1,7 +1,6 @@
 package net.nitroshare.android;
 
 import android.content.SharedPreferences;
-import android.media.audiofx.BassBoost;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
