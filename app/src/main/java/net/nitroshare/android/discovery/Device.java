@@ -2,9 +2,6 @@ package net.nitroshare.android.discovery;
 
 import android.net.nsd.NsdServiceInfo;
 
-import com.google.gson.Gson;
-
-import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +15,7 @@ import java.util.Map;
  */
 public class Device implements Serializable {
 
-    public static final String SERVICE_TYPE = "_nitroshare._tcp";
+    public static final String SERVICE_TYPE = "_nitroshare._tcp.";
 
     public static final String NAME = "name";
 

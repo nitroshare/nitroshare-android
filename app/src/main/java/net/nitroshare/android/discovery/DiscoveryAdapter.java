@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import net.nitroshare.android.R;
 
+import java.net.InetAddress;
+
 /**
  * ArrayAdapter for devices discovered via mDNS
  *
@@ -30,11 +32,16 @@ public class DiscoveryAdapter extends ArrayAdapter<String> {
 
         @Override
         public void onServiceFound(NsdServiceInfo serviceInfo) {
-            mDevices.put(serviceInfo.getServiceName(), new Device(serviceInfo));
+            if (serviceInfo.getHost() != null) {
+                Log.d(TAG, String.format("found %s", serviceInfo.getServiceName()));
+                mDevices.put(serviceInfo.getServiceName(), new Device(serviceInfo));
+                add(serviceInfo.getServiceName());
+            }
         }
 
         @Override
         public void onServiceLost(NsdServiceInfo serviceInfo) {
+            remove(serviceInfo.getServiceName());
             mDevices.remove(serviceInfo.getServiceName());
         }
 
