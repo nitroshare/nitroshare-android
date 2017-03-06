@@ -3,11 +3,14 @@ package net.nitroshare.android;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -34,8 +37,6 @@ public class ShareActivity extends Activity {
 
     private static final String TAG = "ShareActivity";
 
-    private NsdManager mNsdManager;
-
     /**
      * Adapter that discovers other devices on the network
      */
@@ -46,21 +47,37 @@ public class ShareActivity extends Activity {
          */
         private final Map<String, Device> mDevices = new HashMap<>();
 
+        private NsdManager mNsdManager;
+        private String mThisDeviceUuid;
+
         /**
          * Listener for discovery events
          */
         private NsdManager.DiscoveryListener mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
-            public void onServiceFound(final NsdServiceInfo serviceInfo) {
-                Log.d(TAG, String.format("found \"%s\"", serviceInfo.getServiceName()));
-                if (serviceInfo.getHost() == null) {
+            public void onServiceFound(NsdServiceInfo serviceInfo) {
+                if (serviceInfo.getServiceName().equals(mThisDeviceUuid)) {
                     return;
                 }
-                runOnUiThread(new Runnable() {
+                Log.d(TAG, String.format("found \"%s\"", serviceInfo.getServiceName()));
+                mNsdManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
                     @Override
-                    public void run() {
-                        mDevices.put(serviceInfo.getServiceName(), new Device(serviceInfo));
-                        add(serviceInfo.getServiceName());
+                    public void onServiceResolved(final NsdServiceInfo serviceInfo) {
+                        final Device device = new Device(serviceInfo);
+                        Log.d(TAG, String.format("resolved \"%s\"", device.getName()));
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                mDevices.put(serviceInfo.getServiceName(), device);
+                                add(device.getUuid());
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                        Log.e(TAG, String.format("unable to resolve \"%s\"",
+                                serviceInfo.getServiceName()));
                     }
                 });
             }
@@ -79,22 +96,22 @@ public class ShareActivity extends Activity {
 
             @Override
             public void onDiscoveryStarted(String serviceType) {
-                Log.d(TAG, "Service discovery started");
+                Log.d(TAG, "service discovery started");
             }
 
             @Override
             public void onDiscoveryStopped(String serviceType) {
-                Log.d(TAG, "Service discovery stopped");
+                Log.d(TAG, "service discovery stopped");
             }
 
             @Override
             public void onStartDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "onStartDiscoveryFailed()");
+                Log.e(TAG, "unable to start service discovery");
             }
 
             @Override
             public void onStopDiscoveryFailed(String serviceType, int errorCode) {
-                Log.e(TAG, "onStopDiscoveryFailed()");
+                Log.e(TAG, "unable to stop service discovery");
             }
         };
 
@@ -106,6 +123,10 @@ public class ShareActivity extends Activity {
             mNsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
             mNsdManager.discoverServices(Device.SERVICE_TYPE,
                     NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+            SharedPreferences sharedPreferences =
+                    PreferenceManager.getDefaultSharedPreferences(ShareActivity.this);
+            mThisDeviceUuid = sharedPreferences.getString(getString(
+                    R.string.setting_device_uuid), "");
         }
 
         void stop() {

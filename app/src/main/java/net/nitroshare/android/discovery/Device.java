@@ -20,7 +20,7 @@ public class Device implements Serializable {
     public static final String NAME = "name";
 
     private String mUuid;
-    private HashMap<String, String> mAttributes;
+    private Map<String, String> mAttributes;
     private InetAddress mHost;
     private int mPort;
 
@@ -46,7 +46,7 @@ public class Device implements Serializable {
      */
     public Device(String uuid, Map<String, String> attributes, int port) {
         mUuid = uuid;
-        mAttributes = new HashMap<>();
+        mAttributes = attributes;
         mPort = port;
     }
 
