@@ -17,11 +17,12 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         SharedPreferences sharedPreferences =
                 PreferenceManager.getDefaultSharedPreferences(context);
-        if (sharedPreferences.getBoolean(context.getString(
-                R.string.setting_behavior_receive), true)) {
-            Intent startIntent = new Intent(context, TransferService.class);
-            startIntent.setAction(TransferService.ACTION_START_LISTENING);
-            context.startService(startIntent);
-        }
+        TransferService.startStopService(
+                context,
+                sharedPreferences.getBoolean(
+                        context.getString(R.string.setting_behavior_receive),
+                        true
+                )
+        );
     }
 }

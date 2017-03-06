@@ -118,7 +118,7 @@ class TransferServer implements Runnable {
         if (deviceName.isEmpty()) {
             deviceName = Build.MODEL;
         }
-        NsdManager nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
+        NsdManager nsdManager = null;
 
         // Create the notification shown while the server is running
         PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
@@ -146,6 +146,7 @@ class TransferServer implements Runnable {
             // Register the service
             Map<String, String> attributes = new HashMap<>();
             attributes.put(Device.NAME, deviceName);
+            nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
             nsdManager.registerService(
                     new Device(deviceUuid, attributes, 40818).toServiceInfo(),
                     NsdManager.PROTOCOL_DNS_SD,
@@ -183,13 +184,21 @@ class TransferServer implements Runnable {
                 }
             }
 
+            // Close the server socket
+            serverSocketChannel.close();
+
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
 
-        // Unregister the service and close the notification
-        nsdManager.unregisterService(mRegistrationListener);
+        // Unregister the service
+        if (nsdManager != null) {
+            nsdManager.unregisterService(mRegistrationListener);
+        }
+
+        // Close the notification
         mTransferNotificationManager.stop(NOTIFICATION_ID);
+
         Log.i(TAG, "server stopped");
     }
 }

@@ -1,6 +1,7 @@
 package net.nitroshare.android.transfer;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -39,6 +40,23 @@ public class TransferService extends Service {
     public static final String ACTION_STOP_TRANSFER = "stop_transfer";
     public static final String EXTRA_TRANSFER = "transfer";
 
+    /**
+     * Start or stop the service
+     * @param context context to use for sending the intent
+     * @param start true to start the service; false to stop it
+     */
+    public static void startStopService(Context context, boolean start) {
+        Intent intent = new Intent(context, TransferService.class);
+        if (start) {
+            Log.i(TAG, "sending intent to start service");
+            intent.setAction(ACTION_START_LISTENING);
+        } else {
+            Log.i(TAG, "sending intent to stop service");
+            intent.setAction(ACTION_STOP_LISTENING);
+        }
+        context.startService(intent);
+    }
+
     private TransferNotificationManager mTransferNotificationManager;
     private TransferServer mTransferServer;
     private SharedPreferences mSharedPreferences;
@@ -68,6 +86,7 @@ public class TransferService extends Service {
      */
     private int stopListening() {
         mTransferServer.stop();
+        mTransferNotificationManager.stop();
         return START_NOT_STICKY;
     }
 

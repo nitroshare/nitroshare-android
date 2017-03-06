@@ -29,9 +29,8 @@ public class MainActivity extends Activity {
         webView.loadUrl("file:///android_asset/readme.html");
 
         // Launch the transfer service if it isn't already running
-        Intent startIntent = new Intent(this, TransferService.class);
-        startIntent.setAction(TransferService.ACTION_START_LISTENING);
-        startService(startIntent);
+        TransferService.startStopService(this, mSharedPreferences.getBoolean(
+                getString(R.string.setting_behavior_receive), true));
     }
 
     @Override

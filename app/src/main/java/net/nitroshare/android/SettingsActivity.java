@@ -8,6 +8,8 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.view.MenuItem;
 
+import net.nitroshare.android.transfer.TransferService;
+
 /**
  * Settings for the application
  */
@@ -30,6 +32,17 @@ public class SettingsActivity extends PreferenceActivity {
                     R.string.setting_device_name_default);
             bindPreferenceSummaryToValue(R.string.setting_transfer_directory,
                     R.string.setting_transfer_directory_default);
+
+            // Instantly enable/disable the transfer service when the "receive"
+            // setting has been changed
+            Preference preference = findPreference(getString(R.string.setting_behavior_receive));
+            preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    TransferService.startStopService(getActivity(), (boolean) newValue);
+                    return true;
+                }
+            });
         }
 
         /**
