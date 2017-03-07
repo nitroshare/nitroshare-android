@@ -62,7 +62,7 @@ class TransferWrapper {
         Notification.Builder notificationBuilder = new Notification.Builder(mContext)
                 .setCategory(Notification.CATEGORY_STATUS)
                 .setContentTitle(mContext.getString(R.string.service_transfer_title));
-        if (mSharedPreferences.getBoolean(mContext.getString(
+        if (playSound && mSharedPreferences.getBoolean(mContext.getString(
                 R.string.setting_notification_sound), false)) {
             notificationBuilder.setDefaults(Notification.DEFAULT_SOUND);
         }
@@ -198,7 +198,8 @@ class TransferWrapper {
                         mContext.getString(
                                 mTransfer.getDirection() == Transfer.Direction.Receive ?
                                         R.string.service_transfer_status_receiving :
-                                        R.string.service_transfer_status_connecting
+                                        R.string.service_transfer_status_connecting,
+                                mTransfer.getRemoteDeviceName()
                         )
                 )
                 .setSmallIcon(icon(false))
