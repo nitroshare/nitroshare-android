@@ -4,6 +4,8 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -47,17 +49,24 @@ class TransferWrapper {
     private int mId = sNotificationId.incrementAndGet();
     private Context mContext;
     private Transfer mTransfer;
+    private SharedPreferences mSharedPreferences;
     private TransferNotificationManager mTransferNotificationManager;
     private Notification.Builder mNotificationBuilder;
 
     /**
      * Create a notification using the provided text
+     * @param playSound whether a notification sound should be played or not
      * @return newly created notification
      */
-    private Notification.Builder createNotification() {
-        return new Notification.Builder(mContext)
+    private Notification.Builder createNotification(boolean playSound) {
+        Notification.Builder notificationBuilder = new Notification.Builder(mContext)
                 .setCategory(Notification.CATEGORY_STATUS)
                 .setContentTitle(mContext.getString(R.string.service_transfer_title));
+        if (mSharedPreferences.getBoolean(mContext.getString(
+                R.string.setting_notification_sound), false)) {
+            notificationBuilder.setDefaults(Notification.DEFAULT_SOUND);
+        }
+        return notificationBuilder;
     }
 
     /**
@@ -116,7 +125,7 @@ class TransferWrapper {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
-                    createNotification()
+                    createNotification(true)
                             .setContentText(
                                     mContext.getString(
                                             R.string.service_transfer_status_success,
@@ -133,7 +142,7 @@ class TransferWrapper {
             Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(),
-                    createNotification()
+                    createNotification(true)
                             .setContentText(
                                     mContext.getString(
                                             R.string.service_transfer_status_error,
@@ -181,8 +190,9 @@ class TransferWrapper {
         mContext = context;
         mTransfer = transfer;
         mTransfer.setListener(new TransferListener());
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         mTransferNotificationManager = transferNotificationManager;
-        mNotificationBuilder = createNotification()
+        mNotificationBuilder = createNotification(false)
                 .addAction(createStopAction())
                 .setContentText(
                         mContext.getString(

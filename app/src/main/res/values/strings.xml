@@ -9,6 +9,7 @@
     <string name="setting_transfer_directory" translatable="false">transferDirectory</string>
     <string name="setting_transfer_directory_default" translatable="false">/sdcard/Download/NitroShare</string>
     <string name="setting_behavior_receive" translatable="false">behaviorReceive</string>
+    <string name="setting_notification_sound" translatable="false">notificationSound</string>
 
     <!-- Intro activity -->
     <string name="activity_intro_intro_title">Introduction</string>
@@ -27,6 +28,9 @@
     <string name="activity_settings_pref_transfer_directory">Transfer Directory</string>
     <string name="activity_settings_pref_behavior_receive">Receive Transfers</string>
     <string name="activity_settings_pref_behavior_receive_summary">Accept incoming transfers from other devices</string>
+    <string name="activity_settings_category_notifications">Notifications</string>
+    <string name="activity_settings_pref_notification_sound">Notification Sound</string>
+    <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
 
     <!-- Transfer service -->
     <string name="service_transfer_title">NitroShare Transfer</string>

@@ -6,17 +6,28 @@
 
         <EditTextPreference
             android:key="@string/setting_device_name"
-            android:title="@string/activity_settings_pref_device_name" />
+            android:title="@string/activity_settings_pref_device_name"/>
 
         <EditTextPreference
             android:key="@string/setting_transfer_directory"
-            android:title="@string/activity_settings_pref_transfer_directory" />
+            android:title="@string/activity_settings_pref_transfer_directory"/>
 
         <SwitchPreference
             android:key="@string/setting_behavior_receive"
             android:title="@string/activity_settings_pref_behavior_receive"
             android:summary="@string/activity_settings_pref_behavior_receive_summary"
             android:defaultValue="true"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/activity_settings_category_notifications">
+
+        <SwitchPreference
+            android:key="@string/setting_notification_sound"
+            android:title="@string/activity_settings_pref_notification_sound"
+            android:summary="@string/activity_settings_pref_notification_sound_summary"
+            android:defaultValue="false"/>
 
     </PreferenceCategory>
 
