@@ -130,6 +130,7 @@ class TransferServer implements Runnable {
                         .setContentIntent(mainIntent)
                         .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
                         .setContentText(mContext.getString(R.string.service_transfer_server_text))
+                        .setPriority(Notification.PRIORITY_MIN)
                         .setSmallIcon(R.drawable.ic_stat_transfer)
                         .build()
         );
