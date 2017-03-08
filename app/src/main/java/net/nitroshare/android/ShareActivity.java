@@ -4,14 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -155,40 +153,18 @@ public class ShareActivity extends Activity {
     private DeviceAdapter mDeviceAdapter;
 
     /**
-     * Given a SEND intent, determine the absolute paths to the items to send
-     * @param intent intent to resolve
-     * @return list of absolute filenames
+     * Given a SEND intent, build a list of URIs
+     * @param intent intent received
+     * @return list of URIs
      */
-    private String[] resolveIntent(Intent intent) {
-        ArrayList<Uri> unresolvedUris = new ArrayList<>();
-        switch (intent.getAction()) {
-            case "android.intent.action.SEND":
-                unresolvedUris.add((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
-                break;
-            case "android.intent.action.SEND_MULTIPLE":
-                unresolvedUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-                break;
+    private ArrayList<Uri> buildUriList(Intent intent) {
+        if (intent.getAction().equals("android.intent.action.SEND_MULTIPLE")) {
+            return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+        } else {
+            ArrayList<Uri> uriList = new ArrayList<>();
+            uriList.add((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
+            return uriList;
         }
-        Log.i(TAG, String.format("received intent with %d URIs", unresolvedUris.size()));
-        ArrayList<String> resolvedFilenames = new ArrayList<>();
-        for (Uri uri : unresolvedUris) {
-            switch (uri.getScheme()) {
-                case "content":
-                    Cursor cursor = getContentResolver().query(uri, null, null, null, null);
-                    if (cursor != null) {
-                        cursor.moveToFirst();
-                        resolvedFilenames.add(cursor.getString(
-                                cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)));
-                        cursor.close();
-                    }
-                    break;
-                case "file":
-                    resolvedFilenames.add(uri.getPath());
-                    break;
-            }
-        }
-        Log.i(TAG, String.format("successfully resolved %d URIs", resolvedFilenames.size()));
-        return resolvedFilenames.toArray(new String[resolvedFilenames.size()]);
     }
 
     @Override
@@ -197,9 +173,15 @@ public class ShareActivity extends Activity {
         setContentView(R.layout.activity_share);
 
         mDeviceAdapter = new DeviceAdapter();
+        mDeviceAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+                Log.d(TAG, "dataset changed");
+            }
+        });
         mDeviceAdapter.start();
 
-        final String[] filenames = resolveIntent(getIntent());
+        final ArrayList<Uri> uriList = buildUriList(getIntent());
         final ListView listView = (ListView) findViewById(R.id.selectList);
         listView.setAdapter(mDeviceAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -210,7 +192,7 @@ public class ShareActivity extends Activity {
                 Intent startTransfer = new Intent(ShareActivity.this, TransferService.class);
                 startTransfer.setAction(TransferService.ACTION_START_TRANSFER);
                 startTransfer.putExtra(TransferService.EXTRA_DEVICE, device);
-                startTransfer.putExtra(TransferService.EXTRA_FILENAMES, filenames);
+                startTransfer.putParcelableArrayListExtra(TransferService.EXTRA_URIS, uriList);
                 startService(startTransfer);
 
                 // Close the activity

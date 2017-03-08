@@ -1,5 +1,8 @@
 package net.nitroshare.android.bundle;
 
+import android.content.res.AssetFileDescriptor;
+import android.net.Uri;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -23,6 +26,7 @@ public class FileItem extends Item {
     private static final String LAST_MODIFIED = "last_modified";
 
     private File mFile;
+    private AssetFileDescriptor mAssetFileDescriptor;
     private Map<String, Object> mProperties;
 
     private FileInputStream mInputStream;
@@ -60,8 +64,28 @@ public class FileItem extends Item {
         mProperties.put(LAST_MODIFIED, Long.toString(mFile.lastModified()));
 
         // TODO: these are used for temporary compatibility with 0.3.x
-        mProperties.put("created", 0);
-        mProperties.put("last_read", 0);
+        mProperties.put("created", "0");
+        mProperties.put("last_read", "0");
+        mProperties.put("directory", false);
+    }
+
+    /**
+     * Create a file from the specified asset file descriptor and URI
+     * @param assetFileDescriptor file descriptor
+     * @param uri URI used to create descriptor
+     * @throws IOException
+     */
+    public FileItem(AssetFileDescriptor assetFileDescriptor, Uri uri) throws IOException {
+        mAssetFileDescriptor = assetFileDescriptor;
+        mProperties = new HashMap<>();
+        mProperties.put(TYPE, TYPE_NAME);
+        mProperties.put(NAME, uri.getLastPathSegment());
+        mProperties.put(SIZE, Long.toString(mAssetFileDescriptor.getLength()));
+
+        // TODO: these are used for temporary compatibility with 0.3.x
+        mProperties.put("created", "0");
+        mProperties.put("last_read", "0");
+        mProperties.put("last_modified", "0");
         mProperties.put("directory", false);
     }
 
@@ -74,7 +98,12 @@ public class FileItem extends Item {
     public void open(Mode mode) throws IOException {
         switch (mode) {
             case Read:
-                mInputStream = new FileInputStream(mFile);
+                if (mFile != null) {
+                    mInputStream = new FileInputStream(mFile);
+                } else {
+                    mInputStream = new FileInputStream(
+                            mAssetFileDescriptor.getFileDescriptor());
+                }
                 break;
             case Write:
                 //noinspection ResultOfMethodCallIgnored
@@ -102,6 +131,9 @@ public class FileItem extends Item {
     public void close() throws IOException {
         if (mInputStream != null) {
             mInputStream.close();
+            if (mAssetFileDescriptor != null) {
+                mAssetFileDescriptor.close();
+            }
         }
         if (mOutputStream != null) {
             mOutputStream.close();

@@ -35,7 +35,7 @@ public class Transfer implements Runnable {
      */
     interface Listener {
         void onConnect();
-        void onDeviceName();
+        void onTransferHeader(long count);
         void onProgress(int progress);
         void onSuccess();
         void onError(String message);
@@ -187,8 +187,10 @@ public class Transfer implements Runnable {
         mTransferItems = Integer.parseInt(transferHeader.count);
         mTransferBytesTotal = Long.parseLong(transferHeader.size);
         mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
-        mListener.onDeviceName();
+        mListener.onTransferHeader(mTransferItems);
     }
+
+    // TODO: no error handling here :O
 
     /**
      * Process the header for an individual item

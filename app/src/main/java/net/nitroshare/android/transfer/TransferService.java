@@ -1,11 +1,15 @@
 package net.nitroshare.android.transfer;
 
 import android.app.Service;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.AssetFileDescriptor;
+import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -15,7 +19,9 @@ import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.discovery.Device;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Stack;
 
 /**
@@ -34,8 +40,7 @@ public class TransferService extends Service {
 
     public static final String ACTION_START_TRANSFER = "start_transfer";
     public static final String EXTRA_DEVICE = "device";
-    public static final String EXTRA_URLS = "urls";
-    public static final String EXTRA_FILENAMES = "filenames";
+    public static final String EXTRA_URIS = "urls";
 
     public static final String ACTION_STOP_TRANSFER = "stop_transfer";
     public static final String EXTRA_TRANSFER = "transfer";
@@ -91,6 +96,25 @@ public class TransferService extends Service {
     }
 
     /**
+     * Attempt to resolve the provided URI
+     * @param uri URI to resolve
+     * @return file descriptor
+     * @throws IOException
+     */
+    private AssetFileDescriptor getAssetFileDescriptor(Uri uri) throws IOException {
+        AssetFileDescriptor assetFileDescriptor;
+        try {
+            assetFileDescriptor = getContentResolver().openAssetFileDescriptor(uri, "r");
+        } catch (FileNotFoundException e) {
+            throw new IOException(String.format("unable to resolve \"%s\"", uri.toString()));
+        }
+        if (assetFileDescriptor == null) {
+            throw new IOException(String.format("no file descriptor for \"%s\"", uri.toString()));
+        }
+        return assetFileDescriptor;
+    }
+
+    /**
      * Traverse a directory tree and add all files to the bundle
      * @param root the directory to which all filenames will be relative
      * @param bundle target for all files that are found
@@ -114,27 +138,28 @@ public class TransferService extends Service {
     }
 
     /**
-     * Create a bundle from the provided list of URLs and files
-     * @param urls list of URLs
-     * @param filenames list of filenames
+     * Create a bundle from the list of URIs
+     * @param uriList list of URIs to add
      * @return newly created bundle
      * @throws IOException
      */
-    private Bundle createBundle(String[] urls, String[] filenames) throws IOException {
+    private Bundle createBundle(ArrayList<Parcelable> uriList) throws IOException {
         Bundle bundle = new Bundle();
-        if (urls != null) {
-            for (String url : urls) {
-                // TODO: add URL
-            }
-        }
-        if (filenames != null) {
-            for (String filename : filenames) {
-                File file = new File(filename);
-                if (file.isDirectory()) {
-                    traverseDirectory(file, bundle);
-                } else {
-                    bundle.addItem(new FileItem(file));
-                }
+        for (Parcelable parcelable : uriList) {
+            Uri uri = (Uri) parcelable;
+            switch (uri.getScheme()) {
+                case ContentResolver.SCHEME_ANDROID_RESOURCE:
+                case ContentResolver.SCHEME_CONTENT:
+                    bundle.addItem(new FileItem(getAssetFileDescriptor(uri), uri));
+                    break;
+                case ContentResolver.SCHEME_FILE:
+                    File file = new File(uri.getPath());
+                    if (file.isDirectory()) {
+                        traverseDirectory(file, bundle);
+                    } else {
+                        bundle.addItem(new FileItem(file));
+                    }
+                    break;
             }
         }
         return bundle;
@@ -145,21 +170,17 @@ public class TransferService extends Service {
      */
     private int startTransfer(Intent intent) {
 
-        // Retrieve the parameters from the intent
-        final Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
-        String[] urls = intent.getStringArrayExtra(EXTRA_URLS);
-        String[] filenames = intent.getStringArrayExtra(EXTRA_FILENAMES);
-
-        // Retrieve the name for the device
+        // Build the parameters needed to start the transfer
+        Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
         String deviceName = mSharedPreferences.getString(
                 getString(R.string.setting_device_name), "");
         if (deviceName.isEmpty()) {
             deviceName = Build.MODEL;
         }
 
-        // Create the transfer and transfer wrapper
+        // Add each of the items to the bundle and send it
         try {
-            Bundle bundle = createBundle(urls, filenames);
+            Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
             new TransferWrapper(
                     this,
                     new Transfer(device, deviceName, bundle),
@@ -169,6 +190,7 @@ public class TransferService extends Service {
             Log.e(TAG, e.getMessage());
             mTransferNotificationManager.stop();
         }
+
         return START_NOT_STICKY;
     }
 

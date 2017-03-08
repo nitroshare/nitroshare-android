@@ -100,7 +100,9 @@ class TransferWrapper {
         }
 
         @Override
-        public void onDeviceName() {
+        public void onTransferHeader(long count) {
+            Log.i(TAG, String.format("incoming transfer contains %d items", count));
+
             mNotificationBuilder.setContentText(
                     mContext.getString(
                             R.string.service_transfer_status_receiving,
