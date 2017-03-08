@@ -123,12 +123,18 @@ public class TransferService extends Service {
      */
     private String getFilename(Uri uri) {
         String filename = uri.getLastPathSegment();
-        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        String[] projection = {
+                MediaStore.MediaColumns.DISPLAY_NAME,
+        };
+        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
         if (cursor != null) {
             cursor.moveToFirst();
             try {
-                filename = new File(cursor.getString(cursor.getColumnIndexOrThrow(
-                        MediaStore.Images.Media.DATA))).getName();
+                String columnValue = cursor.getString(cursor.getColumnIndexOrThrow(
+                        MediaStore.MediaColumns.DISPLAY_NAME));
+                if (columnValue != null) {
+                    filename = new File(columnValue).getName();
+                }
             } catch (IllegalArgumentException ignored) {
             }
             cursor.close();
