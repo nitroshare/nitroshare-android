@@ -127,8 +127,8 @@ public class TransferService extends Service {
         if (cursor != null) {
             cursor.moveToFirst();
             try {
-                cursor.getString(cursor.getColumnIndexOrThrow(
-                        MediaStore.Images.Media.DATA));
+                filename = new File(cursor.getString(cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media.DATA))).getName();
             } catch (IllegalArgumentException ignored) {
             }
             cursor.close();
