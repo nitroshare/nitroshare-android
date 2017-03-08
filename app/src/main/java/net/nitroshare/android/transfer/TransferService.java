@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.preference.PreferenceManager;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import net.nitroshare.android.R;
@@ -115,6 +117,26 @@ public class TransferService extends Service {
     }
 
     /**
+     * Determine the appropriate filename for a URI
+     * @param uri URI to use for filename
+     * @return filename
+     */
+    private String getFilename(Uri uri) {
+        String filename = uri.getLastPathSegment();
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null) {
+            cursor.moveToFirst();
+            try {
+                cursor.getString(cursor.getColumnIndexOrThrow(
+                        MediaStore.Images.Media.DATA));
+            } catch (IllegalArgumentException ignored) {
+            }
+            cursor.close();
+        }
+        return filename;
+    }
+
+    /**
      * Traverse a directory tree and add all files to the bundle
      * @param root the directory to which all filenames will be relative
      * @param bundle target for all files that are found
@@ -150,7 +172,10 @@ public class TransferService extends Service {
             switch (uri.getScheme()) {
                 case ContentResolver.SCHEME_ANDROID_RESOURCE:
                 case ContentResolver.SCHEME_CONTENT:
-                    bundle.addItem(new FileItem(getAssetFileDescriptor(uri), uri));
+                    bundle.addItem(new FileItem(
+                            getAssetFileDescriptor(uri),
+                            getFilename(uri)
+                    ));
                     break;
                 case ContentResolver.SCHEME_FILE:
                     File file = new File(uri.getPath());

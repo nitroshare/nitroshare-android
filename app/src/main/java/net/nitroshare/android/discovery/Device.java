@@ -17,23 +17,33 @@ public class Device implements Serializable {
 
     public static final String SERVICE_TYPE = "_nitroshare._tcp.";
 
-    public static final String NAME = "name";
+    public static final String UUID = "uuid";
+
+    /**
+     * Device description is invalid
+     *
+     * This is thrown when an invalid DNS-SD entry is used to initialize a
+     * device. This includes missing UUID.
+     */
+    public class InvalidDeviceException extends Exception {}
 
     private String mUuid;
-    private Map<String, String> mAttributes;
+    private String mName;
     private InetAddress mHost;
     private int mPort;
 
     /**
      * Create a device from a service description
      * @param serviceInfo device information
+     * @throws InvalidDeviceException
      */
-    public Device(NsdServiceInfo serviceInfo) {
-        mUuid = serviceInfo.getServiceName();
-        mAttributes = new HashMap<>();
-        for(Map.Entry<String, byte[]> entry : serviceInfo.getAttributes().entrySet()){
-            mAttributes.put(entry.getKey(), new String(entry.getValue(), StandardCharsets.UTF_8));
+    public Device(NsdServiceInfo serviceInfo) throws InvalidDeviceException {
+        byte[] uuid = serviceInfo.getAttributes().get(UUID);
+        if (uuid == null) {
+            throw new InvalidDeviceException();
         }
+        mUuid = new String(uuid, StandardCharsets.UTF_8);
+        mName = serviceInfo.getServiceName();
         mHost = serviceInfo.getHost();
         mPort = serviceInfo.getPort();
     }
@@ -41,12 +51,12 @@ public class Device implements Serializable {
     /**
      * Create a device from the provided information
      * @param uuid unique identifier for the device
-     * @param attributes attributes, such as device name
+     * @param name device name
      * @param port port for the service
      */
-    public Device(String uuid, Map<String, String> attributes, int port) {
+    public Device(String uuid, String name, int port) {
         mUuid = uuid;
-        mAttributes = attributes;
+        mName = name;
         mPort = port;
     }
 
@@ -54,17 +64,8 @@ public class Device implements Serializable {
         return mUuid;
     }
 
-    public String getAttribute(String key) {
-        return mAttributes.get(key);
-    }
-
-    /**
-     * Retrieve the device name
-     * @return name if present, otherwise UUID
-     */
     public String getName() {
-        String name = getAttribute(NAME);
-        return name == null ? getUuid() : name;
+        return mName;
     }
 
     public InetAddress getHost() {
@@ -78,10 +79,8 @@ public class Device implements Serializable {
     public NsdServiceInfo toServiceInfo() {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceType(SERVICE_TYPE);
-        serviceInfo.setServiceName(mUuid);
-        for(Map.Entry<String, String> entry : mAttributes.entrySet()){
-            serviceInfo.setAttribute(entry.getKey(), entry.getValue());
-        }
+        serviceInfo.setServiceName(mName);
+        serviceInfo.setAttribute(UUID, mUuid);
         serviceInfo.setPort(mPort);
         return serviceInfo;
     }

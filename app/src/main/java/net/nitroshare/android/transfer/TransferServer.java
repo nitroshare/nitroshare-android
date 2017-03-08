@@ -145,11 +145,9 @@ class TransferServer implements Runnable {
                     serverSocketChannel.socket().getLocalPort()));
 
             // Register the service
-            Map<String, String> attributes = new HashMap<>();
-            attributes.put(Device.NAME, deviceName);
             nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
             nsdManager.registerService(
-                    new Device(deviceUuid, attributes, 40818).toServiceInfo(),
+                    new Device(deviceUuid, deviceName, 40818).toServiceInfo(),
                     NsdManager.PROTOCOL_DNS_SD,
                     mRegistrationListener
             );

@@ -8,6 +8,7 @@ import android.database.DataSetObserver;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -46,7 +47,7 @@ public class ShareActivity extends Activity {
         private final Map<String, Device> mDevices = new HashMap<>();
 
         private NsdManager mNsdManager;
-        private String mThisDeviceUuid;
+        private String mThisDeviceName;
 
         /**
          * Listener for discovery events
@@ -54,22 +55,27 @@ public class ShareActivity extends Activity {
         private NsdManager.DiscoveryListener mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
             public void onServiceFound(NsdServiceInfo serviceInfo) {
-                if (serviceInfo.getServiceName().equals(mThisDeviceUuid)) {
+                if (serviceInfo.getServiceName().equals(mThisDeviceName)) {
                     return;
                 }
                 Log.d(TAG, String.format("found \"%s\"", serviceInfo.getServiceName()));
                 mNsdManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
                     @Override
                     public void onServiceResolved(final NsdServiceInfo serviceInfo) {
-                        final Device device = new Device(serviceInfo);
-                        Log.d(TAG, String.format("resolved \"%s\"", device.getName()));
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mDevices.put(serviceInfo.getServiceName(), device);
-                                add(device.getUuid());
-                            }
-                        });
+                        try {
+                            final Device device = new Device(serviceInfo);
+                            Log.d(TAG, String.format("resolved \"%s\"", device.getName()));
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mDevices.put(serviceInfo.getServiceName(), device);
+                                    add(serviceInfo.getServiceName());
+                                }
+                            });
+                        } catch (Device.InvalidDeviceException e) {
+                            Log.e(TAG, String.format("invalid device \"%s\"",
+                                    serviceInfo.getServiceName()));
+                        }
                     }
 
                     @Override
@@ -123,8 +129,8 @@ public class ShareActivity extends Activity {
                     NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
             SharedPreferences sharedPreferences =
                     PreferenceManager.getDefaultSharedPreferences(ShareActivity.this);
-            mThisDeviceUuid = sharedPreferences.getString(getString(
-                    R.string.setting_device_uuid), "");
+            mThisDeviceName = sharedPreferences.getString(getString(
+                    R.string.setting_device_name), Build.MODEL);
         }
 
         void stop() {

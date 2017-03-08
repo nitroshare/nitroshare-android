@@ -1,7 +1,6 @@
 package net.nitroshare.android.bundle;
 
 import android.content.res.AssetFileDescriptor;
-import android.net.Uri;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -72,14 +71,14 @@ public class FileItem extends Item {
     /**
      * Create a file from the specified asset file descriptor and URI
      * @param assetFileDescriptor file descriptor
-     * @param uri URI used to create descriptor
+     * @param filename filename to use
      * @throws IOException
      */
-    public FileItem(AssetFileDescriptor assetFileDescriptor, Uri uri) throws IOException {
+    public FileItem(AssetFileDescriptor assetFileDescriptor, String filename) throws IOException {
         mAssetFileDescriptor = assetFileDescriptor;
         mProperties = new HashMap<>();
         mProperties.put(TYPE, TYPE_NAME);
-        mProperties.put(NAME, uri.getLastPathSegment());
+        mProperties.put(NAME, filename);
         mProperties.put(SIZE, Long.toString(mAssetFileDescriptor.getLength()));
 
         // TODO: these are used for temporary compatibility with 0.3.x
