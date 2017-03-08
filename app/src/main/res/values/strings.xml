@@ -32,6 +32,12 @@
     <string name="activity_settings_pref_notification_sound">Notification Sound</string>
     <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
 
+    <!-- About activity -->
+    <string name="activity_about">About</string>
+    <string name="activity_about_subtitle">Cross-platform file transfer application</string>
+    <string name="activity_about_version">Version:</string>
+    <string name="activity_about_last_updated">Last Updated:</string>
+
     <!-- Transfer service -->
     <string name="service_transfer_title">NitroShare Transfer</string>
     <string name="service_transfer_action_stop">Stop</string>

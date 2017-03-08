@@ -56,6 +56,12 @@
             android:label="@string/activity_settings"
             android:parentActivityName=".MainActivity"/>
 
+        <!-- About activity -->
+        <activity
+            android:name=".AboutActivity"
+            android:label="@string/activity_about"
+            android:parentActivityName=".MainActivity"/>
+
         <!-- Service for transfers -->
         <service
             android:name=".transfer.TransferService"
