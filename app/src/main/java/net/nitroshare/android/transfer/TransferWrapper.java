@@ -125,17 +125,16 @@ class TransferWrapper {
         @Override
         public void onSuccess() {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
-            mTransferNotificationManager.update(
-                    sNotificationId.incrementAndGet(),
-                    createNotification(true)
-                            .setContentText(
-                                    mContext.getString(
-                                            R.string.service_transfer_status_success,
-                                            mTransfer.getRemoteDeviceName()
-                                    )
+            Notification.Builder notificationBuilder = createNotification(true)
+                    .setContentText(
+                            mContext.getString(
+                                    R.string.service_transfer_status_success,
+                                    mTransfer.getRemoteDeviceName()
                             )
-                            .setSmallIcon(icon(true))
-                            .build()
+                    )
+                    .setSmallIcon(icon(true));
+            mTransferNotificationManager.update(
+                    sNotificationId.incrementAndGet(), notificationBuilder.build()
             );
         }
 
