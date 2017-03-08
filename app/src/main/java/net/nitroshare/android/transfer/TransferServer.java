@@ -147,7 +147,7 @@ class TransferServer implements Runnable {
             // Register the service
             nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
             nsdManager.registerService(
-                    new Device(deviceUuid, deviceName, 40818).toServiceInfo(),
+                    new Device(deviceUuid, deviceName, null, 40818).toServiceInfo(),
                     NsdManager.PROTOCOL_DNS_SD,
                     mRegistrationListener
             );

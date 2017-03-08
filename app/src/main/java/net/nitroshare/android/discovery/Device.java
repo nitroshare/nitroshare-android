@@ -4,9 +4,6 @@ import android.net.nsd.NsdServiceInfo;
 
 import java.io.Serializable;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Device discoverable through mDNS
@@ -19,49 +16,23 @@ public class Device implements Serializable {
 
     public static final String UUID = "uuid";
 
-    /**
-     * Device description is invalid
-     *
-     * This is thrown when an invalid DNS-SD entry is used to initialize a
-     * device. This includes missing UUID.
-     */
-    public class InvalidDeviceException extends Exception {}
-
     private String mUuid;
     private String mName;
     private InetAddress mHost;
     private int mPort;
 
     /**
-     * Create a device from a service description
-     * @param serviceInfo device information
-     * @throws InvalidDeviceException
-     */
-    public Device(NsdServiceInfo serviceInfo) throws InvalidDeviceException {
-        byte[] uuid = serviceInfo.getAttributes().get(UUID);
-        if (uuid == null) {
-            throw new InvalidDeviceException();
-        }
-        mUuid = new String(uuid, StandardCharsets.UTF_8);
-        mName = serviceInfo.getServiceName();
-        mHost = serviceInfo.getHost();
-        mPort = serviceInfo.getPort();
-    }
-
-    /**
      * Create a device from the provided information
      * @param uuid unique identifier for the device
      * @param name device name
+     * @param host device host
      * @param port port for the service
      */
-    public Device(String uuid, String name, int port) {
+    public Device(String uuid, String name, InetAddress host, int port) {
         mUuid = uuid;
         mName = name;
+        mHost = host;
         mPort = port;
-    }
-
-    public String getUuid() {
-        return mUuid;
     }
 
     public String getName() {
