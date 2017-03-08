@@ -182,7 +182,7 @@ public class ShareActivity extends Activity {
         mDeviceAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
             public void onChanged() {
-                Log.d(TAG, "dataset changed");
+                findViewById(R.id.progressBar).setVisibility(View.GONE);
             }
         });
         mDeviceAdapter.start();
