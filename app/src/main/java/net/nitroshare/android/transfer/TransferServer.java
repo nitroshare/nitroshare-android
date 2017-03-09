@@ -126,7 +126,6 @@ class TransferServer implements Runnable {
         mTransferNotificationManager.start(
                 NOTIFICATION_ID,
                 new Notification.Builder(mContext)
-                        .setCategory(Notification.CATEGORY_SERVICE)
                         .setContentIntent(mainIntent)
                         .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
                         .setContentText(mContext.getString(R.string.service_transfer_server_text))

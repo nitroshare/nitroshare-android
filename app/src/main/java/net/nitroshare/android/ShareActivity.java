@@ -1,6 +1,5 @@
 package net.nitroshare.android;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.DataSetObserver;
@@ -8,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,7 +34,7 @@ import java.util.Map;
  * mDNS (multicast DNS) is used to find other peers capable of receiving the transfer. Once a
  * device is selected, the transfer service is provided with the device information and the file.
  */
-public class ShareActivity extends Activity {
+public class ShareActivity extends AppCompatActivity {
 
     private static final String TAG = "ShareActivity";
 
