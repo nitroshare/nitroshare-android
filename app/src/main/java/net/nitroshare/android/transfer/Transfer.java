@@ -15,7 +15,7 @@ import java.net.InetSocketAddress;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -178,7 +178,7 @@ public class Transfer implements Runnable {
         TransferHeader transferHeader;
         try {
             transferHeader = mGson.fromJson(new String(
-                    mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8),
+                    mReceivingPacket.getBuffer().array(), Charset.forName("UTF-8")),
                     TransferHeader.class);
         } catch (JsonSyntaxException e) {
             throw new IOException(e.getMessage());
@@ -199,7 +199,7 @@ public class Transfer implements Runnable {
     private void processItemHeader() throws IOException {
         Type type = new TypeToken<Map<String, Object>>(){}.getType();
         Map<String, Object> map = mGson.fromJson(new String(
-                mReceivingPacket.getBuffer().array(), StandardCharsets.UTF_8), type);
+                mReceivingPacket.getBuffer().array(), Charset.forName("UTF-8")), type);
         String itemType = (String) map.get(Item.TYPE);
         if (itemType == null) {
             itemType = FileItem.TYPE_NAME;
@@ -252,7 +252,7 @@ public class Transfer implements Runnable {
         if (mReceivingPacket.isFull()) {
             if (mReceivingPacket.getType() == Packet.ERROR) {
                 throw new IOException(new String(mReceivingPacket.getBuffer().array(),
-                        StandardCharsets.UTF_8));
+                        Charset.forName("UTF-8")));
             }
             if (mDirection == Direction.Receive) {
                 if (mState == State.TransferHeader && mReceivingPacket.getType() == Packet.JSON) {
@@ -286,7 +286,7 @@ public class Transfer implements Runnable {
         map.put("count", Integer.toString(mBundle.size()));
         map.put("size", Long.toString(mBundle.getTotalSize()));
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(
-                StandardCharsets.UTF_8));
+                Charset.forName("UTF-8")));
         mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
     }
 
@@ -297,7 +297,7 @@ public class Transfer implements Runnable {
     private void sendItemHeader() throws IOException {
         mItem = mBundle.get(mItemIndex);
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(
-                mItem.getProperties()).getBytes(StandardCharsets.UTF_8));
+                mItem.getProperties()).getBytes(Charset.forName("UTF-8")));
         long itemSize = mItem.getLongProperty(Item.SIZE, true);
         if (itemSize != 0) {
             mState = State.ItemContent;

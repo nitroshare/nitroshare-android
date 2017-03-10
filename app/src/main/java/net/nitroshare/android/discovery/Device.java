@@ -51,7 +51,7 @@ public class Device implements Serializable {
         NsdServiceInfo serviceInfo = new NsdServiceInfo();
         serviceInfo.setServiceType(SERVICE_TYPE);
         serviceInfo.setServiceName(mName);
-        serviceInfo.setAttribute(UUID, mUuid);
+        //serviceInfo.setAttribute(UUID, mUuid);
         serviceInfo.setPort(mPort);
         return serviceInfo;
     }

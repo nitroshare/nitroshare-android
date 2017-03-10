@@ -60,7 +60,6 @@ class TransferWrapper {
      */
     private Notification.Builder createNotification(boolean playSound) {
         Notification.Builder notificationBuilder = new Notification.Builder(mContext)
-                .setCategory(Notification.CATEGORY_STATUS)
                 .setContentTitle(mContext.getString(R.string.service_transfer_title));
         if (playSound && mSharedPreferences.getBoolean(mContext.getString(
                 R.string.setting_notification_sound), false)) {
@@ -133,6 +132,26 @@ class TransferWrapper {
                             )
                     )
                     .setSmallIcon(icon(true));
+
+            /*
+            // If items were received, create an intent to let the user browse
+            // the directory where the items ended up
+            if (mTransfer.getDirection() == Transfer.Direction.Receive) {
+                String transferDirectory = mSharedPreferences.getString(
+                        mContext.getString(R.string.setting_transfer_directory),
+                        mContext.getString(R.string.setting_transfer_directory_default)
+                );
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(Uri.fromFile(new File(transferDirectory)),
+                        "resource/folder");
+                if (intent.resolveActivityInfo(mContext.getPackageManager(), 0) != null) {
+                    notificationBuilder.setContentIntent(
+                            PendingIntent.getActivity(mContext, 0, intent, 0)
+                    );
+                }
+            }
+            */
+
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(), notificationBuilder.build()
             );
@@ -166,19 +185,14 @@ class TransferWrapper {
     }
 
     /**
-     * Create an action for stopping the transfer
-     * @return newly created action
+     * Create a pending intent for stopping the transfer
+     * @return newly created pending intent
      */
-    private Notification.Action createStopAction() {
+    private PendingIntent createStopPendingIntent() {
         Intent stopIntent = new Intent(mContext, TransferService.class)
                 .setAction(TransferService.ACTION_STOP_TRANSFER)
                 .putExtra(TransferService.EXTRA_TRANSFER, mId);
-        PendingIntent pendingIntent =  PendingIntent.getService(
-                mContext, 0, stopIntent, 0);
-        //noinspection deprecation
-        return new Notification.Action.Builder(R.drawable.ic_action_stop,
-                mContext.getString(R.string.service_transfer_action_stop),
-                pendingIntent).build();
+        return PendingIntent.getService(mContext, 0, stopIntent, 0);
     }
 
     /**
@@ -194,7 +208,11 @@ class TransferWrapper {
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         mTransferNotificationManager = transferNotificationManager;
         mNotificationBuilder = createNotification(false)
-                .addAction(createStopAction())
+                .addAction(
+                        R.drawable.ic_action_stop,
+                        mContext.getString(R.string.service_transfer_action_stop),
+                        createStopPendingIntent()
+                )
                 .setContentText(
                         mContext.getString(
                                 mTransfer.getDirection() == Transfer.Direction.Receive ?

@@ -76,16 +76,18 @@ public class ShareActivity extends AppCompatActivity {
                     } catch (UnknownHostException ignored) {
                     }
                     final InetAddress host = ipAddress;
+                    /*
                     final String uuid = result.txt.dict.get(Device.UUID);
                     if (uuid == null) {
                         continue;
                     }
+                    */
                     Log.d(TAG, String.format("found new device \"%s\"", name));
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             Device device = new Device(
-                                    uuid,
+                                    "",
                                     name,
                                     host,
                                     result.srv.port
