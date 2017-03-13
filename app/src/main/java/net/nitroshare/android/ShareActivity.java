@@ -13,6 +13,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -133,6 +134,7 @@ public class ShareActivity extends AppCompatActivity {
             Device device = mDevices.get(getItem(position));
             ((TextView) convertView.findViewById(android.R.id.text1)).setText(device.getName());
             ((TextView) convertView.findViewById(android.R.id.text2)).setText(device.getHost().getHostAddress());
+            ((ImageView) convertView.findViewById(android.R.id.icon)).setImageResource(R.drawable.ic_device);
             return convertView;
         }
     }

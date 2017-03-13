@@ -9,7 +9,6 @@
 
     <ImageView
         android:id="@id/android:icon"
-        android:src="@drawable/ic_device"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
