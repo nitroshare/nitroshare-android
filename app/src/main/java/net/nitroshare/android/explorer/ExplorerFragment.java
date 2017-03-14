@@ -1,12 +1,14 @@
 package net.nitroshare.android.explorer;
 
 import android.app.ListFragment;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
 import android.widget.ListView;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /**
  * Display the contents of a directory
@@ -17,6 +19,7 @@ public class ExplorerFragment extends ListFragment {
 
     interface Listener {
         void onBrowseDirectory(String directory);
+        void onSendUris(ArrayList<Uri> uris);
     }
 
     @Override
@@ -35,9 +38,14 @@ public class ExplorerFragment extends ListFragment {
 
     @Override
     public void onListItemClick(ListView listView, View view, int position, long id) {
+        Listener listener = (Listener) getActivity();
         File file = (File) getListAdapter().getItem(position);
         if (file.isDirectory()) {
-            ((Listener) getActivity()).onBrowseDirectory(file.getPath());
+            listener.onBrowseDirectory(file.getPath());
+        } else {
+            ArrayList<Uri> uris = new ArrayList<>();
+            uris.add(Uri.fromFile(file));
+            listener.onSendUris(uris);
         }
     }
 }

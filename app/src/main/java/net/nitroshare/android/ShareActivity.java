@@ -185,6 +185,7 @@ public class ShareActivity extends AppCompatActivity {
                 startService(startTransfer);
 
                 // Close the activity
+                ShareActivity.this.setResult(RESULT_OK);
                 ShareActivity.this.finish();
             }
         });
