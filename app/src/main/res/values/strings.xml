@@ -17,6 +17,12 @@
     <string name="activity_intro_perms_title">Permission</string>
     <string name="activity_intro_perms_description">In order to send and receive files, NitroShare needs your permission to read and write files on your Android device.</string>
 
+    <!-- Explorer activity -->
+    <string name="activity_explorer">Send Items</string>
+    <string name="activity_explorer_kb">%1$d KB</string>
+    <string name="activity_explorer_mb">%1$d MB</string>
+    <string name="activity_explorer_gb">%1$d GB</string>
+
     <!-- Share activity -->
     <string name="activity_share">Send with NitroShare</string>
     <string name="activity_share_label">Select a device from the list below to receive the file:</string>

@@ -36,6 +36,12 @@
             </intent-filter>
         </activity>
 
+        <!-- Explorer activity -->
+        <activity
+            android:name=".explorer.ExplorerActivity"
+            android:label="@string/activity_explorer"
+            android:parentActivityName=".MainActivity"/>
+
         <!-- Share activity -->
         <activity
             android:name=".ShareActivity"
