@@ -88,6 +88,13 @@ public class FileItem extends Item {
         mProperties.put("directory", false);
     }
 
+    /**
+     * Retrieve the underlying path for the item
+     */
+    public String getPath() {
+        return mFile.getPath();
+    }
+
     @Override
     public Map<String, Object> getProperties() {
         return mProperties;

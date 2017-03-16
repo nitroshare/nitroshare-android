@@ -5,11 +5,14 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.MediaScannerConnection;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.bundle.FileItem;
+import net.nitroshare.android.bundle.Item;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,6 +54,7 @@ class TransferWrapper {
     private Transfer mTransfer;
     private SharedPreferences mSharedPreferences;
     private TransferNotificationManager mTransferNotificationManager;
+    private MediaScannerConnection mMediaScannerConnection;
     private Notification.Builder mNotificationBuilder;
 
     /**
@@ -122,6 +126,15 @@ class TransferWrapper {
         }
 
         @Override
+        public void onItemReceived(Item item) {
+            if (item instanceof FileItem) {
+                String path = ((FileItem) item).getPath();
+                Log.d(TAG, String.format("submitting \"%s\" to media scanner", path));
+                mMediaScannerConnection.scanFile(path, null);
+            }
+        }
+
+        @Override
         public void onSuccess() {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
             Notification.Builder notificationBuilder = createNotification(true)
@@ -132,26 +145,6 @@ class TransferWrapper {
                             )
                     )
                     .setSmallIcon(icon(true));
-
-            /*
-            // If items were received, create an intent to let the user browse
-            // the directory where the items ended up
-            if (mTransfer.getDirection() == Transfer.Direction.Receive) {
-                String transferDirectory = mSharedPreferences.getString(
-                        mContext.getString(R.string.setting_transfer_directory),
-                        mContext.getString(R.string.setting_transfer_directory_default)
-                );
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.fromFile(new File(transferDirectory)),
-                        "resource/folder");
-                if (intent.resolveActivityInfo(mContext.getPackageManager(), 0) != null) {
-                    notificationBuilder.setContentIntent(
-                            PendingIntent.getActivity(mContext, 0, intent, 0)
-                    );
-                }
-            }
-            */
-
             mTransferNotificationManager.update(
                     sNotificationId.incrementAndGet(), notificationBuilder.build()
             );
@@ -181,6 +174,10 @@ class TransferWrapper {
                 sActiveTransfers.remove(mId);
             }
             mTransferNotificationManager.stop(mId);
+            if (mTransfer.getDirection() == Transfer.Direction.Receive) {
+                mMediaScannerConnection.disconnect();
+                Log.i(TAG, "disconnected from media scanner");
+            }
         }
     }
 
@@ -207,6 +204,11 @@ class TransferWrapper {
         mTransfer.setListener(new TransferListener());
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         mTransferNotificationManager = transferNotificationManager;
+        if (mTransfer.getDirection() == Transfer.Direction.Receive) {
+            mMediaScannerConnection = new MediaScannerConnection(mContext, null);
+            mMediaScannerConnection.connect();
+            Log.i(TAG, "connected to media scanner");
+        }
         mNotificationBuilder = createNotification(false)
                 .addAction(
                         R.drawable.ic_action_stop,

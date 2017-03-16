@@ -37,6 +37,7 @@ public class Transfer implements Runnable {
         void onConnect();
         void onTransferHeader(long count);
         void onProgress(int progress);
+        void onItemReceived(Item item);
         void onSuccess();
         void onError(String message);
         void onFinish();
@@ -234,6 +235,7 @@ public class Transfer implements Runnable {
         updateProgress();
         if (mItemBytesRemaining <= 0) {
             mItem.close();
+            mListener.onItemReceived(mItem);
             mItemIndex += 1;
             mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
         }
