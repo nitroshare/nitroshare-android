@@ -168,6 +168,10 @@ class TransferServer implements Runnable {
                             mContext.getString(R.string.setting_transfer_directory),
                             mContext.getString(R.string.setting_transfer_directory_default)
                     );
+                    boolean overwrite = mSharedPreferences.getBoolean(
+                            mContext.getString(R.string.setting_behavior_overwrite),
+                            false
+                    );
                     String unknownDeviceName = mContext.getString(
                             R.string.service_transfer_unknown_device);
                     new TransferWrapper(
@@ -175,6 +179,7 @@ class TransferServer implements Runnable {
                             new Transfer(
                                     socketChannel,
                                     transferDirectory,
+                                    overwrite,
                                     unknownDeviceName
                             ),
                             mTransferNotificationManager

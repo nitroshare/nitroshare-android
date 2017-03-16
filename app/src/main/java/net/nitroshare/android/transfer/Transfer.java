@@ -75,6 +75,7 @@ public class Transfer implements Runnable {
     private Device mDevice;
     private String mDeviceName;
     private String mTransferDirectory;
+    private boolean mOverwrite;
     private Bundle mBundle;
     private Listener mListener;
 
@@ -98,14 +99,16 @@ public class Transfer implements Runnable {
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
      * @param transferDirectory directory for incoming files
+     * @param overwrite true to overwrite existing files
      * @param unknownDeviceName device name shown before being received
      * @throws IOException
      */
-    public Transfer(SocketChannel socketChannel, String transferDirectory, String unknownDeviceName) throws IOException {
+    public Transfer(SocketChannel socketChannel, String transferDirectory, boolean overwrite, String unknownDeviceName) throws IOException {
         mSocketChannel = socketChannel;
         mSocketChannel.configureBlocking(false);
         mDeviceName = unknownDeviceName;
         mTransferDirectory = transferDirectory;
+        mOverwrite = overwrite;
         mDirection = Direction.Receive;
     }
 
@@ -207,7 +210,7 @@ public class Transfer implements Runnable {
         }
         switch (itemType) {
             case FileItem.TYPE_NAME:
-                mItem = new FileItem(mTransferDirectory, map);
+                mItem = new FileItem(mTransferDirectory, map, mOverwrite);
                 break;
             default:
                 throw new IOException("unrecognized item type");

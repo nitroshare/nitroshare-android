@@ -18,6 +18,13 @@
             android:summary="@string/activity_settings_pref_behavior_receive_summary"
             android:defaultValue="true"/>
 
+        <SwitchPreference
+            android:key="@string/setting_behavior_overwrite"
+            android:title="@string/activity_settings_pref_behavior_overwrite"
+            android:summary="@string/activity_settings_pref_behavior_overwrite_summary"
+            android:dependency="@string/setting_behavior_receive"
+            android:defaultValue="false"/>
+
     </PreferenceCategory>
 
     <PreferenceCategory

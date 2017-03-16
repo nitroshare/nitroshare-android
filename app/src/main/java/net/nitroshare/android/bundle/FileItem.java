@@ -1,5 +1,6 @@
 package net.nitroshare.android.bundle;
 
+import android.annotation.SuppressLint;
 import android.content.res.AssetFileDescriptor;
 
 import java.io.File;
@@ -8,6 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * An individual file for transfer
@@ -24,6 +27,9 @@ public class FileItem extends Item {
     private static final String EXECUTABLE = "executable";
     private static final String LAST_MODIFIED = "last_modified";
 
+    // Regexp for renaming files
+    private static final Pattern sRenamePattern = Pattern.compile("^(.*?)((?:\\.tar)?\\.[^/]*)?$");
+
     private File mFile;
     private AssetFileDescriptor mAssetFileDescriptor;
     private Map<String, Object> mProperties;
@@ -35,11 +41,31 @@ public class FileItem extends Item {
      * Create a new file item using the provided properties
      * @param transferDirectory directory for the file
      * @param properties map of properties for the file
+     * @param overwrite true to overwrite an existing file
      * @throws IOException
      */
-    public FileItem(String transferDirectory, Map<String, Object> properties) throws IOException {
+    public FileItem(String transferDirectory, Map<String, Object> properties, boolean overwrite) throws IOException {
         mProperties = properties;
-        mFile = new File(new File(transferDirectory), getStringProperty(NAME, true));
+        File parentDir = new File(transferDirectory);
+        String filename = getStringProperty(NAME, true);
+        mFile = new File(parentDir, filename);
+        if (!overwrite) {
+            int i = 2;
+            while (mFile.exists()) {
+                Matcher matcher = sRenamePattern.matcher(filename);
+                if (!matcher.matches()) {
+                    throw new IOException("unable to match regexp");
+                }
+                @SuppressLint("DefaultLocale")
+                String newFilename = String.format(
+                        "%s_%d%s",
+                        matcher.group(1),
+                        i++,
+                        matcher.group(2) == null ? "" : matcher.group(2)
+                );
+                mFile = new File(parentDir, newFilename);
+            }
+        }
     }
 
     /**
