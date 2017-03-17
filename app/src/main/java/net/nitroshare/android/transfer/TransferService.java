@@ -151,14 +151,14 @@ public class TransferService extends Service {
     private void traverseDirectory(File root, Bundle bundle) throws IOException {
         Stack<File> stack = new Stack<>();
         stack.push(root);
-        while (stack.empty()) {
+        while (!stack.empty()) {
             File topOfStack = stack.pop();
             for (File f : topOfStack.listFiles()) {
                 if (f.isDirectory()) {
                     stack.push(f);
                 } else {
                     String relativeFilename = f.getAbsolutePath().substring(
-                            root.getAbsolutePath().length() + 1);
+                            root.getParentFile().getAbsolutePath().length() + 1);
                     bundle.addItem(new FileItem(f, relativeFilename));
                 }
             }
