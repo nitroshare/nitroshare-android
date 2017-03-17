@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ListView;
 
 import java.io.File;
@@ -22,6 +23,8 @@ public class ExplorerFragment extends ListFragment {
         void onSendUris(ArrayList<Uri> uris);
     }
 
+    private Listener mListener;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -37,15 +40,37 @@ public class ExplorerFragment extends ListFragment {
     }
 
     @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        mListener = (Listener) getActivity();
+
+        // Watch for long presses on directories
+        getListView().setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                File file = (File) getListAdapter().getItem(position);
+                if (file.isDirectory()) {
+                    ArrayList<Uri> uris = new ArrayList<>();
+                    uris.add(Uri.fromFile(file));
+                    mListener.onSendUris(uris);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+        });
+    }
+
+    @Override
     public void onListItemClick(ListView listView, View view, int position, long id) {
-        Listener listener = (Listener) getActivity();
         File file = (File) getListAdapter().getItem(position);
         if (file.isDirectory()) {
-            listener.onBrowseDirectory(file.getPath());
+            mListener.onBrowseDirectory(file.getPath());
         } else {
             ArrayList<Uri> uris = new ArrayList<>();
             uris.add(Uri.fromFile(file));
-            listener.onSendUris(uris);
+            mListener.onSendUris(uris);
         }
     }
 }
