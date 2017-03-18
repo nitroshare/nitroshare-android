@@ -183,7 +183,7 @@ class TransferServer implements Runnable {
                                     unknownDeviceName
                             ),
                             mTransferNotificationManager
-                    ).run();
+                    );
                 }
             }
 

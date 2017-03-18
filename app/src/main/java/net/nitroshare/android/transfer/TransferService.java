@@ -216,7 +216,7 @@ public class TransferService extends Service {
                     this,
                     new Transfer(device, deviceName, bundle),
                     mTransferNotificationManager
-            ).run();
+            );
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
             mTransferNotificationManager.stop();

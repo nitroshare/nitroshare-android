@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.MediaScannerConnection;
+import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
@@ -204,11 +205,6 @@ class TransferWrapper {
         mTransfer.setListener(new TransferListener());
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         mTransferNotificationManager = transferNotificationManager;
-        if (mTransfer.getDirection() == Transfer.Direction.Receive) {
-            mMediaScannerConnection = new MediaScannerConnection(mContext, null);
-            mMediaScannerConnection.connect();
-            Log.i(TAG, "connected to media scanner");
-        }
         mNotificationBuilder = createNotification(false)
                 .addAction(
                         R.drawable.ic_action_stop,
@@ -230,12 +226,24 @@ class TransferWrapper {
         }
         mTransferNotificationManager.start(mId, mNotificationBuilder.build());
         Log.i(TAG, String.format("created transfer #%d", mId));
-    }
 
-    /**
-     * Create a new thread and run the transfer in it
-     */
-    void run() {
-        new Thread(mTransfer).start();
+        // When receiving items, connect to the media scanner first so that the
+        // the files can be passed to it
+        if (mTransfer.getDirection() == Transfer.Direction.Receive) {
+            mMediaScannerConnection = new MediaScannerConnection(mContext, new MediaScannerConnection.MediaScannerConnectionClient() {
+                @Override
+                public void onMediaScannerConnected() {
+                    Log.i(TAG, "connected to media scanner");
+                    new Thread(mTransfer).start();
+                }
+
+                @Override
+                public void onScanCompleted(String path, Uri uri) {
+                }
+            });
+            mMediaScannerConnection.connect();
+        } else {
+            new Thread(mTransfer).start();
+        }
     }
 }
