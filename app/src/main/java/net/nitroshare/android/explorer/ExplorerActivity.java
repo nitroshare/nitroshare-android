@@ -1,9 +1,9 @@
 package net.nitroshare.android.explorer;
 
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
@@ -26,7 +26,15 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
             arguments.putString(ExplorerFragment.DIRECTORY, directory);
             explorerFragment.setArguments(arguments);
         }
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if (directory != null) {
+            transaction.setCustomAnimations(
+                    R.anim.enter_from_right,
+                    R.anim.exit_to_left,
+                    R.anim.enter_from_left,
+                    R.anim.exit_to_right
+            );
+        }
         transaction.replace(R.id.directory_container, explorerFragment);
         if (directory != null) {
             transaction.addToBackStack(null);
