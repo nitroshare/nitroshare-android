@@ -4,6 +4,8 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,9 +21,10 @@ import java.util.Comparator;
 class DirectoryAdapter extends ArrayAdapter<File> {
 
     private Context mContext;
+    private boolean[] mChecked;
 
     DirectoryAdapter(String directory, Context context) {
-        super(context, R.layout.view_simple_list_item, android.R.id.text1);
+        super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
         mContext = context;
 
         File[] files = new File(directory).listFiles();
@@ -38,6 +41,8 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         for (File file : files) {
             add(file);
         }
+
+        mChecked = new boolean[getCount()];
     }
 
     private String getDirectorySummary(File directory) {
@@ -60,16 +65,25 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        convertView = super.getView(position, convertView, parent);
+    public View getView(final int position, View convertView, ViewGroup parent) {
+        View view = super.getView(position, convertView, parent);
         File file = getItem(position);
-        ((TextView) convertView.findViewById(android.R.id.text1)).setText(file.getName());
-        ((TextView) convertView.findViewById(android.R.id.text2)).setText(
+        ((TextView) view.findViewById(android.R.id.text1)).setText(file.getName());
+        ((TextView) view.findViewById(android.R.id.text2)).setText(
                 file.isDirectory() ? getDirectorySummary(file) : getFileSummary(file)
         );
-        ((ImageView) convertView.findViewById(android.R.id.icon)).setImageResource(
+        ((ImageView) view.findViewById(android.R.id.icon)).setImageResource(
                 file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
         );
-        return convertView;
+        CheckBox checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
+        checkBox.setOnCheckedChangeListener(null);
+        checkBox.setChecked(mChecked[position]);
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                mChecked[position] = isChecked;
+            }
+        });
+        return view;
     }
 }
