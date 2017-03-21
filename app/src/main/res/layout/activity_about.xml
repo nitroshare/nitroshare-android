@@ -52,30 +52,48 @@
 
     <TableLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <TableRow
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:paddingEnd="@dimen/activity_horizontal_margin"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
                 android:text="@string/activity_about_version"/>
+            <View
+                android:layout_width="@dimen/activity_horizontal_margin"
+                android:layout_height="@dimen/activity_vertical_margin"/>
             <TextView
                 android:id="@+id/version"/>
         </TableRow>
 
         <TableRow>
             <TextView
-                android:paddingEnd="@dimen/activity_horizontal_margin"
-                android:paddingLeft="@dimen/activity_horizontal_margin"
-                android:paddingRight="@dimen/activity_horizontal_margin"
                 android:text="@string/activity_about_last_updated"/>
+            <View
+                android:layout_width="@dimen/activity_horizontal_margin"
+                android:layout_height="@dimen/activity_vertical_margin"/>
             <TextView
                 android:id="@+id/lastUpdated"/>
         </TableRow>
 
     </TableLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
+        android:background="?android:attr/listDivider"/>
+
+    <ScrollView
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/activity_about_license"/>
+
+    </ScrollView>
 
 </LinearLayout>
