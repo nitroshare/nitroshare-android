@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ShareActivity;
@@ -40,6 +41,8 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
 
         if(savedInstanceState == null) {
             showDirectory(null);
+            Toast.makeText(this, getText(R.string.activity_explorer_hint),
+                    Toast.LENGTH_SHORT).show();
         }
     }
 

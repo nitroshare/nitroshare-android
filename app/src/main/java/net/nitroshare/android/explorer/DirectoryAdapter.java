@@ -1,6 +1,8 @@
 package net.nitroshare.android.explorer;
 
 import android.content.Context;
+import android.net.Uri;
+import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -12,6 +14,7 @@ import android.widget.TextView;
 import net.nitroshare.android.R;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -20,12 +23,19 @@ import java.util.Comparator;
  */
 class DirectoryAdapter extends ArrayAdapter<File> {
 
-    private Context mContext;
-    private boolean[] mChecked;
+    interface Listener {
+        void onAllItemsDeselected();
+    }
 
-    DirectoryAdapter(String directory, Context context) {
+    private Context mContext;
+    private Listener mListener;
+    private boolean mCheckboxes = false;
+    private SparseArray<File> mChecked = new SparseArray<>();
+
+    DirectoryAdapter(String directory, Context context, Listener listener) {
         super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
         mContext = context;
+        mListener = listener;
 
         File[] files = new File(directory).listFiles();
         Arrays.sort(files, new Comparator<File>() {
@@ -41,8 +51,47 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         for (File file : files) {
             add(file);
         }
+    }
 
-        mChecked = new boolean[getCount()];
+    /**
+     * Activate checkboxes for the list view items
+     */
+    void activateCheckboxes(int position) {
+        mCheckboxes = true;
+        mChecked.put(position, getItem(position));
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Deactivate checkboxes for the list view items
+     */
+    void deactivateCheckboxes() {
+        mCheckboxes = false;
+        mChecked.clear();
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Toggle the checkbox for the item at position
+     */
+    void toggleItem(int position) {
+        if (mChecked.indexOfKey(position) < 0) {
+            mChecked.put(position, getItem(position));
+        } else {
+            mChecked.remove(position);
+        }
+        notifyDataSetChanged();
+    }
+
+    /**
+     * Retrieve a list of URIs containing all checked items
+     */
+    ArrayList<Uri> getUris() {
+        ArrayList<Uri> uris = new ArrayList<>();
+        for (int i = 0; i < mChecked.size(); ++i) {
+            uris.add(Uri.fromFile(mChecked.valueAt(i)));
+        }
+        return uris;
     }
 
     private String getDirectorySummary(File directory) {
@@ -76,14 +125,26 @@ class DirectoryAdapter extends ArrayAdapter<File> {
                 file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
         );
         CheckBox checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
-        checkBox.setOnCheckedChangeListener(null);
-        checkBox.setChecked(mChecked[position]);
-        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                mChecked[position] = isChecked;
-            }
-        });
+        if (mCheckboxes) {
+            checkBox.setOnCheckedChangeListener(null);
+            checkBox.setChecked(mChecked.indexOfKey(position) >= 0);
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        mChecked.put(position, getItem(position));
+                    } else {
+                        mChecked.remove(position);
+                        if (mChecked.size() == 0) {
+                            mListener.onAllItemsDeselected();
+                        }
+                    }
+                }
+            });
+            checkBox.setVisibility(View.VISIBLE);
+        } else {
+            checkBox.setVisibility(View.GONE);
+        }
         return view;
     }
 }
