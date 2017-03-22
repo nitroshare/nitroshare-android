@@ -50,23 +50,23 @@ class TransferWrapper {
         }
     }
 
-    private int mId = sNotificationId.incrementAndGet();
+    private int mId;
     private Context mContext;
     private Transfer mTransfer;
     private SharedPreferences mSharedPreferences;
-    private TransferNotificationManager mTransferNotificationManager;
-    private MediaScannerConnection mMediaScannerConnection;
     private Notification.Builder mNotificationBuilder;
+    private TransferNotificationManager mTransferNotificationManager;
+    private Intent mRetryIntent;
+    private MediaScannerConnection mMediaScannerConnection;
 
     /**
      * Create a notification using the provided text
-     * @param playSound whether a notification sound should be played or not
      * @return newly created notification
      */
-    private Notification.Builder createNotification(boolean playSound) {
+    private Notification.Builder createNotification() {
         Notification.Builder notificationBuilder = new Notification.Builder(mContext)
                 .setContentTitle(mContext.getString(R.string.service_transfer_title));
-        if (playSound && mSharedPreferences.getBoolean(mContext.getString(
+        if (mSharedPreferences.getBoolean(mContext.getString(
                 R.string.setting_notification_sound), false)) {
             notificationBuilder.setDefaults(Notification.DEFAULT_SOUND);
         }
@@ -138,7 +138,7 @@ class TransferWrapper {
         @Override
         public void onSuccess() {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
-            Notification.Builder notificationBuilder = createNotification(true)
+            Notification.Builder notificationBuilder = createNotification()
                     .setContentText(
                             mContext.getString(
                                     R.string.service_transfer_status_success,
@@ -154,9 +154,17 @@ class TransferWrapper {
         @Override
         public void onError(String message) {
             Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
+            int newId = sNotificationId.incrementAndGet();
+            mRetryIntent.putExtra(TransferService.EXTRA_ID, newId);
+            //noinspection deprecation
             mTransferNotificationManager.update(
-                    sNotificationId.incrementAndGet(),
-                    createNotification(true)
+                    newId,
+                    createNotification()
+                            .addAction(
+                                    R.drawable.ic_action_retry,
+                                    mContext.getString(R.string.service_transfer_action_retry),
+                                    PendingIntent.getService(mContext, 0, mRetryIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+                            )
                             .setContentText(
                                     mContext.getString(
                                             R.string.service_transfer_status_error,
@@ -183,14 +191,26 @@ class TransferWrapper {
     }
 
     /**
-     * Create a pending intent for stopping the transfer
-     * @return newly created pending intent
+     * Create the ongoing notification to show during the transfer
+     *
+     * I haven't figured out how to avoid the deprecation warning with
+     * addAction() without breaking backwards compatibility.
      */
-    private PendingIntent createStopPendingIntent() {
+    private Notification.Builder createOngoingNotification() {
+        Notification.Builder builder = new Notification.Builder(mContext);
+        builder.setContentTitle(mContext.getString(R.string.service_transfer_title));
         Intent stopIntent = new Intent(mContext, TransferService.class)
                 .setAction(TransferService.ACTION_STOP_TRANSFER)
                 .putExtra(TransferService.EXTRA_TRANSFER, mId);
-        return PendingIntent.getService(mContext, 0, stopIntent, 0);
+        //noinspection deprecation
+        builder.addAction(
+                R.drawable.ic_action_stop,
+                mContext.getString(R.string.service_transfer_action_stop),
+                PendingIntent.getService(mContext, 0, stopIntent, 0)
+        );
+        builder.setSmallIcon(icon(false));
+        builder.setProgress(0, 0, true);
+        return builder;
     }
 
     /**
@@ -198,37 +218,29 @@ class TransferWrapper {
      * @param context context for retrieving string resources
      * @param transfer transfer to wrap
      * @param transferNotificationManager notification manager
+     * @param intent intent used to start the transfer (or null)
      */
-    TransferWrapper(Context context, Transfer transfer, TransferNotificationManager transferNotificationManager) {
+    TransferWrapper(Context context, Transfer transfer, TransferNotificationManager transferNotificationManager, Intent intent) {
+        mId = intent.getIntExtra(TransferService.EXTRA_ID, 0);
+        if (mId == 0) {
+            mId = sNotificationId.incrementAndGet();
+        }
         mContext = context;
         mTransfer = transfer;
         mTransfer.setListener(new TransferListener());
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        mNotificationBuilder = createOngoingNotification();
         mTransferNotificationManager = transferNotificationManager;
-        mNotificationBuilder = createNotification(false)
-                .addAction(
-                        R.drawable.ic_action_stop,
-                        mContext.getString(R.string.service_transfer_action_stop),
-                        createStopPendingIntent()
-                )
-                .setContentText(
-                        mContext.getString(
-                                mTransfer.getDirection() == Transfer.Direction.Receive ?
-                                        R.string.service_transfer_status_receiving :
-                                        R.string.service_transfer_status_connecting,
-                                mTransfer.getRemoteDeviceName()
-                        )
-                )
-                .setSmallIcon(icon(false))
-                .setProgress(0, 0, true);
+        mTransferNotificationManager.start(mId, mNotificationBuilder.build());
+        mRetryIntent = intent;
+
+        Log.i(TAG, String.format("created transfer #%d", mId));
         synchronized (sActiveTransfers) {
             sActiveTransfers.append(mId, this);
         }
-        mTransferNotificationManager.start(mId, mNotificationBuilder.build());
-        Log.i(TAG, String.format("created transfer #%d", mId));
 
         // When receiving items, connect to the media scanner first so that the
-        // the files can be passed to it
+        // the files can be passed to it immediately
         if (mTransfer.getDirection() == Transfer.Direction.Receive) {
             mMediaScannerConnection = new MediaScannerConnection(mContext, new MediaScannerConnection.MediaScannerConnectionClient() {
                 @Override

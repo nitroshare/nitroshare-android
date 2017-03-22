@@ -37,15 +37,16 @@ public class TransferService extends Service {
 
     private static final String TAG = "TransferService";
 
-    public static final String ACTION_START_LISTENING = "start_listening";
-    public static final String ACTION_STOP_LISTENING = "stop_listening";
+    public static final String ACTION_START_LISTENING = "net.nitroshare.android.START_LISTENING";
+    public static final String ACTION_STOP_LISTENING = "net.nitroshare.android.STOP_LISTENING";
 
-    public static final String ACTION_START_TRANSFER = "start_transfer";
-    public static final String EXTRA_DEVICE = "device";
-    public static final String EXTRA_URIS = "urls";
+    public static final String ACTION_START_TRANSFER = "net.nitroshare.android.START_TRANSFER";
+    public static final String EXTRA_DEVICE = "net.nitroshare.android.DEVICE";
+    public static final String EXTRA_URIS = "net.nitroshare.android.URLS";
+    public static final String EXTRA_ID = "net.nitroshare.android.ID";
 
-    public static final String ACTION_STOP_TRANSFER = "stop_transfer";
-    public static final String EXTRA_TRANSFER = "transfer";
+    public static final String ACTION_STOP_TRANSFER = "net.nitroshare.android.STOP_TRANSFER";
+    public static final String EXTRA_TRANSFER = "net.nitroshare.android.TRANSFER";
 
     /**
      * Start or stop the service
@@ -215,7 +216,8 @@ public class TransferService extends Service {
             new TransferWrapper(
                     this,
                     new Transfer(device, deviceName, bundle),
-                    mTransferNotificationManager
+                    mTransferNotificationManager,
+                    intent
             );
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
@@ -245,7 +247,7 @@ public class TransferService extends Service {
             case ACTION_STOP_TRANSFER:
                 return stopTransfer(intent);
         }
-        return 0;
+        return START_NOT_STICKY;
     }
 
     @Override

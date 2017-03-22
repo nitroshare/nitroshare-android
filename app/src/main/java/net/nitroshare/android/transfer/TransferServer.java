@@ -182,7 +182,8 @@ class TransferServer implements Runnable {
                                     overwrite,
                                     unknownDeviceName
                             ),
-                            mTransferNotificationManager
+                            mTransferNotificationManager,
+                            null
                     );
                 }
             }
