@@ -376,8 +376,7 @@ public class Transfer implements Runnable {
                     mSelector,
                     mDirection == Direction.Receive ?
                             SelectionKey.OP_READ :
-                            SelectionKey.OP_CONNECT | SelectionKey.OP_READ |
-                                    SelectionKey.OP_WRITE
+                            SelectionKey.OP_CONNECT
             );
 
             // For a sending transfer, connect to the remote device
