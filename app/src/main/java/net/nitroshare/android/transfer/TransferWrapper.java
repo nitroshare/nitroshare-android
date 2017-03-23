@@ -1,6 +1,5 @@
 package net.nitroshare.android.transfer;
 
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +7,7 @@ import android.content.SharedPreferences;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -54,7 +54,7 @@ class TransferWrapper {
     private Context mContext;
     private Transfer mTransfer;
     private SharedPreferences mSharedPreferences;
-    private Notification.Builder mNotificationBuilder;
+    private NotificationCompat.Builder mNotificationBuilder;
     private TransferNotificationManager mTransferNotificationManager;
     private Intent mRetryIntent;
     private MediaScannerConnection mMediaScannerConnection;
@@ -63,12 +63,12 @@ class TransferWrapper {
      * Create a notification using the provided text
      * @return newly created notification
      */
-    private Notification.Builder createNotification() {
-        Notification.Builder notificationBuilder = new Notification.Builder(mContext)
+    private NotificationCompat.Builder createNotification() {
+        NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mContext)
                 .setContentTitle(mContext.getString(R.string.service_transfer_title));
         if (mSharedPreferences.getBoolean(mContext.getString(
                 R.string.setting_notification_sound), false)) {
-            notificationBuilder.setDefaults(Notification.DEFAULT_SOUND);
+            notificationBuilder.setDefaults(NotificationCompat.DEFAULT_SOUND);
         }
         return notificationBuilder;
     }
@@ -138,16 +138,16 @@ class TransferWrapper {
         @Override
         public void onSuccess() {
             Log.i(TAG, String.format("transfer #%d succeeded", mId));
-            Notification.Builder notificationBuilder = createNotification()
-                    .setContentText(
-                            mContext.getString(
-                                    R.string.service_transfer_status_success,
-                                    mTransfer.getRemoteDeviceName()
-                            )
-                    )
+            String contentText = mContext.getString(
+                    R.string.service_transfer_status_success,
+                    mTransfer.getRemoteDeviceName()
+            );
+            NotificationCompat.Builder builder = createNotification()
+                    .setContentText(contentText)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
                     .setSmallIcon(icon(true));
             mTransferNotificationManager.update(
-                    sNotificationId.incrementAndGet(), notificationBuilder.build()
+                    sNotificationId.incrementAndGet(), builder.build()
             );
         }
 
@@ -156,25 +156,22 @@ class TransferWrapper {
             Log.i(TAG, String.format("transfer #%d failed: %s", mId, message));
             int newId = sNotificationId.incrementAndGet();
             mRetryIntent.putExtra(TransferService.EXTRA_ID, newId);
-            //noinspection deprecation
-            mTransferNotificationManager.update(
-                    newId,
-                    createNotification()
-                            .addAction(
-                                    R.drawable.ic_action_retry,
-                                    mContext.getString(R.string.service_transfer_action_retry),
-                                    PendingIntent.getService(mContext, 0, mRetryIntent, PendingIntent.FLAG_UPDATE_CURRENT)
-                            )
-                            .setContentText(
-                                    mContext.getString(
-                                            R.string.service_transfer_status_error,
-                                            mTransfer.getRemoteDeviceName(),
-                                            message
-                                    )
-                            )
-                            .setSmallIcon(icon(true))
-                            .build()
+            String contentText = mContext.getString(
+                    R.string.service_transfer_status_error,
+                    mTransfer.getRemoteDeviceName(),
+                    message
             );
+            NotificationCompat.Builder builder = createNotification()
+                    .addAction(
+                            R.drawable.ic_action_retry,
+                            mContext.getString(R.string.service_transfer_action_retry),
+                            PendingIntent.getService(mContext, 0, mRetryIntent,
+                                    PendingIntent.FLAG_UPDATE_CURRENT)
+                    )
+                    .setContentText(contentText)
+                    .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
+                    .setSmallIcon(icon(true));
+            mTransferNotificationManager.update(newId, builder.build());
         }
 
         @Override
@@ -196,13 +193,12 @@ class TransferWrapper {
      * I haven't figured out how to avoid the deprecation warning with
      * addAction() without breaking backwards compatibility.
      */
-    private Notification.Builder createOngoingNotification() {
-        Notification.Builder builder = new Notification.Builder(mContext);
+    private NotificationCompat.Builder createOngoingNotification() {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext);
         builder.setContentTitle(mContext.getString(R.string.service_transfer_title));
         Intent stopIntent = new Intent(mContext, TransferService.class)
                 .setAction(TransferService.ACTION_STOP_TRANSFER)
                 .putExtra(TransferService.EXTRA_TRANSFER, mId);
-        //noinspection deprecation
         builder.addAction(
                 R.drawable.ic_action_stop,
                 mContext.getString(R.string.service_transfer_action_stop),
