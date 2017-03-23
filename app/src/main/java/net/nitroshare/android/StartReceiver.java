@@ -9,9 +9,9 @@ import android.preference.PreferenceManager;
 import net.nitroshare.android.transfer.TransferService;
 
 /**
- * Starts the transfer service upon boot (if enabled)
+ * Starts the transfer service
  */
-public class BootReceiver extends BroadcastReceiver {
+public class StartReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
