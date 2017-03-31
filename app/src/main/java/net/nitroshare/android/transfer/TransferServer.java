@@ -11,7 +11,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import net.nitroshare.android.MainActivity;
+import net.nitroshare.android.ui.MainActivity;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 
@@ -21,8 +21,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 /**

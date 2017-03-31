@@ -1,4 +1,4 @@
-package net.nitroshare.android;
+package net.nitroshare.android.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.youview.tinydnssd.DiscoverResolver;
 import com.youview.tinydnssd.MDNSDiscover;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.transfer.TransferService;
 

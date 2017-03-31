@@ -20,14 +20,14 @@
 
         <!-- Intro activity -->
         <activity
-            android:name=".MainIntroActivity"
+            android:name=".ui.MainIntroActivity"
             android:exported="false"
             android:theme="@style/Theme.Intro">
         </activity>
 
         <!-- Main activity -->
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -40,11 +40,11 @@
         <activity
             android:name=".explorer.ExplorerActivity"
             android:label="@string/activity_explorer"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".ui.MainActivity"/>
 
         <!-- Share activity -->
         <activity
-            android:name=".ShareActivity"
+            android:name=".ui.ShareActivity"
             android:label="@string/activity_share">
             <intent-filter>
                 <action android:name="android.intent.action.SEND"/>
@@ -58,15 +58,15 @@
 
         <!-- Settings activity -->
         <activity
-            android:name=".SettingsActivity"
+            android:name=".ui.SettingsActivity"
             android:label="@string/activity_settings"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".ui.MainActivity"/>
 
         <!-- About activity -->
         <activity
-            android:name=".AboutActivity"
+            android:name=".ui.AboutActivity"
             android:label="@string/activity_about"
-            android:parentActivityName=".MainActivity"/>
+            android:parentActivityName=".ui.MainActivity"/>
 
         <!-- Service for transfers -->
         <service
@@ -75,7 +75,7 @@
             android:exported="false"/>
 
         <!-- Receiver for actions that might require the service to start -->
-        <receiver android:name=".StartReceiver">
+        <receiver android:name=".misc.StartReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>

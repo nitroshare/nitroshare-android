@@ -1,10 +1,12 @@
-package net.nitroshare.android;
+package net.nitroshare.android.ui;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
+
+import net.nitroshare.android.R;
 
 import java.text.DateFormat;
 import java.util.Date;

@@ -8,7 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.Toast;
 
 import net.nitroshare.android.R;
-import net.nitroshare.android.ShareActivity;
+import net.nitroshare.android.ui.ShareActivity;
 
 import java.util.ArrayList;
 

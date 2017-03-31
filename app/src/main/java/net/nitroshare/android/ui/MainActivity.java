@@ -1,4 +1,4 @@
-package net.nitroshare.android;
+package net.nitroshare.android.ui;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
 

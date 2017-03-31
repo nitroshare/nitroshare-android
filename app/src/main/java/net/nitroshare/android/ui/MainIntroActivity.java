@@ -1,10 +1,12 @@
-package net.nitroshare.android;
+package net.nitroshare.android.ui;
 
 import android.Manifest;
 import android.os.Bundle;
 
 import com.heinrichreimersoftware.materialintro.app.IntroActivity;
 import com.heinrichreimersoftware.materialintro.slide.SimpleSlide;
+
+import net.nitroshare.android.R;
 
 /**
  * Display an interactive introduction to the application

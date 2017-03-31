@@ -1,4 +1,4 @@
-package net.nitroshare.android;
+package net.nitroshare.android.misc;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
 
 /**

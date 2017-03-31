@@ -1,4 +1,4 @@
-package net.nitroshare.android;
+package net.nitroshare.android.ui;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
 
 /**
