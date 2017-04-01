@@ -12,6 +12,9 @@
     <string name="setting_behavior_overwrite" translatable="false">overwrite</string>
     <string name="setting_notification_sound" translatable="false">notificationSound</string>
 
+    <!-- Main activity -->
+    <string name="activity_main_empty_text">No transfers in progress</string>
+
     <!-- Intro activity -->
     <string name="activity_intro_intro_title">Introduction</string>
     <string name="activity_intro_intro_description">NitroShare makes it easy to send files to other devices on your local network.</string>
@@ -64,5 +67,11 @@
     <string name="service_transfer_status_success">Transfer with %1$s completed</string>
     <string name="service_transfer_status_error">Transfer with %1$s failed: %2$s</string>
     <string name="service_transfer_unknown_device">[unknown]</string>
+
+    <!-- Transfer adapter -->
+    <string name="adapter_transfer_connecting">Connecting...</string>
+    <string name="adapter_transfer_transferring">Transferring: %1$d%%</string>
+    <string name="adapter_transfer_failed">Failed: %1$s</string>
+    <string name="adapter_transfer_succeeded">Succeeded</string>
 
 </resources>
