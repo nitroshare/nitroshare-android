@@ -50,7 +50,7 @@ public class Transfer implements Runnable {
      * Listener for transfer progress events
      */
     interface ProgressListener {
-        void onProgress(int progress);
+        void onProgress();
     }
 
     /**
@@ -71,7 +71,7 @@ public class Transfer implements Runnable {
      * Listener for an error causing the transfer to abort
      */
     interface ErrorListener {
-        void onError(String message);
+        void onError();
     }
 
     /**
@@ -93,6 +93,16 @@ public class Transfer implements Runnable {
     }
 
     /**
+     * State of the transfer
+     */
+    enum State {
+        Connecting,
+        Transferring,
+        Failed,
+        Succeeded,
+    };
+
+    /**
      * Transfer header
      */
     private class TransferHeader {
@@ -101,13 +111,15 @@ public class Transfer implements Runnable {
         String size;
     }
 
-    // State of the transfer
-    private enum State {
+    // Internal state of the transfer
+    private enum InternalState {
         TransferHeader,
         ItemHeader,
         ItemContent,
         Finished,
     }
+
+    private final Object mSync = new Object();
 
     private volatile boolean mStop = false;
     private Selector mSelector = Selector.open();
@@ -120,7 +132,8 @@ public class Transfer implements Runnable {
     private Bundle mBundle;
 
     private Direction mDirection;
-    private State mState = State.TransferHeader;
+    private State mState;
+    private InternalState mInternalState = InternalState.TransferHeader;
 
     private Packet mReceivingPacket;
     private Packet mSendingPacket;
@@ -134,6 +147,7 @@ public class Transfer implements Runnable {
     private long mItemBytesRemaining;
 
     private int mProgress;
+    private String mError;
 
     private final List<ConnectListener> mConnectListeners = new ArrayList<>();
     private final List<HeaderListener> mHeaderListeners = new ArrayList<>();
@@ -158,6 +172,7 @@ public class Transfer implements Runnable {
         mTransferDirectory = transferDirectory;
         mOverwrite = overwrite;
         mDirection = Direction.Receive;
+        mState = State.Transferring;
     }
 
     /**
@@ -174,6 +189,7 @@ public class Transfer implements Runnable {
         mDeviceName = deviceName;
         mBundle = bundle;
         mDirection = Direction.Send;
+        mState = State.Connecting;
         mTransferItems = mBundle.size();
         mTransferBytesTotal = mBundle.getTotalSize();
     }
@@ -240,11 +256,37 @@ public class Transfer implements Runnable {
      * @return remote device name
      */
     String getRemoteDeviceName() {
-        return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
+        synchronized (mSync) {
+            return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
+        }
     }
 
     /**
-     * Close the socket, effectively aborting the transfer
+     * Retrieve the current state of the transfer
+     */
+    State getState() {
+        synchronized (mSync) {
+            return mState;
+        }
+    }
+
+    /**
+     * Retrieve the current progress of the transfer
+     */
+    int getProgress() {
+        synchronized (mSync) {
+            return mProgress;
+        }
+    }
+
+    String getError() {
+        synchronized (mSync) {
+            return mError;
+        }
+    }
+
+    /**
+     * Close the socket and wake the selector, effectively aborting the transfer
      */
     void stop() {
         mStop = true;
@@ -255,12 +297,14 @@ public class Transfer implements Runnable {
      * Update the progress notification
      */
     private void updateProgress() {
-        int oldProgress = mProgress;
-        mProgress = (int) (100.0 * (mTransferBytesTotal != 0 ?
+        int newProgress = (int) (100.0 * (mTransferBytesTotal != 0 ?
                 (double) mTransferBytesTransferred / (double) mTransferBytesTotal : 0.0));
-        if (mProgress != oldProgress) {
+        if (newProgress != mProgress) {
+            synchronized (mSync) {
+                mProgress = newProgress;
+            }
             for (ProgressListener progressListener : mProgressListeners) {
-                progressListener.onProgress(mProgress);
+                progressListener.onProgress();
             }
         }
     }
@@ -278,10 +322,12 @@ public class Transfer implements Runnable {
         } catch (JsonSyntaxException e) {
             throw new IOException(e.getMessage());
         }
-        mDeviceName = transferHeader.name;
+        synchronized (mSync) {
+            mDeviceName = transferHeader.name;
+        }
         mTransferItems = Integer.parseInt(transferHeader.count);
         mTransferBytesTotal = Long.parseLong(transferHeader.size);
-        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         for (HeaderListener headerListener : mHeaderListeners) {
             headerListener.onHeader();
         }
@@ -310,12 +356,12 @@ public class Transfer implements Runnable {
         }
         long itemSize = mItem.getLongProperty(Item.SIZE, true);
         if (itemSize != 0) {
-            mState = State.ItemContent;
+            mInternalState = InternalState.ItemContent;
             mItem.open(Item.Mode.Write);
             mItemBytesRemaining = itemSize;
         } else {
             mItemIndex += 1;
-            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         }
     }
 
@@ -335,7 +381,7 @@ public class Transfer implements Runnable {
                 itemListener.onItem(mItem);
             }
             mItemIndex += 1;
-            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         }
     }
 
@@ -355,19 +401,19 @@ public class Transfer implements Runnable {
                         Charset.forName("UTF-8")));
             }
             if (mDirection == Direction.Receive) {
-                if (mState == State.TransferHeader && mReceivingPacket.getType() == Packet.JSON) {
+                if (mInternalState == InternalState.TransferHeader && mReceivingPacket.getType() == Packet.JSON) {
                     processTransferHeader();
-                } else if (mState == State.ItemHeader && mReceivingPacket.getType() == Packet.JSON) {
+                } else if (mInternalState == InternalState.ItemHeader && mReceivingPacket.getType() == Packet.JSON) {
                     processItemHeader();
-                } else if (mState == State.ItemContent && mReceivingPacket.getType() == Packet.BINARY) {
+                } else if (mInternalState == InternalState.ItemContent && mReceivingPacket.getType() == Packet.BINARY) {
                     processItemContent();
                 } else {
                     throw new IOException("unexpected packet");
                 }
                 mReceivingPacket = null;
-                return mState != State.Finished;
+                return mInternalState != InternalState.Finished;
             } else {
-                if (mState == State.Finished && mReceivingPacket.getType() == Packet.SUCCESS) {
+                if (mInternalState == InternalState.Finished && mReceivingPacket.getType() == Packet.SUCCESS) {
                     return false;
                 } else {
                     throw new IOException("unexpected packet");
@@ -387,7 +433,7 @@ public class Transfer implements Runnable {
         map.put("size", Long.toString(mBundle.getTotalSize()));
         mSendingPacket = new Packet(Packet.JSON, mGson.toJson(map).getBytes(
                 Charset.forName("UTF-8")));
-        mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+        mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
     }
 
     /**
@@ -400,12 +446,12 @@ public class Transfer implements Runnable {
                 mItem.getProperties()).getBytes(Charset.forName("UTF-8")));
         long itemSize = mItem.getLongProperty(Item.SIZE, true);
         if (itemSize != 0) {
-            mState = State.ItemContent;
+            mInternalState = InternalState.ItemContent;
             mItem.open(Item.Mode.Read);
             mItemBytesRemaining = itemSize;
         } else {
             mItemIndex += 1;
-            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         }
     }
 
@@ -423,7 +469,7 @@ public class Transfer implements Runnable {
         if (mItemBytesRemaining <= 0) {
             mItem.close();
             mItemIndex += 1;
-            mState = mItemIndex == mTransferItems ? State.Finished : State.ItemHeader;
+            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         }
     }
 
@@ -437,7 +483,7 @@ public class Transfer implements Runnable {
             if (mDirection == Direction.Receive) {
                 mSendingPacket = new Packet(Packet.SUCCESS);
             } else {
-                switch (mState) {
+                switch (mInternalState) {
                     case TransferHeader:
                         sendTransferHeader();
                         break;
@@ -455,7 +501,7 @@ public class Transfer implements Runnable {
         mSocketChannel.write(mSendingPacket.getBuffer());
         if (mSendingPacket.isFull()) {
             mSendingPacket = null;
-            return mState != State.Finished;
+            return mInternalState != InternalState.Finished;
         }
         return true;
     }
@@ -487,6 +533,10 @@ public class Transfer implements Runnable {
                 if (selectionKey.isConnectable()) {
                     mSocketChannel.finishConnect();
                     selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+
+                    synchronized (mSync) {
+                        mState = State.Transferring;
+                    }
                     for (ConnectListener connectListener : mConnectListeners) {
                         connectListener.onConnect();
                     }
@@ -520,13 +570,20 @@ public class Transfer implements Runnable {
             }
 
             // Indicate success
+            synchronized (mSync) {
+                mState = State.Succeeded;
+            }
             for (SuccessListener successListener : mSuccessListeners) {
                 successListener.onSuccess();
             }
 
         } catch (IOException e) {
+            synchronized (mSync) {
+                mState = State.Failed;
+                mError = e.getMessage();
+            }
             for (ErrorListener errorListener : mErrorListeners) {
-                errorListener.onError(e.getMessage());
+                errorListener.onError();
             }
         }
 
