@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.WebView;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.explorer.ExplorerActivity;
@@ -28,13 +27,15 @@ public class MainActivity extends AppCompatActivity {
      */
     private void finishInit() {
 
-        // Display the README
-        WebView webView = (WebView) findViewById(R.id.webview);
-        webView.loadUrl("file:///android_asset/readme.html");
-
         // Launch the transfer service if it isn't already running
         TransferService.startStopService(this, mSharedPreferences.getBoolean(
                 getString(R.string.setting_behavior_receive), true));
+
+        MainFragment mainFragment = new MainFragment();
+        getSupportFragmentManager()
+                .beginTransaction()
+                .add(R.id.list_container, mainFragment)
+                .commit();
     }
 
     @Override
