@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -69,16 +70,25 @@ public class TransferService extends Service {
     private TransferServer mTransferServer;
     private SharedPreferences mSharedPreferences;
 
+    private TransferAdapter mTransferAdapter;
+
     @Override
     public void onCreate() {
         super.onCreate();
+
         mTransferNotificationManager = new TransferNotificationManager(this);
         try {
-            mTransferServer = new TransferServer(this, mTransferNotificationManager);
+            mTransferServer = new TransferServer(this, mTransferNotificationManager, new TransferServer.Listener() {
+                @Override
+                public void onNewTransfer(Transfer transfer) {
+                    mTransferAdapter.addTransfer(transfer, null);
+                }
+            });
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mTransferAdapter = new TransferAdapter(this, mTransferNotificationManager);
     }
 
     /**
@@ -213,10 +223,8 @@ public class TransferService extends Service {
         // Add each of the items to the bundle and send it
         try {
             Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
-            new TransferWrapper(
-                    this,
+            mTransferAdapter.addTransfer(
                     new Transfer(device, deviceName, bundle),
-                    mTransferNotificationManager,
                     intent
             );
         } catch (IOException e) {
@@ -231,7 +239,7 @@ public class TransferService extends Service {
      * Stop a transfer in progress
      */
     private int stopTransfer(Intent intent) {
-        TransferWrapper.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        mTransferAdapter.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
         return START_NOT_STICKY;
     }
 

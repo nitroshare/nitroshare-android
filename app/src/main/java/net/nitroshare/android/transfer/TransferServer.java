@@ -31,10 +31,15 @@ class TransferServer implements Runnable {
     private static final String TAG = "TransferServer";
     private static final int NOTIFICATION_ID = 1;
 
+    interface Listener {
+        void onNewTransfer(Transfer transfer);
+    }
+
     private Thread mThread = new Thread(this);
     private boolean mStop;
 
     private Context mContext;
+    private Listener mListener;
     private TransferNotificationManager mTransferNotificationManager;
     private SharedPreferences mSharedPreferences;
     private Selector mSelector = Selector.open();
@@ -65,11 +70,13 @@ class TransferServer implements Runnable {
      * Create a new transfer server
      * @param context context for retrieving string resources
      * @param transferNotificationManager notification manager
+     * @param listener callback for new transfers
      * @throws IOException
      */
-    TransferServer(Context context, TransferNotificationManager transferNotificationManager) throws IOException {
+    TransferServer(Context context, TransferNotificationManager transferNotificationManager, Listener listener) throws IOException {
         mContext = context;
         mTransferNotificationManager = transferNotificationManager;
+        mListener = listener;
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
     }
 
@@ -172,16 +179,13 @@ class TransferServer implements Runnable {
                     );
                     String unknownDeviceName = mContext.getString(
                             R.string.service_transfer_unknown_device);
-                    new TransferWrapper(
-                            mContext,
+                    mListener.onNewTransfer(
                             new Transfer(
                                     socketChannel,
                                     transferDirectory,
                                     overwrite,
                                     unknownDeviceName
-                            ),
-                            mTransferNotificationManager,
-                            null
+                            )
                     );
                 }
             }

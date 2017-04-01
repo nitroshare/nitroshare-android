@@ -22,7 +22,8 @@ class TransferWrapper implements
         Transfer.ConnectListener,
         Transfer.HeaderListener,
         Transfer.ItemListener,
-        Transfer.ProgressListener {
+        Transfer.ProgressListener,
+        Transfer.FinishListener {
 
     private static final String TAG = "TransferWrapper";
 
@@ -31,6 +32,7 @@ class TransferWrapper implements
     private Transfer mTransfer;
     private TransferNotificationManager mTransferNotificationManager;
 
+    // TODO: do this in the adapter
     private MediaScannerConnection mMediaScannerConnection;
 
     private NotificationCompat.Builder mBuilder;
@@ -135,6 +137,13 @@ class TransferWrapper implements
     }
 
     /**
+     * Retrieve the ID of the transfer
+     */
+    public int getId() {
+        return mId;
+    }
+
+    /**
      * Retrieve the transfer being wrapped
      */
     public Transfer getTransfer() {
@@ -184,6 +193,13 @@ class TransferWrapper implements
             mBuilder.setProgress(100, progress, false);
             mLastTimestamp = currentTimestamp;
             updateNotification();
+        }
+    }
+
+    @Override
+    public void onFinish() {
+        if (mMediaScannerConnection != null) {
+            mMediaScannerConnection.disconnect();
         }
     }
 }
