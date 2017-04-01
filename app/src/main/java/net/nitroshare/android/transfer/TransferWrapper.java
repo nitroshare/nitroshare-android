@@ -41,7 +41,7 @@ class TransferWrapper implements
     /**
      * Retrieve the correct icon to display for transfers
      */
-    private int icon(boolean done) {
+    public int icon(boolean done) {
         return mTransfer.getDirection() == Transfer.Direction.Receive ?
                 (done ? android.R.drawable.stat_sys_download_done :
                         android.R.drawable.stat_sys_download) :
@@ -185,12 +185,10 @@ class TransferWrapper implements
     }
 
     @Override
-    public void onProgress(int progress) {
-
-        // By using a timestamp, we can ensure that the notification isn't
+    public void onProgress() {
         long currentTimestamp = System.currentTimeMillis();
         if (currentTimestamp - mLastTimestamp >= 1000) {
-            mBuilder.setProgress(100, progress, false);
+            mBuilder.setProgress(100, mTransfer.getProgress(), false);
             mLastTimestamp = currentTimestamp;
             updateNotification();
         }
