@@ -258,8 +258,19 @@ public class TransferService extends Service {
         return START_NOT_STICKY;
     }
 
+    private final IBinder mBinder = new TransferBinder();
+
+    /**
+     * Interface for interacting with the service from an activity
+     */
+    public class TransferBinder extends Binder {
+        public TransferAdapter getAdapter() {
+            return mTransferAdapter;
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        return mBinder;
     }
 }
