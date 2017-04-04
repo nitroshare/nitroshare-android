@@ -1,19 +1,10 @@
 package net.nitroshare.android.ui.transfer;
 
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.ServiceConnection;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.v4.app.ListFragment;
-import android.util.Log;
 import android.view.View;
 
-import com.wdullaer.swipeactionadapter.SwipeActionAdapter;
-import com.wdullaer.swipeactionadapter.SwipeDirection;
-
 import net.nitroshare.android.R;
-import net.nitroshare.android.transfer.TransferService;
 
 /**
  * Display list of current transfers
