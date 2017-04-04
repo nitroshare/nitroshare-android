@@ -81,6 +81,7 @@ public class TransferService extends Service {
             mTransferServer = new TransferServer(this, mTransferNotificationManager, new TransferServer.Listener() {
                 @Override
                 public void onNewTransfer(Transfer transfer) {
+                    transfer.setId(mTransferNotificationManager.nextId());
                     mTransferManager.addTransfer(transfer, null);
                 }
             });
@@ -223,10 +224,13 @@ public class TransferService extends Service {
         // Add each of the items to the bundle and send it
         try {
             Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
-            mTransferManager.addTransfer(
-                    new Transfer(device, deviceName, bundle),
-                    intent
-            );
+            int nextId = intent.getIntExtra(EXTRA_ID, 0);
+            if (nextId == 0) {
+                nextId = mTransferNotificationManager.nextId();
+            }
+            Transfer transfer = new Transfer(device, deviceName, bundle);
+            transfer.setId(nextId);
+            mTransferManager.addTransfer(transfer, intent);
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
             mTransferNotificationManager.stop();

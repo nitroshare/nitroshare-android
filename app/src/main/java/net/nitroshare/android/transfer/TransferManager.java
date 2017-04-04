@@ -13,8 +13,6 @@ import net.nitroshare.android.R;
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.bundle.Item;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Manage active transfers
  */
@@ -33,7 +31,7 @@ class TransferManager {
     private Context mContext;
     private TransferNotificationManager mTransferNotificationManager;
 
-    private AtomicInteger mNextId = new AtomicInteger(2);
+
     private final SparseArray<Transfer> mTransfers = new SparseArray<>();
 
     private MediaScannerConnection mMediaScannerConnection;
@@ -169,7 +167,7 @@ class TransferManager {
                 Log.i(TAG, String.format("transfer #%d succeeded", transfer.getId()));
 
                 mTransferNotificationManager.show(
-                        mNextId.getAndIncrement(),
+                        mTransferNotificationManager.nextId(),
                         mContext.getString(
                                 R.string.service_transfer_status_success,
                                 transfer.getRemoteDeviceName()
@@ -190,7 +188,7 @@ class TransferManager {
                 // If the transfer is retried, the ongoing notification needs
                 // to use the same ID as the error notification so that it
                 // is replaced
-                int newId = mNextId.getAndIncrement();
+                int newId = mTransferNotificationManager.nextId();
 
                 NotificationCompat.Action action = null;
                 if (transfer.getDirection() == Transfer.Direction.Send) {

@@ -10,6 +10,8 @@ import android.util.SparseArray;
 
 import net.nitroshare.android.R;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Manage notifications and service lifecycle
  *
@@ -31,6 +33,7 @@ class TransferNotificationManager {
     private Service mService;
     private SharedPreferences mSharedPreferences;
     private NotificationManager mNotificationManager;
+    private AtomicInteger mNextId = new AtomicInteger(2);
 
     /**
      * Create a notification manager for the specified service
@@ -120,5 +123,12 @@ class TransferNotificationManager {
             }
         }
         update(id, builder.build());
+    }
+
+    /**
+     * Retrieve the next unique integer ID
+     */
+    int nextId() {
+        return mNextId.getAndIncrement();
     }
 }
