@@ -86,6 +86,21 @@ class TransferServer implements Runnable {
     void start() {
         if (!mThread.isAlive()) {
             mStop = false;
+
+            // Create the notification shown while the server is running
+            PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
+                    new Intent(mContext, TransferActivity.class), 0);
+            mTransferNotificationManager.start(
+                    NOTIFICATION_ID,
+                    new Notification.Builder(mContext)
+                            .setContentIntent(mainIntent)
+                            .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
+                            .setContentText(mContext.getString(R.string.service_transfer_server_text))
+                            .setPriority(Notification.PRIORITY_MIN)
+                            .setSmallIcon(R.drawable.ic_stat_transfer)
+                            .build()
+            );
+
             mThread.start();
         }
     }
@@ -124,20 +139,6 @@ class TransferServer implements Runnable {
             deviceName = Build.MODEL;
         }
         NsdManager nsdManager = null;
-
-        // Create the notification shown while the server is running
-        PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
-                new Intent(mContext, TransferActivity.class), 0);
-        mTransferNotificationManager.start(
-                NOTIFICATION_ID,
-                new Notification.Builder(mContext)
-                        .setContentIntent(mainIntent)
-                        .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
-                        .setContentText(mContext.getString(R.string.service_transfer_server_text))
-                        .setPriority(Notification.PRIORITY_MIN)
-                        .setSmallIcon(R.drawable.ic_stat_transfer)
-                        .build()
-        );
 
         try {
             // Create a server and attempt to bind to a port

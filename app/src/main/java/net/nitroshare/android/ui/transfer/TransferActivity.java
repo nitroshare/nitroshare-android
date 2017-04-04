@@ -29,6 +29,7 @@ public class TransferActivity extends AppCompatActivity {
      * Finish initializing the activity
      */
     private void finishInit() {
+        Log.i(TAG, "finishing initialization of activity");
 
         // Launch the transfer service if it isn't already running
         TransferService.startStopService(this, mSharedPreferences.getBoolean(

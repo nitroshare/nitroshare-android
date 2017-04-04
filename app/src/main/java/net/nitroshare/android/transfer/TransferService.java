@@ -269,6 +269,8 @@ public class TransferService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, String.format("received intent: %s", intent.getAction()));
+
         switch (intent.getAction()) {
             case ACTION_START_LISTENING:
                 return startListening();
@@ -285,6 +287,14 @@ public class TransferService extends Service {
         }
         return START_NOT_STICKY;
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        Log.d(TAG, "service destroyed");
+    }
+
 
     @Override
     public IBinder onBind(Intent intent) {

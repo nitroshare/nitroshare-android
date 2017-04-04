@@ -79,6 +79,8 @@ public class TransferFragment extends ListFragment {
 
         getContext().registerReceiver(mBroadcastReceiver,
                 new IntentFilter(TransferManager.TRANSFER_UPDATED));
+
+        // Get fresh data from the service
         Intent broadcastIntent = new Intent(getContext(), TransferService.class)
                 .setAction(TransferService.ACTION_BROADCAST);
         getContext().startService(broadcastIntent);
