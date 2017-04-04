@@ -13,7 +13,6 @@ import android.view.View;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.AboutActivity;
-import net.nitroshare.android.ui.MainFragment;
 import net.nitroshare.android.ui.MainIntroActivity;
 import net.nitroshare.android.ui.SettingsActivity;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
@@ -35,7 +34,7 @@ public class TransferActivity extends AppCompatActivity {
         TransferService.startStopService(this, mSharedPreferences.getBoolean(
                 getString(R.string.setting_behavior_receive), true));
 
-        MainFragment mainFragment = new MainFragment();
+        TransferFragment mainFragment = new TransferFragment();
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.list_container, mainFragment)

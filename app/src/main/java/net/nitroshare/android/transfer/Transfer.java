@@ -87,7 +87,7 @@ public class Transfer implements Runnable {
     /**
      * Direction of transfer relative to the current device
      */
-    enum Direction {
+    public enum Direction {
         Receive,
         Send,
     }
@@ -95,7 +95,7 @@ public class Transfer implements Runnable {
     /**
      * State of the transfer
      */
-    enum State {
+    public enum State {
         Connecting,
         Transferring,
         Failed,

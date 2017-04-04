@@ -11,7 +11,7 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
-import net.nitroshare.android.ui.MainActivity;
+import net.nitroshare.android.ui.transfer.TransferActivity;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 
@@ -127,7 +127,7 @@ class TransferServer implements Runnable {
 
         // Create the notification shown while the server is running
         PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
-                new Intent(mContext, MainActivity.class), 0);
+                new Intent(mContext, TransferActivity.class), 0);
         mTransferNotificationManager.start(
                 NOTIFICATION_ID,
                 new Notification.Builder(mContext)
