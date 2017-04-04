@@ -31,7 +31,6 @@ public class TransferManager {
     private Context mContext;
     private TransferNotificationManager mTransferNotificationManager;
 
-
     private final SparseArray<Transfer> mTransfers = new SparseArray<>();
 
     private MediaScannerConnection mMediaScannerConnection;
@@ -262,6 +261,15 @@ public class TransferManager {
                 }
                 mTransfers.remove(id);
             }
+        }
+    }
+
+    /**
+     * Trigger a broadcast of all transfers
+     */
+    void broadcastTransfers() {
+        for (int i = 0; i < mTransfers.size(); i++) {
+            broadcastUpdate(mTransfers.valueAt(i));
         }
     }
 }

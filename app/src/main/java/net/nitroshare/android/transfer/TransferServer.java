@@ -24,7 +24,7 @@ import java.nio.channels.SocketChannel;
 import java.util.UUID;
 
 /**
- * Listen for new connections and create TransferWrappers for them
+ * Listen for new connections and create Transfers for them
  */
 class TransferServer implements Runnable {
 
@@ -160,7 +160,7 @@ class TransferServer implements Runnable {
             SelectionKey selectionKey = serverSocketChannel.register(mSelector,
                     SelectionKey.OP_ACCEPT);
 
-            // Create Transfers and TransferWrappers as new connections come in
+            // Create Transfers as new connections come in
             while (true) {
                 mSelector.select();
                 if (mStop) {

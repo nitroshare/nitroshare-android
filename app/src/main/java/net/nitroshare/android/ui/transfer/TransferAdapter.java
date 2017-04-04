@@ -14,6 +14,7 @@ import android.widget.TextView;
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.Transfer;
 import net.nitroshare.android.transfer.TransferManager;
+import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.ui.TintableButton;
 
 /**
@@ -81,7 +82,7 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
         convertView = super.getView(position, convertView, parent);
 
         // Retrieve the underlying transfer data
-        TransferData transferData = getItem(position);
+        final TransferData transferData = getItem(position);
 
         // Set the icon, device name, and progress
         ((ImageView) convertView.findViewById(R.id.transfer_icon)).setImageResource(
@@ -115,7 +116,10 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
                 actionButton.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // TODO: cancel transfer
+                        Intent stopIntent = new Intent(getContext(), TransferService.class)
+                                .setAction(TransferService.ACTION_STOP_TRANSFER)
+                                .putExtra(TransferService.EXTRA_TRANSFER, transferData.mId);
+                        getContext().startService(stopIntent);
                     }
                 });
                 break;
@@ -130,6 +134,7 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
                         R.string.adapter_transfer_failed, transferData.mError));
                 stateTextView.setTextColor(ContextCompat.getColor(getContext(),
                         R.color.colorError));
+                /*
                 if (transferData.mDirection == Transfer.Direction.Send) {
                     actionButton.setVisibility(View.VISIBLE);
                     actionButton.setIcon(R.drawable.ic_action_retry);
@@ -141,8 +146,11 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
                         }
                     });
                 } else {
+                */
                     actionButton.setVisibility(View.GONE);
+                /*
                 }
+                */
                 break;
         }
 

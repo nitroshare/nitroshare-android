@@ -49,6 +49,8 @@ public class TransferService extends Service {
     public static final String ACTION_REMOVE_TRANSFER = "net.nitroshare.android.REMOVE_TRANSFER";
     public static final String EXTRA_TRANSFER = "net.nitroshare.android.TRANSFER";
 
+    public static final String ACTION_BROADCAST = "net.nitroshare.android.BROADCAST";
+
     /**
      * Start or stop the service
      * @param context context to use for sending the intent
@@ -252,6 +254,16 @@ public class TransferService extends Service {
      */
     private int removeTransfer(Intent intent) {
         mTransferManager.removeTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        mTransferNotificationManager.stop();
+        return START_NOT_STICKY;
+    }
+
+    /**
+     * Trigger a broadcast for all transfers
+     */
+    private int broadcast() {
+        mTransferManager.broadcastTransfers();
+        mTransferNotificationManager.stop();
         return START_NOT_STICKY;
     }
 
@@ -268,6 +280,8 @@ public class TransferService extends Service {
                 return stopTransfer(intent);
             case ACTION_REMOVE_TRANSFER:
                 return removeTransfer(intent);
+            case ACTION_BROADCAST:
+                return broadcast();
         }
         return START_NOT_STICKY;
     }
