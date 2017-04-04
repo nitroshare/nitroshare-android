@@ -71,6 +71,7 @@ public class ExplorerFragment extends ListFragment
     public void onListItemClick(ListView listView, View view, int position, long id) {
         if (mActionMode == null) {
             File file = mDirectoryAdapter.getItem(position);
+            //noinspection ConstantConditions
             if (file.isDirectory()) {
                 mListener.onBrowseDirectory(file.getPath());
             } else {

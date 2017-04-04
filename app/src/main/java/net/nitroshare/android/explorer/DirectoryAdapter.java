@@ -2,6 +2,7 @@ package net.nitroshare.android.explorer;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,7 +96,11 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     }
 
     private String getDirectorySummary(File directory) {
-        int numItems = directory.listFiles().length;
+        File files[] = directory.listFiles();
+        int numItems = 0;
+        if (files != null) {
+            numItems = files.length;
+        }
         return mContext.getResources().getQuantityString(R.plurals.activity_explorer_folder, numItems, numItems);
     }
 
@@ -113,10 +118,12 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         }
     }
 
+    @NonNull
     @Override
-    public View getView(final int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, @NonNull ViewGroup parent) {
         View view = super.getView(position, convertView, parent);
         File file = getItem(position);
+        //noinspection ConstantConditions
         ((TextView) view.findViewById(android.R.id.text1)).setText(file.getName());
         ((TextView) view.findViewById(android.R.id.text2)).setText(
                 file.isDirectory() ? getDirectorySummary(file) : getFileSummary(file)
