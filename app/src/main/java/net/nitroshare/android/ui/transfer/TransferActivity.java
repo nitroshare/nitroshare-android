@@ -1,4 +1,4 @@
-package net.nitroshare.android.ui;
+package net.nitroshare.android.ui.transfer;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -12,12 +12,16 @@ import android.view.MenuItem;
 import android.view.View;
 
 import net.nitroshare.android.R;
-import net.nitroshare.android.explorer.ExplorerActivity;
+import net.nitroshare.android.ui.AboutActivity;
+import net.nitroshare.android.ui.MainFragment;
+import net.nitroshare.android.ui.MainIntroActivity;
+import net.nitroshare.android.ui.SettingsActivity;
+import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
 
-public class MainActivity extends AppCompatActivity {
+public class TransferActivity extends AppCompatActivity {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "TransferActivity";
     private static final int INTRO_REQUEST = 1;
 
     private SharedPreferences mSharedPreferences;
@@ -34,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         MainFragment mainFragment = new MainFragment();
         getSupportFragmentManager()
                 .beginTransaction()
-                .add(R.id.list_container, mainFragment)
+                .replace(R.id.list_container, mainFragment)
                 .commit();
     }
 
@@ -46,7 +50,7 @@ public class MainActivity extends AppCompatActivity {
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, ExplorerActivity.class));
+                startActivity(new Intent(TransferActivity.this, ExplorerActivity.class));
             }
         });
 

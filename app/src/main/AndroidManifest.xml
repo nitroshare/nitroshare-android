@@ -27,7 +27,7 @@
 
         <!-- Main activity -->
         <activity
-            android:name=".ui.MainActivity"
+            android:name=".ui.transfer.TransferActivity"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -40,7 +40,7 @@
         <activity
             android:name=".ui.explorer.ExplorerActivity"
             android:label="@string/activity_explorer"
-            android:parentActivityName=".ui.MainActivity"/>
+            android:parentActivityName=".ui.transfer.TransferActivity"/>
 
         <!-- Share activity -->
         <activity
@@ -60,13 +60,13 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:label="@string/activity_settings"
-            android:parentActivityName=".ui.MainActivity"/>
+            android:parentActivityName=".ui.transfer.TransferActivity"/>
 
         <!-- About activity -->
         <activity
             android:name=".ui.AboutActivity"
             android:label="@string/activity_about"
-            android:parentActivityName=".ui.MainActivity"/>
+            android:parentActivityName=".ui.transfer.TransferActivity"/>
 
         <!-- Service for transfers -->
         <service
