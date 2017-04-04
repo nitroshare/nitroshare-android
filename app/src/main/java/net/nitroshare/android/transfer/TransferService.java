@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
@@ -47,6 +46,7 @@ public class TransferService extends Service {
     public static final String EXTRA_ID = "net.nitroshare.android.ID";
 
     public static final String ACTION_STOP_TRANSFER = "net.nitroshare.android.STOP_TRANSFER";
+    public static final String ACTION_REMOVE_TRANSFER = "net.nitroshare.android.REMOVE_TRANSFER";
     public static final String EXTRA_TRANSFER = "net.nitroshare.android.TRANSFER";
 
     /**
@@ -70,7 +70,7 @@ public class TransferService extends Service {
     private TransferServer mTransferServer;
     private SharedPreferences mSharedPreferences;
 
-    private TransferAdapter mTransferAdapter;
+    private TransferManager mTransferManager;
 
     @Override
     public void onCreate() {
@@ -81,14 +81,14 @@ public class TransferService extends Service {
             mTransferServer = new TransferServer(this, mTransferNotificationManager, new TransferServer.Listener() {
                 @Override
                 public void onNewTransfer(Transfer transfer) {
-                    mTransferAdapter.addTransfer(transfer, null);
+                    mTransferManager.addTransfer(transfer, null);
                 }
             });
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mTransferAdapter = new TransferAdapter(this, mTransferNotificationManager);
+        mTransferManager = new TransferManager(this, mTransferNotificationManager);
     }
 
     /**
@@ -223,7 +223,7 @@ public class TransferService extends Service {
         // Add each of the items to the bundle and send it
         try {
             Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
-            mTransferAdapter.addTransfer(
+            mTransferManager.addTransfer(
                     new Transfer(device, deviceName, bundle),
                     intent
             );
@@ -239,7 +239,15 @@ public class TransferService extends Service {
      * Stop a transfer in progress
      */
     private int stopTransfer(Intent intent) {
-        mTransferAdapter.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        mTransferManager.stopTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        return START_NOT_STICKY;
+    }
+
+    /**
+     * Remove a transfer that has completed
+     */
+    private int removeTransfer(Intent intent) {
+        mTransferManager.removeTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
         return START_NOT_STICKY;
     }
 
@@ -254,23 +262,14 @@ public class TransferService extends Service {
                 return startTransfer(intent);
             case ACTION_STOP_TRANSFER:
                 return stopTransfer(intent);
+            case ACTION_REMOVE_TRANSFER:
+                return removeTransfer(intent);
         }
         return START_NOT_STICKY;
     }
 
-    private final IBinder mBinder = new TransferBinder();
-
-    /**
-     * Interface for interacting with the service from an activity
-     */
-    public class TransferBinder extends Binder {
-        public TransferAdapter getAdapter() {
-            return mTransferAdapter;
-        }
-    }
-
     @Override
     public IBinder onBind(Intent intent) {
-        return mBinder;
+        throw new UnsupportedOperationException("Not implemented");
     }
 }
