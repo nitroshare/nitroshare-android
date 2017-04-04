@@ -1,4 +1,4 @@
-package net.nitroshare.android.explorer;
+package net.nitroshare.android.ui.explorer;
 
 import android.net.Uri;
 import android.os.Bundle;
