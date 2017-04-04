@@ -120,6 +120,7 @@ public class Transfer implements Runnable {
     }
 
     private final Object mSync = new Object();
+    private int mId;
 
     private volatile boolean mStop = false;
     private Selector mSelector = Selector.open();
@@ -195,6 +196,62 @@ public class Transfer implements Runnable {
     }
 
     /**
+     * Set the ID for the transfer
+     */
+    void setId(int id) {
+        mId = id;
+    }
+
+    /**
+     * Retrieve the transfer ID
+     */
+    int getId() {
+        return mId;
+    }
+
+    /**
+     * Retrieve the direction of the transfer
+     * @return transfer direction
+     */
+    Direction getDirection() {
+        return mDirection;
+    }
+
+    /**
+     * Retrieve the name of the remote device
+     * @return remote device name
+     */
+    String getRemoteDeviceName() {
+        synchronized (mSync) {
+            return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
+        }
+    }
+
+    /**
+     * Retrieve the current state of the transfer
+     */
+    State getState() {
+        synchronized (mSync) {
+            return mState;
+        }
+    }
+
+    /**
+     * Retrieve the current progress of the transfer
+     */
+    int getProgress() {
+        synchronized (mSync) {
+            return mProgress;
+        }
+    }
+
+    String getError() {
+        synchronized (mSync) {
+            return mError;
+        }
+    }
+
+    /**
      * Add a listener for connection events
      */
     void addConnectListener(ConnectListener connectListener) {
@@ -241,48 +298,6 @@ public class Transfer implements Runnable {
      */
     void addFinishListener(FinishListener finishListener) {
         mFinishListeners.add(finishListener);
-    }
-
-    /**
-     * Retrieve the direction of the transfer
-     * @return transfer direction
-     */
-    Direction getDirection() {
-        return mDirection;
-    }
-
-    /**
-     * Retrieve the name of the remote device
-     * @return remote device name
-     */
-    String getRemoteDeviceName() {
-        synchronized (mSync) {
-            return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
-        }
-    }
-
-    /**
-     * Retrieve the current state of the transfer
-     */
-    State getState() {
-        synchronized (mSync) {
-            return mState;
-        }
-    }
-
-    /**
-     * Retrieve the current progress of the transfer
-     */
-    int getProgress() {
-        synchronized (mSync) {
-            return mProgress;
-        }
-    }
-
-    String getError() {
-        synchronized (mSync) {
-            return mError;
-        }
     }
 
     /**
