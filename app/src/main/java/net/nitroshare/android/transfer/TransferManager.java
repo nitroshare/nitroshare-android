@@ -16,17 +16,17 @@ import net.nitroshare.android.bundle.Item;
 /**
  * Manage active transfers
  */
-class TransferManager {
+public class TransferManager {
 
     private static final String TAG = "TransferManager";
 
-    private static final String TRANSFER_UPDATED = "net.nitroshare.android.TRANSFER_UPDATED";
-    private static final String EXTRA_ID = "net.nitroshare.android.ID";
-    private static final String EXTRA_DIRECTION = "net.nitroshare.android.DIRECTION";
-    private static final String EXTRA_DEVICE_NAME = "net.nitroshare.android.DEVICE_NAME";
-    private static final String EXTRA_STATE = "net.nitroshare.android.STATE";
-    private static final String EXTRA_PROGRESS = "net.nitroshare.android.PROGRESS";
-    private static final String EXTRA_ERROR = "net.nitroshare.android.ERROR";
+    public static final String TRANSFER_UPDATED = "net.nitroshare.android.TRANSFER_UPDATED";
+    public static final String EXTRA_ID = "net.nitroshare.android.ID";
+    public static final String EXTRA_DIRECTION = "net.nitroshare.android.DIRECTION";
+    public static final String EXTRA_DEVICE_NAME = "net.nitroshare.android.DEVICE_NAME";
+    public static final String EXTRA_STATE = "net.nitroshare.android.STATE";
+    public static final String EXTRA_PROGRESS = "net.nitroshare.android.PROGRESS";
+    public static final String EXTRA_ERROR = "net.nitroshare.android.ERROR";
 
     private Context mContext;
     private TransferNotificationManager mTransferNotificationManager;
