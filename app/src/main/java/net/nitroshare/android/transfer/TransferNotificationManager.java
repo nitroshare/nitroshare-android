@@ -3,7 +3,12 @@ package net.nitroshare.android.transfer;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
+
+import net.nitroshare.android.R;
 
 /**
  * Manage notifications and service lifecycle
@@ -24,6 +29,7 @@ class TransferNotificationManager {
 
     private final SparseArray<Notification> mNotifications = new SparseArray<>();
     private Service mService;
+    private SharedPreferences mSharedPreferences;
     private NotificationManager mNotificationManager;
 
     /**
@@ -32,6 +38,7 @@ class TransferNotificationManager {
      */
     TransferNotificationManager(Service service) {
         mService = service;
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(service);
         mNotificationManager = (NotificationManager) mService.getSystemService(
                 Service.NOTIFICATION_SERVICE);
     }
@@ -88,5 +95,30 @@ class TransferNotificationManager {
                 mService.stopSelf();
             }
         }
+    }
+
+    /**
+     * Show a notification with the specified information
+     * @param id unique identifier for the notification
+     * @param contentText text to display in the notification
+     * @param icon icon to use for the notification
+     * @param actions list of actions or null for none
+     */
+    void show(int id, CharSequence contentText, int icon, NotificationCompat.Action actions[]) {
+        boolean notificationSound = mSharedPreferences.getBoolean(
+                mService.getString(R.string.setting_notification_sound), false
+        );
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mService)
+                .setDefaults(notificationSound ? NotificationCompat.DEFAULT_ALL : 0)
+                .setContentTitle(mService.getString(R.string.service_transfer_title))
+                .setContentText(contentText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
+                .setSmallIcon(icon);
+        if (actions != null) {
+            for (NotificationCompat.Action action : actions) {
+                builder.addAction(action);
+            }
+        }
+        update(id, builder.build());
     }
 }
