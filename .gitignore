@@ -1,9 +1,9 @@
 *.apk
 *.iml
 .gradle
-/local.properties
-/.idea/
 .DS_Store
+.idea/
 /build
 /captures
+local.properties
 .externalNativeBuild
