@@ -115,7 +115,6 @@ public class TransferService extends Service {
      * Attempt to resolve the provided URI
      * @param uri URI to resolve
      * @return file descriptor
-     * @throws IOException
      */
     private AssetFileDescriptor getAssetFileDescriptor(Uri uri) throws IOException {
         AssetFileDescriptor assetFileDescriptor;
@@ -160,7 +159,6 @@ public class TransferService extends Service {
      * Traverse a directory tree and add all files to the bundle
      * @param root the directory to which all filenames will be relative
      * @param bundle target for all files that are found
-     * @throws IOException
      */
     private void traverseDirectory(File root, Bundle bundle) throws IOException {
         Stack<File> stack = new Stack<>();
@@ -183,7 +181,6 @@ public class TransferService extends Service {
      * Create a bundle from the list of URIs
      * @param uriList list of URIs to add
      * @return newly created bundle
-     * @throws IOException
      */
     private Bundle createBundle(ArrayList<Parcelable> uriList) throws IOException {
         Bundle bundle = new Bundle();

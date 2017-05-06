@@ -57,7 +57,6 @@ abstract public class Item {
      * @param class_ type for conversion
      * @param <T> type of value
      * @return value of the key
-     * @throws IOException
      */
     private <T> T getProperty(String key, T defaultValue, Class<T> class_) throws IOException {
         try {
@@ -80,7 +79,6 @@ abstract public class Item {
      * @param key property to retrieve
      * @param required true to require a value
      * @return value of the key
-     * @throws IOException
      */
     String getStringProperty(String key, boolean required) throws IOException {
         return getProperty(key, required ? "" : null, String.class);
@@ -91,7 +89,6 @@ abstract public class Item {
      * @param key property to retrieve
      * @param required true to require a value
      * @return value of the key
-     * @throws IOException
      */
     public long getLongProperty(String key, boolean required) throws IOException {
         try {
@@ -106,7 +103,6 @@ abstract public class Item {
      * @param key property to retrieve
      * @param required true to require a value
      * @return value of the key
-     * @throws IOException
      */
     boolean getBooleanProperty(String key, boolean required) throws IOException {
         return getProperty(key, required ? null : false, Boolean.class);
@@ -115,7 +111,6 @@ abstract public class Item {
     /**
      * Open the item for reading or writing
      * @param mode open mode
-     * @throws IOException
      */
     abstract public void open(Mode mode) throws IOException;
 
@@ -132,13 +127,11 @@ abstract public class Item {
     /**
      * Write data to the item
      * @param data array of bytes to write
-     * @throws IOException
      */
     abstract public void write(byte[] data) throws IOException;
 
     /**
      * Close the item
-     * @throws IOException
      */
     abstract public void close() throws IOException;
 }

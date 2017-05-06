@@ -88,7 +88,7 @@ public class SettingsActivity extends PreferenceActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        
+
         //System.out.println(mSharedPreferences.getBoolean("dark-theme", false));
 
         SharedPreferences mSharedPreferences;

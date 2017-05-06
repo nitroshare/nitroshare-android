@@ -20,7 +20,7 @@ public class Bundle extends ArrayList<Item> {
 
     /**
      * Retrieve the total size of the bundle content
-     * @return
+     * @return total size in bytes
      */
     public long getTotalSize() {
         return mTotalSize;

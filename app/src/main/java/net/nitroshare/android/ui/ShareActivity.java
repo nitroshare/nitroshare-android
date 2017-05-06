@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -130,8 +131,9 @@ public class ShareActivity extends AppCompatActivity {
             return mDevices.get(getItem(position));
         }
 
+        @NonNull
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             convertView = super.getView(position, convertView, parent);
             Device device = mDevices.get(getItem(position));
             ((TextView) convertView.findViewById(android.R.id.text1)).setText(device.getName());

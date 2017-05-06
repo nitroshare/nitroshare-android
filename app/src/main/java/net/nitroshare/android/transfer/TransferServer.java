@@ -71,7 +71,6 @@ class TransferServer implements Runnable {
      * @param context context for retrieving string resources
      * @param transferNotificationManager notification manager
      * @param listener callback for new transfers
-     * @throws IOException
      */
     TransferServer(Context context, TransferNotificationManager transferNotificationManager, Listener listener) throws IOException {
         mContext = context;
