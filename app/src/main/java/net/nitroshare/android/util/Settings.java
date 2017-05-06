@@ -83,6 +83,15 @@ public class Settings {
     }
 
     /**
+     * Store a boolean value for the specified key
+     * @param key store a value for this key
+     * @param value store this value
+     */
+    public void putBoolean(Key key, boolean value) {
+        mSharedPreferences.edit().putBoolean(key.name(), value).apply();
+    }
+
+    /**
      * Retrieve the string value or its default for the specified key
      * @param key retrieve value for this key
      * @return value of the key
@@ -91,6 +100,15 @@ public class Settings {
     @Nullable
     public String getString(Key key) throws ClassCastException {
         return mSharedPreferences.getString(key.name(), (String) getDefault(key));
+    }
+
+    /**
+     * Store a string value for the specified key
+     * @param key store a value for this key
+     * @param value store this value
+     */
+    public void putString(Key key, String value) {
+        mSharedPreferences.edit().putString(key.name(), value).apply();
     }
 
     /**
