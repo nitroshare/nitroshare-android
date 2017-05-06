@@ -75,7 +75,7 @@
             android:exported="false"/>
 
         <!-- Receiver for actions that might require the service to start -->
-        <receiver android:name=".misc.StartReceiver">
+        <receiver android:name=".util.StartReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
