@@ -4,21 +4,18 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.util.Log;
 
-import net.nitroshare.android.R;
 import net.nitroshare.android.bundle.Bundle;
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.discovery.Device;
+import net.nitroshare.android.util.Settings;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,7 +67,7 @@ public class TransferService extends Service {
 
     private TransferNotificationManager mTransferNotificationManager;
     private TransferServer mTransferServer;
-    private SharedPreferences mSharedPreferences;
+    private Settings mSettings;
 
     private TransferManager mTransferManager;
 
@@ -90,7 +87,7 @@ public class TransferService extends Service {
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mSettings = new Settings(this);
         mTransferManager = new TransferManager(this, mTransferNotificationManager);
     }
 
@@ -214,11 +211,6 @@ public class TransferService extends Service {
 
         // Build the parameters needed to start the transfer
         Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
-        String deviceName = mSharedPreferences.getString(
-                getString(R.string.setting_device_name), "");
-        if (deviceName.isEmpty()) {
-            deviceName = Build.MODEL;
-        }
 
         // Add each of the items to the bundle and send it
         try {
@@ -227,7 +219,8 @@ public class TransferService extends Service {
             if (nextId == 0) {
                 nextId = mTransferNotificationManager.nextId();
             }
-            Transfer transfer = new Transfer(device, deviceName, bundle);
+            Transfer transfer = new Transfer(device,
+                    mSettings.getString(Settings.Key.DEVICE_NAME), bundle);
             transfer.setId(nextId);
             mTransferManager.addTransfer(transfer, intent);
         } catch (IOException e) {

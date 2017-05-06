@@ -1,9 +1,7 @@
 package net.nitroshare.android.ui.transfer;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,7 +25,7 @@ public class TransferActivity extends AppCompatActivity {
     private static final String TAG = "TransferActivity";
     private static final int INTRO_REQUEST = 1;
 
-    private SharedPreferences mSharedPreferences;
+    private Settings mSettings;
 
     /**
      * Finish initializing the activity
@@ -36,8 +34,7 @@ public class TransferActivity extends AppCompatActivity {
         Log.i(TAG, "finishing initialization of activity");
 
         // Launch the transfer service if it isn't already running
-        TransferService.startStopService(this, mSharedPreferences.getBoolean(
-                getString(R.string.setting_behavior_receive), true));
+        TransferService.startStopService(this, mSettings.getBoolean(Settings.Key.BEHAVIOR_RECEIVE));
 
         TransferFragment mainFragment = new TransferFragment();
         getSupportFragmentManager()
@@ -59,13 +56,10 @@ public class TransferActivity extends AppCompatActivity {
             }
         });
 
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+        mSettings = new Settings(this);
 
         // Launch the intro if the user hasn't seen it yet
-        boolean introShown = mSharedPreferences.getBoolean(
-                getString(R.string.setting_intro_shown), false);
-
-        if (!introShown) {
+        if (!mSettings.getBoolean(Settings.Key.INTRO_SHOWN)) {
             Log.i(TAG, "intro has not been shown; launching activity");
             Intent introIntent = new Intent(this, MainIntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
@@ -77,9 +71,8 @@ public class TransferActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(TransferActivity.this);
 
-        boolean darkTheme = mSharedPreferences.getBoolean("dark-theme", false);
+        boolean darkTheme = mSettings.getBoolean(Settings.Key.UI_DARK);
 
         int themeResId = 0;
         try {
@@ -129,8 +122,7 @@ public class TransferActivity extends AppCompatActivity {
         if (requestCode == INTRO_REQUEST) {
             if (resultCode == RESULT_OK) {
                 Log.i(TAG, "intro finished");
-                mSharedPreferences.edit().putBoolean(
-                        getString(R.string.setting_intro_shown), true).apply();
+                mSettings.putBoolean(Settings.Key.INTRO_SHOWN, true);
                 finishInit();
             } else {
                 finish();

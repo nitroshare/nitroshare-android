@@ -3,12 +3,11 @@ package net.nitroshare.android.transfer;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.util.Settings;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,7 +30,7 @@ class TransferNotificationManager {
 
     private final SparseArray<Notification> mNotifications = new SparseArray<>();
     private Service mService;
-    private SharedPreferences mSharedPreferences;
+    private Settings mSettings;
     private NotificationManager mNotificationManager;
     private AtomicInteger mNextId = new AtomicInteger(2);
 
@@ -41,7 +40,7 @@ class TransferNotificationManager {
      */
     TransferNotificationManager(Service service) {
         mService = service;
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(service);
+        mSettings = new Settings(service);
         mNotificationManager = (NotificationManager) mService.getSystemService(
                 Service.NOTIFICATION_SERVICE);
     }
@@ -108,11 +107,9 @@ class TransferNotificationManager {
      * @param actions list of actions or null for none
      */
     void show(int id, CharSequence contentText, int icon, NotificationCompat.Action actions[]) {
-        boolean notificationSound = mSharedPreferences.getBoolean(
-                mService.getString(R.string.setting_notification_sound), false
-        );
+        boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(mService)
-                .setDefaults(notificationSound ? NotificationCompat.DEFAULT_ALL : 0)
+                .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
                 .setContentTitle(mService.getString(R.string.service_transfer_title))
                 .setContentText(contentText)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
