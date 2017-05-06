@@ -36,15 +36,15 @@ import java.util.Map;
  * mDNS (multicast DNS) is used to find other peers capable of receiving the transfer. Once a
  * device is selected, the transfer service is provided with the device information and the file.
  */
-public class ShareActivity extends AppCompatActivity {
-
+public class ShareActivity extends AppCompatActivity
+{
     private static final String TAG = "ShareActivity";
 
     /**
      * Adapter that discovers other devices on the network
      */
-    class DeviceAdapter extends ArrayAdapter<String> {
-
+    class DeviceAdapter extends ArrayAdapter<String>
+    {
         /**
          * Maintain a mapping of device IDs to discovered devices
          */
@@ -53,29 +53,41 @@ public class ShareActivity extends AppCompatActivity {
         private DiscoverResolver mDiscoverResolver;
         private String mThisDeviceName;
 
-        DiscoverResolver.Listener mListener = new DiscoverResolver.Listener() {
+        DiscoverResolver.Listener mListener = new DiscoverResolver.Listener()
+        {
             @Override
-            public void onServicesChanged(Map<String, MDNSDiscover.Result> services) {
-                for (final MDNSDiscover.Result result : services.values()) {
+            public void onServicesChanged(Map<String, MDNSDiscover.Result> services)
+            {
+                for (final MDNSDiscover.Result result : services.values())
+                {
                     // We neither need nor want a FQDN
                     final String name = result.srv.fqdn.replaceFirst(
                             String.format("\\.%slocal$", Device.SERVICE_TYPE), "");
-                    if (name.equals(mThisDeviceName)) {
+                    if (name.equals(mThisDeviceName))
+                    {
                         continue;
                     }
-                    if (result.srv.ttl == 0) {
-                        runOnUiThread(new Runnable() {
+                    if (result.srv.ttl == 0)
+                    {
+                        runOnUiThread(new Runnable()
+                        {
                             @Override
-                            public void run() {
+                            public void run()
+                            {
                                 remove(name);
                                 mDevices.remove(name);
                             }
                         });
                     }
                     InetAddress ipAddress = null;
-                    try {
+                    try
+                    {
                         ipAddress = InetAddress.getByName(result.a.ipaddr);
-                    } catch (UnknownHostException ignored) {
+                    }
+
+                    catch (UnknownHostException ignored)
+                    {
+
                     }
                     final InetAddress host = ipAddress;
                     /*
@@ -85,9 +97,11 @@ public class ShareActivity extends AppCompatActivity {
                     }
                     */
                     Log.d(TAG, String.format("found new device \"%s\"", name));
-                    runOnUiThread(new Runnable() {
+                    runOnUiThread(new Runnable()
+                    {
                         @Override
-                        public void run() {
+                        public void run()
+                        {
                             Device device = new Device(
                                     "",
                                     name,
@@ -102,7 +116,8 @@ public class ShareActivity extends AppCompatActivity {
             }
         };
 
-        DeviceAdapter() {
+        DeviceAdapter()
+        {
             super(ShareActivity.this, R.layout.view_simple_list_item, android.R.id.text1);
 
             mDiscoverResolver = new DiscoverResolver(ShareActivity.this, Device.SERVICE_TYPE, mListener);
@@ -112,11 +127,13 @@ public class ShareActivity extends AppCompatActivity {
                     R.string.setting_device_name), Build.MODEL);
         }
 
-        void start() {
+        void start()
+        {
             mDiscoverResolver.start();
         }
 
-        void stop() {
+        void stop()
+        {
             mDiscoverResolver.stop();
         }
 
@@ -125,12 +142,14 @@ public class ShareActivity extends AppCompatActivity {
          * @param position device index
          * @return device at the specified position
          */
-        Device getDevice(int position) {
+        Device getDevice(int position)
+        {
             return mDevices.get(getItem(position));
         }
 
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, ViewGroup parent)
+        {
             convertView = super.getView(position, convertView, parent);
             Device device = mDevices.get(getItem(position));
             ((TextView) convertView.findViewById(android.R.id.text1)).setText(device.getName());
@@ -147,10 +166,15 @@ public class ShareActivity extends AppCompatActivity {
      * @param intent intent received
      * @return list of URIs
      */
-    private ArrayList<Uri> buildUriList(Intent intent) {
-        if (intent.getAction().equals("android.intent.action.SEND_MULTIPLE")) {
+    private ArrayList<Uri> buildUriList(Intent intent)
+    {
+        if (intent.getAction().equals("android.intent.action.SEND_MULTIPLE"))
+        {
             return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-        } else {
+        }
+
+        else
+        {
             ArrayList<Uri> uriList = new ArrayList<>();
             uriList.add((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
             return uriList;
@@ -158,14 +182,29 @@ public class ShareActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        SharedPreferences mSharedPreferences;
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(ShareActivity.this);
+
+        if(mSharedPreferences.getBoolean("dark-theme", false))
+        {
+            setTheme(R.style.DarkTheme);
+        }
+        else
+        {
+            setTheme(R.style.AppTheme);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_share);
 
         mDeviceAdapter = new DeviceAdapter();
-        mDeviceAdapter.registerDataSetObserver(new DataSetObserver() {
+        mDeviceAdapter.registerDataSetObserver(new DataSetObserver()
+        {
             @Override
-            public void onChanged() {
+            public void onChanged()
+            {
                 findViewById(R.id.progressBar).setVisibility(View.GONE);
             }
         });
@@ -174,7 +213,8 @@ public class ShareActivity extends AppCompatActivity {
         final ArrayList<Uri> uriList = buildUriList(getIntent());
         final ListView listView = (ListView) findViewById(R.id.selectList);
         listView.setAdapter(mDeviceAdapter);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener()
+        {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Device device = mDeviceAdapter.getDevice(position);
@@ -193,7 +233,8 @@ public class ShareActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy()
+    {
         mDeviceAdapter.stop();
         super.onDestroy();
     }

@@ -36,6 +36,7 @@
     <!-- Settings activity -->
     <string name="activity_settings">Settings</string>
     <string name="activity_settings_category_general">General</string>
+    <string name="activity_settings_category_appearance">Appearance</string>
     <string name="activity_settings_pref_device_name">Device Name</string>
     <string name="activity_settings_pref_transfer_directory">Transfer Directory</string>
     <string name="activity_settings_pref_behavior_receive">Receive Transfers</string>
@@ -45,6 +46,8 @@
     <string name="activity_settings_category_notifications">Notifications</string>
     <string name="activity_settings_pref_notification_sound">Notification Sound</string>
     <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
+    <string name="activity_settings_darkTheme" translatable="false">Dark theme</string>
+    <string name="activity_settings_darkTheme_summary" translatable="false">Enable the alternate dark them instead of the standard light theme</string>
 
     <!-- About activity -->
     <string name="activity_about">About</string>

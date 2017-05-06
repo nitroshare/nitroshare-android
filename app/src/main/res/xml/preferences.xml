@@ -28,6 +28,17 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="@string/activity_settings_category_appearance">
+
+        <SwitchPreference
+            android:key="dark-theme"
+            android:title="@string/activity_settings_darkTheme"
+            android:summary="@string/activity_settings_darkTheme_summary"
+            android:defaultValue="false"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="@string/activity_settings_category_notifications">
 
         <SwitchPreference
