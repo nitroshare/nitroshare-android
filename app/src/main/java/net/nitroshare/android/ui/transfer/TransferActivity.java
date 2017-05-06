@@ -1,15 +1,12 @@
 package net.nitroshare.android.ui.transfer;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,11 +18,11 @@ import net.nitroshare.android.ui.MainIntroActivity;
 import net.nitroshare.android.ui.SettingsActivity;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.util.Settings;
 
 import java.lang.reflect.Method;
 
-public class TransferActivity extends AppCompatActivity
-{
+public class TransferActivity extends AppCompatActivity {
 
     private static final String TAG = "TransferActivity";
     private static final int INTRO_REQUEST = 1;
@@ -50,21 +47,9 @@ public class TransferActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(TransferActivity.this);
-
-        if(mSharedPreferences.getBoolean("dark-theme", false))
-        {
-            setTheme(R.style.DarkTheme);
-        }
-        else
-        {
-            setTheme(R.style.AppTheme);
-        }
-
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setTheme(new Settings(this).getTheme());
         setContentView(R.layout.activity_main);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -80,54 +65,39 @@ public class TransferActivity extends AppCompatActivity
         boolean introShown = mSharedPreferences.getBoolean(
                 getString(R.string.setting_intro_shown), false);
 
-        if (!introShown)
-        {
+        if (!introShown) {
             Log.i(TAG, "intro has not been shown; launching activity");
             Intent introIntent = new Intent(this, MainIntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
-        }
-
-        else
-        {
+        } else {
             finishInit();
         }
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(TransferActivity.this);
 
         boolean darkTheme = mSharedPreferences.getBoolean("dark-theme", false);
 
         int themeResId = 0;
-        try
-        {
+        try {
             Class<?> willThisWork = ContextThemeWrapper.class;
             Method method = willThisWork.getMethod("getThemeResId");
             method.setAccessible(true);
             themeResId = (Integer) method.invoke(this);
-        }
-
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        if(darkTheme)
-        {
-            if(themeResId != R.style.DarkTheme)
-            {
+        if(darkTheme) {
+            if(themeResId != R.style.DarkTheme) {
                 setTheme(R.style.DarkTheme);
                 this.recreate();
             }
-        }
-
-        else
-        {
-            if(themeResId != R.style.AppTheme)
-            {
+        } else {
+            if(themeResId != R.style.AppTheme) {
                 setTheme(R.style.AppTheme);
                 this.recreate();
             }
@@ -135,17 +105,14 @@ public class TransferActivity extends AppCompatActivity
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu)
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        switch (item.getItemId())
-        {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
@@ -157,20 +124,15 @@ public class TransferActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data)
-    {
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == INTRO_REQUEST)
-        {
-            if (resultCode == RESULT_OK)
-            {
+        if (requestCode == INTRO_REQUEST) {
+            if (resultCode == RESULT_OK) {
                 Log.i(TAG, "intro finished");
                 mSharedPreferences.edit().putBoolean(
                         getString(R.string.setting_intro_shown), true).apply();
                 finishInit();
-            }
-            else
-            {
+            } else {
                 finish();
             }
         }

@@ -16,15 +16,14 @@ import net.nitroshare.android.R;
 /**
  * Button with a single icon that can be colored
  */
-public class TintableButton extends LinearLayout
-{
+public class TintableButton extends LinearLayout {
+
     private int mColor;
 
     private ImageView mImageView;
     private TextView mTextView;
 
-    public TintableButton(Context context, AttributeSet attrs)
-    {
+    public TintableButton(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.TintableButton);
@@ -38,8 +37,7 @@ public class TintableButton extends LinearLayout
     }
 
     @Override
-    protected void onFinishInflate()
-    {
+    protected void onFinishInflate() {
         super.onFinishInflate();
 
         mImageView = (ImageView) findViewById(android.R.id.icon);
@@ -52,16 +50,14 @@ public class TintableButton extends LinearLayout
     /**
      * Set the icon for the button
      */
-    public void setIcon(@DrawableRes int resId)
-    {
+    public void setIcon(@DrawableRes int resId) {
         mImageView.setImageResource(resId);
     }
 
     /**
      * Set the text for the button
      */
-    public void setText(@StringRes int resId)
-    {
+    public void setText(@StringRes int resId) {
         mTextView.setText(getContext().getString(resId));
     }
 }

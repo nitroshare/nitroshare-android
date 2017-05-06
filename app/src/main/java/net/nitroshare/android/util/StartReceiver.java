@@ -1,4 +1,4 @@
-package net.nitroshare.android.misc;
+package net.nitroshare.android.util;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
