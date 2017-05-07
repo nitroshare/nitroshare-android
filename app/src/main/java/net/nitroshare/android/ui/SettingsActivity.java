@@ -127,11 +127,10 @@ public class SettingsActivity extends PreferenceActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState)
-    {
-        //For some unknown reason, we have to call this before we call super.onCreate();
+    protected void onCreate(Bundle savedInstanceState) {
+        // The theme must be set before calling the parent method since it
+        // initializes some of the controls in the method
         setTheme(new Settings(this).getTheme());
-
         super.onCreate(savedInstanceState);
         getFragmentManager()
                 .beginTransaction()
