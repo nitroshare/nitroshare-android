@@ -11,5 +11,6 @@ NitroShare for Android simplifies the task of transferring files and directories
 
 ### Screenshots
 
-![Send with NitroShare](https://i.stack.imgur.com/1yG5X.png)
-![Settings](https://i.stack.imgur.com/eawFA.png)
+![MainScreen](https://github.com/UsernameInvalidException/nitroshare-android/raw/master/Fancy%20renders/Main%20Screen%20phone%20and%20tablet.png)
+![Send with NitroShare](https://github.com/UsernameInvalidException/nitroshare-android/raw/master/Fancy%20renders/File%20manager%20phone%20and%20tablet.png)
+![Settings](https://github.com/UsernameInvalidException/nitroshare-android/raw/master/Fancy%20renders/Settings%20phone%20and%20tablet.png)
