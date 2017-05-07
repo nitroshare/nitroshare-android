@@ -62,7 +62,7 @@ public class Settings {
             case TRANSFER_DIRECTORY:
                 File storage = Environment.getExternalStorageDirectory();
                 File downloads = new File(storage, "Downloads");
-                return new File(downloads, "NitroShare").getAbsoluteFile();
+                return new File(downloads, "NitroShare").getAbsolutePath();
             case TRANSFER_NOTIFICATION:
                 return true;
             case UI_DARK:
