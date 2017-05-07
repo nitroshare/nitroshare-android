@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -72,28 +73,16 @@ public class TransferActivity extends AppCompatActivity {
     public void onResume() {
         super.onResume();
 
-        boolean darkTheme = mSettings.getBoolean(Settings.Key.UI_DARK);
+        // Determine if the dark theme is currently applied
+        TypedValue typedValue = new TypedValue();
+        getTheme().resolveAttribute(R.attr.themeName, typedValue, true);
+        boolean currentThemeDark = "dark".equals(typedValue.string);
 
-        int themeResId = 0;
-        try {
-            Class<?> willThisWork = ContextThemeWrapper.class;
-            Method method = willThisWork.getMethod("getThemeResId");
-            method.setAccessible(true);
-            themeResId = (Integer) method.invoke(this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        if(darkTheme) {
-            if(themeResId != R.style.DarkTheme) {
-                setTheme(R.style.DarkTheme);
-                this.recreate();
-            }
-        } else {
-            if(themeResId != R.style.AppTheme) {
-                setTheme(R.style.AppTheme);
-                this.recreate();
-            }
+        // Recreate the activity if the theme has changed
+        boolean shouldShowDark = mSettings.getBoolean(Settings.Key.UI_DARK);
+        if (currentThemeDark != shouldShowDark) {
+            setTheme(shouldShowDark ? R.style.DarkTheme : R.style.AppTheme);
+            recreate();
         }
     }
 

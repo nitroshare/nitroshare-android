@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <attr name="themeName" format="string"/>
+
     <declare-styleable name="TintableButton">
         <attr name="color" format="color"/>
     </declare-styleable>
