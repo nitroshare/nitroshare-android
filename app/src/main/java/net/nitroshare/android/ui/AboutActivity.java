@@ -7,6 +7,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.util.Settings;
 
 import java.text.DateFormat;
 import java.util.Date;
@@ -20,6 +21,7 @@ public class AboutActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(new Settings(this).getTheme());
         setContentView(R.layout.activity_about);
 
         PackageInfo packageInfo = null;

@@ -42,7 +42,6 @@ public class FileItem extends Item {
      * @param transferDirectory directory for the file
      * @param properties map of properties for the file
      * @param overwrite true to overwrite an existing file
-     * @throws IOException
      */
     public FileItem(String transferDirectory, Map<String, Object> properties, boolean overwrite) throws IOException {
         mProperties = properties;
@@ -98,7 +97,6 @@ public class FileItem extends Item {
      * Create a file from the specified asset file descriptor and URI
      * @param assetFileDescriptor file descriptor
      * @param filename filename to use
-     * @throws IOException
      */
     public FileItem(AssetFileDescriptor assetFileDescriptor, String filename) throws IOException {
         mAssetFileDescriptor = assetFileDescriptor;

@@ -9,6 +9,7 @@ import android.widget.Toast;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.ShareActivity;
+import net.nitroshare.android.util.Settings;
 
 import java.util.ArrayList;
 
@@ -45,6 +46,7 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(new Settings(this).getTheme());
         setContentView(R.layout.activity_explorer);
 
         if(savedInstanceState == null) {

@@ -4,16 +4,14 @@ import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
-import android.os.Build;
-import android.preference.PreferenceManager;
 import android.util.Log;
 
 import net.nitroshare.android.ui.transfer.TransferActivity;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
+import net.nitroshare.android.util.Settings;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,7 +19,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.util.UUID;
 
 /**
  * Listen for new connections and create Transfers for them
@@ -41,7 +38,7 @@ class TransferServer implements Runnable {
     private Context mContext;
     private Listener mListener;
     private TransferNotificationManager mTransferNotificationManager;
-    private SharedPreferences mSharedPreferences;
+    private Settings mSettings;
     private Selector mSelector = Selector.open();
 
     private NsdManager.RegistrationListener mRegistrationListener =
@@ -71,13 +68,12 @@ class TransferServer implements Runnable {
      * @param context context for retrieving string resources
      * @param transferNotificationManager notification manager
      * @param listener callback for new transfers
-     * @throws IOException
      */
     TransferServer(Context context, TransferNotificationManager transferNotificationManager, Listener listener) throws IOException {
         mContext = context;
         mTransferNotificationManager = transferNotificationManager;
         mListener = listener;
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        mSettings = new Settings(context);
     }
 
     /**
@@ -126,18 +122,6 @@ class TransferServer implements Runnable {
     public void run() {
         Log.i(TAG, "starting server...");
 
-        // Retrieve the UUID (generating a new one if necessary) and name
-        String deviceUuidKey = mContext.getString(R.string.setting_device_uuid);
-        String deviceUuid = mSharedPreferences.getString(deviceUuidKey, "");
-        if (deviceUuid.isEmpty()) {
-            deviceUuid = String.format("{%s}", UUID.randomUUID().toString());
-            mSharedPreferences.edit().putString(deviceUuidKey, deviceUuid).apply();
-        }
-        String deviceName = mSharedPreferences.getString(mContext.getString(
-                R.string.setting_device_name), "");
-        if (deviceName.isEmpty()) {
-            deviceName = Build.MODEL;
-        }
         NsdManager nsdManager = null;
 
         try {
@@ -152,7 +136,12 @@ class TransferServer implements Runnable {
             // Register the service
             nsdManager = (NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
             nsdManager.registerService(
-                    new Device(deviceUuid, deviceName, null, 40818).toServiceInfo(),
+                    new Device(
+                            mSettings.getString(Settings.Key.DEVICE_NAME),
+                            mSettings.getString(Settings.Key.DEVICE_UUID),
+                            null,
+                            40818
+                    ).toServiceInfo(),
                     NsdManager.PROTOCOL_DNS_SD,
                     mRegistrationListener
             );
@@ -170,21 +159,13 @@ class TransferServer implements Runnable {
                 if (selectionKey.isAcceptable()) {
                     Log.i(TAG, "accepting incoming connection");
                     SocketChannel socketChannel = serverSocketChannel.accept();
-                    String transferDirectory = mSharedPreferences.getString(
-                            mContext.getString(R.string.setting_transfer_directory),
-                            mContext.getString(R.string.setting_transfer_directory_default)
-                    );
-                    boolean overwrite = mSharedPreferences.getBoolean(
-                            mContext.getString(R.string.setting_behavior_overwrite),
-                            false
-                    );
                     String unknownDeviceName = mContext.getString(
                             R.string.service_transfer_unknown_device);
                     mListener.onNewTransfer(
                             new Transfer(
                                     socketChannel,
-                                    transferDirectory,
-                                    overwrite,
+                                    mSettings.getString(Settings.Key.TRANSFER_DIRECTORY),
+                                    mSettings.getBoolean(Settings.Key.BEHAVIOR_OVERWRITE),
                                     unknownDeviceName
                             )
                     );

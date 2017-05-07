@@ -100,7 +100,7 @@ public class Transfer implements Runnable {
         Transferring,
         Failed,
         Succeeded,
-    };
+    }
 
     /**
      * Transfer header
@@ -164,7 +164,6 @@ public class Transfer implements Runnable {
      * @param transferDirectory directory for incoming files
      * @param overwrite true to overwrite existing files
      * @param unknownDeviceName device name shown before being received
-     * @throws IOException
      */
     public Transfer(SocketChannel socketChannel, String transferDirectory, boolean overwrite, String unknownDeviceName) throws IOException {
         mSocketChannel = socketChannel;
@@ -181,7 +180,6 @@ public class Transfer implements Runnable {
      * @param device device to connect to
      * @param deviceName device name to send to the remote device
      * @param bundle bundle to transfer
-     * @throws IOException
      */
     public Transfer(Device device, String deviceName, Bundle bundle) throws IOException {
         mSocketChannel = SocketChannel.open();
@@ -326,7 +324,6 @@ public class Transfer implements Runnable {
 
     /**
      * Process the transfer header
-     * @throws IOException
      */
     private void processTransferHeader() throws IOException {
         TransferHeader transferHeader;
@@ -352,7 +349,6 @@ public class Transfer implements Runnable {
 
     /**
      * Process the header for an individual item
-     * @throws IOException
      */
     private void processItemHeader() throws IOException {
         Type type = new TypeToken<Map<String, Object>>(){}.getType();
@@ -382,7 +378,6 @@ public class Transfer implements Runnable {
 
     /**
      * Process item contents
-     * @throws IOException
      */
     private void processItemContent() throws IOException {
         mItem.write(mReceivingPacket.getBuffer().array());
@@ -403,7 +398,6 @@ public class Transfer implements Runnable {
     /**
      * Process the next packet by reading it and then invoking the correct method
      * @return true if there are more packets expected
-     * @throws IOException
      */
     private boolean processNextPacket() throws IOException {
         if (mReceivingPacket == null) {
@@ -453,7 +447,6 @@ public class Transfer implements Runnable {
 
     /**
      * Send the header for an individual item
-     * @throws IOException
      */
     private void sendItemHeader() throws IOException {
         mItem = mBundle.get(mItemIndex);
@@ -472,7 +465,6 @@ public class Transfer implements Runnable {
 
     /**
      * Send item contents
-     * @throws IOException
      */
     private void sendItemContent() throws IOException {
         byte buffer[] = new byte[CHUNK_SIZE];
@@ -491,7 +483,6 @@ public class Transfer implements Runnable {
     /**
      * Send the next packet by evaluating the current state
      * @return true if there are more packets to send
-     * @throws IOException
      */
     private boolean sendNextPacket() throws IOException {
         if (mSendingPacket == null) {

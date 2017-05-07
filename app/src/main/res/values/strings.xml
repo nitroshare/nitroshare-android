@@ -1,17 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">NitroShare</string>
 
-    <!-- Settings -->
-    <string name="setting_intro_shown" translatable="false">introShown</string>
-    <string name="setting_device_name" translatable="false">deviceName</string>
-    <string name="setting_device_name_default">Not set - use device model name</string>
-    <string name="setting_device_uuid" translatable="false">deviceUuid</string>
-    <string name="setting_transfer_directory" translatable="false">transferDirectory</string>
-    <string name="setting_transfer_directory_default" translatable="false">/sdcard/Download/NitroShare</string>
-    <string name="setting_behavior_receive" translatable="false">behaviorReceive</string>
-    <string name="setting_behavior_overwrite" translatable="false">overwrite</string>
-    <string name="setting_notification_sound" translatable="false">notificationSound</string>
-
     <!-- Main activity -->
     <string name="activity_main_empty_text">No transfers in progress</string>
 
@@ -36,6 +25,7 @@
     <!-- Settings activity -->
     <string name="activity_settings">Settings</string>
     <string name="activity_settings_category_general">General</string>
+    <string name="activity_settings_category_appearance">Appearance</string>
     <string name="activity_settings_pref_device_name">Device Name</string>
     <string name="activity_settings_pref_transfer_directory">Transfer Directory</string>
     <string name="activity_settings_pref_behavior_receive">Receive Transfers</string>
@@ -45,6 +35,8 @@
     <string name="activity_settings_category_notifications">Notifications</string>
     <string name="activity_settings_pref_notification_sound">Notification Sound</string>
     <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
+    <string name="activity_settings_darkTheme" translatable="false">Dark theme</string>
+    <string name="activity_settings_darkTheme_summary" translatable="false">Enable the alternate dark them instead of the standard light theme</string>
 
     <!-- About activity -->
     <string name="activity_about">About</string>

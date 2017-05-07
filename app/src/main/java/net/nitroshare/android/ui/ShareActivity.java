@@ -1,12 +1,10 @@
 package net.nitroshare.android.ui;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -23,6 +21,7 @@ import com.youview.tinydnssd.MDNSDiscover;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.util.Settings;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -43,7 +42,7 @@ public class ShareActivity extends AppCompatActivity {
     /**
      * Adapter that discovers other devices on the network
      */
-    class DeviceAdapter extends ArrayAdapter<String> {
+    private class DeviceAdapter extends ArrayAdapter<String> {
 
         /**
          * Maintain a mapping of device IDs to discovered devices
@@ -106,10 +105,7 @@ public class ShareActivity extends AppCompatActivity {
             super(ShareActivity.this, R.layout.view_simple_list_item, android.R.id.text1);
 
             mDiscoverResolver = new DiscoverResolver(ShareActivity.this, Device.SERVICE_TYPE, mListener);
-            SharedPreferences sharedPreferences =
-                    PreferenceManager.getDefaultSharedPreferences(ShareActivity.this);
-            mThisDeviceName = sharedPreferences.getString(getString(
-                    R.string.setting_device_name), Build.MODEL);
+            mThisDeviceName = new Settings(getContext()).getString(Settings.Key.DEVICE_NAME);
         }
 
         void start() {
@@ -129,8 +125,9 @@ public class ShareActivity extends AppCompatActivity {
             return mDevices.get(getItem(position));
         }
 
+        @NonNull
         @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
+        public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             convertView = super.getView(position, convertView, parent);
             Device device = mDevices.get(getItem(position));
             ((TextView) convertView.findViewById(android.R.id.text1)).setText(device.getName());
@@ -160,6 +157,7 @@ public class ShareActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setTheme(new Settings(this).getTheme());
         setContentView(R.layout.activity_share);
 
         mDeviceAdapter = new DeviceAdapter();
