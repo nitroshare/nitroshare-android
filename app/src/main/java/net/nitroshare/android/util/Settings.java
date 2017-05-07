@@ -45,7 +45,7 @@ public class Settings {
      * @return default value or null if key is invalid
      */
     @Nullable
-    private Object getDefault(Key key) {
+    public Object getDefault(Key key) {
         switch (key) {
             case BEHAVIOR_RECEIVE:
                 return true;
