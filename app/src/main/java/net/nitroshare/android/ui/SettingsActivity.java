@@ -127,9 +127,12 @@ public class SettingsActivity extends PreferenceActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle savedInstanceState)
+    {
+        //For some unknown reason, we have to call this before we call super.onCreate();
         setTheme(new Settings(this).getTheme());
+
+        super.onCreate(savedInstanceState);
         getFragmentManager()
                 .beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
