@@ -10,12 +10,12 @@ android {
         versionCode 11
         versionName "0.4.0.10"
     }
-    buildTypes {
+    /*buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
+    }*/
 }
 
 dependencies {
