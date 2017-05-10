@@ -28,6 +28,14 @@ public class MainIntroActivity extends IntroActivity {
                 .backgroundDark(R.color.colorPrimaryDark)
                 .build());
 
+        addSlide(new SimpleSlide.Builder()
+                .title(R.string.activity_intro_share_title)
+                .description(R.string.activity_intro_share_description)
+                .image(R.drawable.ic_intro_share)
+                .background(R.color.colorPrimary)
+                .backgroundDark(R.color.colorPrimaryDark)
+                .build());
+
         // We only need to ask for the permission if the user is running Marshmallow or higher; on
         // previous versions of Android permissions are granted by default
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
