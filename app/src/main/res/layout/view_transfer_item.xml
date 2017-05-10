@@ -17,7 +17,8 @@
         <ImageView
             android:id="@+id/transfer_icon"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:tint="?attr/colorControlNormal"/>
 
         <View
             android:layout_width="@dimen/activity_horizontal_margin"
