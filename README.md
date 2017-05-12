@@ -7,6 +7,8 @@ NitroShare for Android simplifies the task of transferring files and directories
 - Automatic peer discovery
 - Integration with Share menu
 - Blazing fast transfers over Wi-Fi
+- File explorer for selecting items to send
+- Light and dark themes
 - Completely open-source and ad-free
 
 ### Screenshots
