@@ -16,21 +16,21 @@ public class Device implements Serializable {
 
     public static final String UUID = "uuid";
 
-    private String mUuid;
     private String mName;
+    private String mUuid;
     private InetAddress mHost;
     private int mPort;
 
     /**
      * Create a device from the provided information
-     * @param uuid unique identifier for the device
      * @param name device name
+     * @param uuid unique identifier for the device
      * @param host device host
      * @param port port for the service
      */
-    public Device(String uuid, String name, InetAddress host, int port) {
-        mUuid = uuid;
+    public Device(String name, String uuid, InetAddress host, int port) {
         mName = name;
+        mUuid = uuid;
         mHost = host;
         mPort = port;
     }
