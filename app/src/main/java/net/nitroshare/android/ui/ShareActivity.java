@@ -88,8 +88,8 @@ public class ShareActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             Device device = new Device(
-                                    "",
                                     name,
+                                    "",
                                     host,
                                     result.srv.port
                             );

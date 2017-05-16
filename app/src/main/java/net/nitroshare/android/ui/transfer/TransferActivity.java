@@ -6,7 +6,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.ContextThemeWrapper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -18,8 +17,6 @@ import net.nitroshare.android.ui.SettingsActivity;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.util.Settings;
-
-import java.lang.reflect.Method;
 
 public class TransferActivity extends AppCompatActivity {
 
