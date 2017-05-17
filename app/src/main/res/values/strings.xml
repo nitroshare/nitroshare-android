@@ -9,6 +9,9 @@
     <string name="activity_intro_intro_description">NitroShare makes it easy to send files to other devices on your local network.</string>
     <string name="activity_intro_share_title">Sending Files</string>
     <string name="activity_intro_share_description">Send files with NitroShare from other Android applications like Gallery, Google Docs, and Google Photos.</string>
+    <string name="activity_intro_desktop_title">Desktop App</string>
+    <string name="activity_intro_desktop_description">NitroShare for Android works with the desktop app, which is available for Windows, macOS, and Linux.</string>
+    <string name="activity_intro_desktop_button">Visit Website</string>
     <string name="activity_intro_perms_title">Permission</string>
     <string name="activity_intro_perms_description">In order to send and receive files, NitroShare needs your permission to read and write files on your Android device.</string>
 

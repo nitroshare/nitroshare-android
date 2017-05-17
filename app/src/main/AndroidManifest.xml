@@ -20,9 +20,9 @@
 
         <!-- Intro activity -->
         <activity
-            android:name=".ui.MainIntroActivity"
+            android:name=".ui.IntroActivity"
             android:exported="false"
-            android:theme="@style/Theme.Intro">
+            android:theme="@style/Theme.AppCompat.NoActionBar">
         </activity>
 
         <!-- Main activity -->

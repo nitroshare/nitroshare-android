@@ -6,4 +6,7 @@
 
     <color name="colorError">#D50000</color>
     <color name="colorSuccess">#1B5E20</color>
+
+    <color name="colorIconLight">#de000000</color>
+    <color name="colorIconDark">#ffffffff</color>
 </resources>

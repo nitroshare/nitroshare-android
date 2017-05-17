@@ -12,7 +12,7 @@ import android.view.View;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.AboutActivity;
-import net.nitroshare.android.ui.MainIntroActivity;
+import net.nitroshare.android.ui.IntroActivity;
 import net.nitroshare.android.ui.SettingsActivity;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
@@ -59,7 +59,7 @@ public class TransferActivity extends AppCompatActivity {
         // Launch the intro if the user hasn't seen it yet
         if (!mSettings.getBoolean(Settings.Key.INTRO_SHOWN)) {
             Log.i(TAG, "intro has not been shown; launching activity");
-            Intent introIntent = new Intent(this, MainIntroActivity.class);
+            Intent introIntent = new Intent(this, IntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
         } else {
             finishInit();
