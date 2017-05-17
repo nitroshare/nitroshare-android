@@ -132,9 +132,12 @@ public class SettingsActivity extends PreferenceActivity {
         // initializes some of the controls in the method
         setTheme(new Settings(this).getTheme());
         super.onCreate(savedInstanceState);
-        getFragmentManager()
-                .beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
-                .commit();
+
+        if (savedInstanceState == null) {
+            getFragmentManager()
+                    .beginTransaction()
+                    .replace(android.R.id.content, new SettingsFragment())
+                    .commit();
+        }
     }
 }
