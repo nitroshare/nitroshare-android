@@ -95,6 +95,9 @@ public class TransferActivity extends AppCompatActivity {
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
                 return true;
+            case R.id.action_intro:
+                startActivity(new Intent(this, IntroActivity.class));
+                return true;
             case R.id.action_about:
                 startActivity(new Intent(this, AboutActivity.class));
                 return true;
