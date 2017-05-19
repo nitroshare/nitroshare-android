@@ -112,11 +112,24 @@ public class Settings {
     }
 
     /**
-     * Convenience method for retrieving the current app theme
+     * Convenience method for determining the current app theme to use
+     * @param lightTheme theme to use when dark is disabled
+     * @param darkTheme theme to use when dark is enabled
      * @return integer ID of the correct theme to use
      */
     @StyleRes
+    public int getTheme(@StyleRes int lightTheme, @StyleRes int darkTheme) {
+        return getBoolean(Key.UI_DARK) ? darkTheme : lightTheme;
+    }
+
+    /**
+     * Convenience method for determining the current app theme to use
+     * @return integer ID of the correct theme to use
+     *
+     * This method uses the default themes for light and dark.
+     */
+    @StyleRes
     public int getTheme() {
-        return getBoolean(Key.UI_DARK) ? R.style.DarkTheme : R.style.AppTheme;
+        return getTheme(R.style.LightTheme, R.style.DarkTheme);
     }
 }

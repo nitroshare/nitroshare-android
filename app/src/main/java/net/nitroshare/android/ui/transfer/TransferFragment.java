@@ -97,6 +97,6 @@ public class TransferFragment extends ListFragment {
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setEmptyText(getString(R.string.activity_main_empty_text));
+        setEmptyText(getString(R.string.activity_transfer_empty_text));
     }
 }

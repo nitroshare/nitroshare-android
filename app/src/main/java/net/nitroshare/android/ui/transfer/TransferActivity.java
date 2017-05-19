@@ -2,23 +2,30 @@ package net.nitroshare.android.ui.transfer;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.AboutActivity;
 import net.nitroshare.android.ui.IntroActivity;
 import net.nitroshare.android.ui.SettingsActivity;
-import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.util.Settings;
 
-public class TransferActivity extends AppCompatActivity {
+public class TransferActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     private static final String TAG = "TransferActivity";
     private static final int INTRO_REQUEST = 1;
@@ -31,9 +38,43 @@ public class TransferActivity extends AppCompatActivity {
     private void finishInit() {
         Log.i(TAG, "finishing initialization of activity");
 
+        // Setup the action bar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Connect the action bar and navigation drawer
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawer, toolbar,
+                R.string.activity_transfer_navigation_drawer_open,
+                R.string.activity_transfer_navigation_drawer_close
+        );
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        // Process items in the navigation drawer
+        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        // TODO: update this every time the activity is shown
+
+        // Set the label for the subtitle in the navigation drawer
+        String deviceName = mSettings.getString(Settings.Key.DEVICE_NAME);
+        ((TextView) navigationView.getHeaderView(0).findViewById(R.id.transfer_subtitle)).setText(
+                getString(R.string.menu_transfer_subtitle, deviceName));
+
+        // Setup the floating action button
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                startActivity(new Intent(TransferActivity.this, ExplorerActivity.class));
+            }
+        });
+
         // Launch the transfer service if it isn't already running
         TransferService.startStopService(this, mSettings.getBoolean(Settings.Key.BEHAVIOR_RECEIVE));
 
+        // Add the transfer fragment
         TransferFragment mainFragment = new TransferFragment();
         getSupportFragmentManager()
                 .beginTransaction()
@@ -44,15 +85,11 @@ public class TransferActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(new Settings(this).getTheme());
-        setContentView(R.layout.activity_main);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                startActivity(new Intent(TransferActivity.this, ExplorerActivity.class));
-            }
-        });
+        setTheme(new Settings(this).getTheme(
+                R.style.LightTheme_NoActionBar,
+                R.style.DarkTheme_NoActionBar
+        ));
+        setContentView(R.layout.activity_transfer);
 
         mSettings = new Settings(this);
 
@@ -78,31 +115,40 @@ public class TransferActivity extends AppCompatActivity {
         // Recreate the activity if the theme has changed
         boolean shouldShowDark = mSettings.getBoolean(Settings.Key.UI_DARK);
         if (currentThemeDark != shouldShowDark) {
-            setTheme(shouldShowDark ? R.style.DarkTheme : R.style.AppTheme);
+            setTheme(shouldShowDark ? R.style.DarkTheme : R.style.LightTheme);
             recreate();
         }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        if (drawer.isDrawerOpen(GravityCompat.START)) {
+            drawer.closeDrawer(GravityCompat.START);
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.action_send:
+                startActivity(new Intent(this, ExplorerActivity.class));
+                break;
             case R.id.action_settings:
                 startActivity(new Intent(this, SettingsActivity.class));
-                return true;
+                break;
             case R.id.action_intro:
                 startActivity(new Intent(this, IntroActivity.class));
-                return true;
+                break;
             case R.id.action_about:
                 startActivity(new Intent(this, AboutActivity.class));
-                return true;
+                break;
         }
-        return super.onOptionsItemSelected(item);
+        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        drawer.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     @Override
