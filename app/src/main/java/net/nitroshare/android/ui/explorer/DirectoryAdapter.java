@@ -6,7 +6,9 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.text.format.DateUtils;
 import android.util.SparseArray;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -39,6 +41,9 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     private boolean mCheckboxes = false;
     private SparseArray<File> mChecked = new SparseArray<>();
 
+    // Icon color
+    private int mColor;
+
     DirectoryAdapter(String directory, Context context, Listener listener) {
         super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
         mContext = context;
@@ -58,6 +63,10 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         for (File file : files) {
             add(file);
         }
+
+        TypedValue typedValue = new TypedValue();
+        mContext.getTheme().resolveAttribute(R.attr.colorControlNormal, typedValue, true);
+        mColor = typedValue.data;
     }
 
     /**
@@ -134,10 +143,22 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         ((TextView) view.findViewById(android.R.id.text2)).setText(
                 file.isDirectory() ? getDirectorySummary(file) : getFileSummary(file)
         );
+        ((TextView) view.findViewById(R.id.last_modified)).setText(
+                DateUtils.getRelativeDateTimeString(
+                        mContext,
+                        file.lastModified(),
+                        DateUtils.MINUTE_IN_MILLIS,
+                        DateUtils.WEEK_IN_MILLIS,
+                        0
+                )
+        );
+
         final ImageView imageView = (ImageView) view.findViewById(android.R.id.icon);
+        imageView.setColorFilter(mColor);
         Picasso.with(mContext)
                 .load(file)
                 .resize(96, 96)
+                .centerInside()
                 .placeholder(ContextCompat.getDrawable(
                         mContext, file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
                 ))

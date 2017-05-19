@@ -17,13 +17,13 @@
 
     <TextView
         android:id="@id/android:text1"
-        android:textAppearance="@android:style/TextAppearance.Medium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toStartOf="@id/android:checkbox"
         android:layout_toLeftOf="@id/android:checkbox"
         android:layout_toEndOf="@id/android:icon"
         android:layout_toRightOf="@id/android:icon"
+        android:textStyle="bold"
         android:ellipsize="end"
         android:maxLines="1"/>
 
@@ -32,10 +32,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/android:text1"
+        android:layout_toEndOf="@id/android:icon"
+        android:layout_toRightOf="@id/android:icon"
+        android:textColor="?android:textColorHint"/>
+
+    <TextView
+        android:id="@+id/last_modified"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/android:text1"
         android:layout_toStartOf="@id/android:checkbox"
         android:layout_toLeftOf="@id/android:checkbox"
-        android:layout_toEndOf="@id/android:icon"
-        android:layout_toRightOf="@id/android:icon"/>
+        android:layout_toEndOf="@id/android:text2"
+        android:layout_toRightOf="@id/android:text2"
+        android:layout_alignWithParentIfMissing="true"
+        android:textColor="?android:textColorHint"
+        android:gravity="end"
+        android:paddingRight="@dimen/activity_horizontal_margin"/>
 
     <CheckBox
         android:id="@id/android:checkbox"
