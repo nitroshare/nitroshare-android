@@ -23,7 +23,9 @@
         android:layout_toStartOf="@id/android:checkbox"
         android:layout_toLeftOf="@id/android:checkbox"
         android:layout_toEndOf="@id/android:icon"
-        android:layout_toRightOf="@id/android:icon"/>
+        android:layout_toRightOf="@id/android:icon"
+        android:ellipsize="end"
+        android:maxLines="1"/>
 
     <TextView
         android:id="@id/android:text2"
