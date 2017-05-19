@@ -1,8 +1,11 @@
 package net.nitroshare.android.ui.explorer;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +14,9 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 import net.nitroshare.android.R;
 
@@ -128,9 +134,24 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         ((TextView) view.findViewById(android.R.id.text2)).setText(
                 file.isDirectory() ? getDirectorySummary(file) : getFileSummary(file)
         );
-        ((ImageView) view.findViewById(android.R.id.icon)).setImageResource(
-                file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
-        );
+        final ImageView imageView = (ImageView) view.findViewById(android.R.id.icon);
+        Picasso.with(mContext)
+                .load(file)
+                .resize(96, 96)
+                .placeholder(ContextCompat.getDrawable(
+                        mContext, file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
+                ))
+                .into(imageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        // Remove the tint once the image loads
+                        imageView.setColorFilter(Color.argb(0, 0, 0, 0), PorterDuff.Mode.DST);
+                    }
+
+                    @Override
+                    public void onError() {
+                    }
+                });
         CheckBox checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
         if (mCheckboxes) {
             checkBox.setOnCheckedChangeListener(null);
