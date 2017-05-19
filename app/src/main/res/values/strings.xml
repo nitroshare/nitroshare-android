@@ -32,7 +32,9 @@
     <string name="activity_explorer_kb">%1$d KB</string>
     <string name="activity_explorer_mb">%1$d MB</string>
     <string name="activity_explorer_gb">%1$d GB</string>
-    <string name="activity_explorer_send">Send</string>
+
+    <string name="menu_explorer_actions_send">Send</string>
+    <string name="menu_explorer_options_show_hidden">Show Hidden Items</string>
 
     <!-- Share activity -->
     <string name="activity_share">Send with NitroShare</string>

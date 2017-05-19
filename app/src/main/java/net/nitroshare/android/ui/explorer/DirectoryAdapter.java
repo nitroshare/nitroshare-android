@@ -38,18 +38,18 @@ class DirectoryAdapter extends ArrayAdapter<File> {
 
     private Context mContext;
     private Listener mListener;
+    private String mDirectory;
+    private boolean mShowHidden = false;
     private boolean mCheckboxes = false;
     private SparseArray<File> mChecked = new SparseArray<>();
 
-    // Icon color
     private int mColor;
 
-    DirectoryAdapter(String directory, Context context, Listener listener) {
-        super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
-        mContext = context;
-        mListener = listener;
-
-        File[] files = new File(directory).listFiles();
+    /**
+     * Initialize the list of files
+     */
+    private void init() {
+        File[] files = new File(mDirectory).listFiles();
         Arrays.sort(files, new Comparator<File>() {
             @Override
             public int compare(File o1, File o2) {
@@ -61,12 +61,32 @@ class DirectoryAdapter extends ArrayAdapter<File> {
             }
         });
         for (File file : files) {
-            add(file);
+            if (mShowHidden || !file.getName().startsWith(".")) {
+                add(file);
+            }
         }
+    }
+
+    DirectoryAdapter(String directory, Context context, Listener listener) {
+        super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
+        mContext = context;
+        mListener = listener;
+        mDirectory = directory;
 
         TypedValue typedValue = new TypedValue();
         mContext.getTheme().resolveAttribute(R.attr.colorControlNormal, typedValue, true);
         mColor = typedValue.data;
+
+        init();
+    }
+
+    /**
+     * Enable or disable showing of hidden items
+     */
+    void toggleHidden(boolean showHidden) {
+        mShowHidden = showHidden;
+        clear();
+        init();
     }
 
     /**

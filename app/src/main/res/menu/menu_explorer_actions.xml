@@ -5,7 +5,7 @@
     <item
         android:id="@+id/action_send"
         android:icon="@drawable/ic_send"
-        android:title="@string/activity_explorer_send"
+        android:title="@string/menu_explorer_actions_send"
         app:showAsAction="never" />
 
 </menu>

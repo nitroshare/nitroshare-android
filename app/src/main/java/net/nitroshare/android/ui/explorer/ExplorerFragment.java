@@ -38,6 +38,8 @@ public class ExplorerFragment extends ListFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setHasOptionsMenu(true);
+
         String directory = null;
         if (getArguments() != null) {
             directory = getArguments().getString(DIRECTORY);
@@ -85,9 +87,26 @@ public class ExplorerFragment extends ListFragment
     }
 
     @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_explorer_options, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.option_show_hidden:
+                boolean isChecked = !item.isChecked();
+                item.setChecked(isChecked);
+                mDirectoryAdapter.toggleHidden(isChecked);
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public boolean onCreateActionMode(ActionMode mode, Menu menu) {
         MenuInflater inflator = mode.getMenuInflater();
-        inflator.inflate(R.menu.menu_explorer, menu);
+        inflator.inflate(R.menu.menu_explorer_actions, menu);
         return true;
     }
 
