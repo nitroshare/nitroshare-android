@@ -1,6 +1,7 @@
 package net.nitroshare.android.ui.transfer;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -141,6 +142,10 @@ public class TransferActivity extends AppCompatActivity
                 break;
             case R.id.action_intro:
                 startActivity(new Intent(this, IntroActivity.class));
+                break;
+            case R.id.action_report:
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(
+                        "https://github.com/nitroshare/nitroshare-android/issues/new")));
                 break;
             case R.id.action_about:
                 startActivity(new Intent(this, AboutActivity.class));

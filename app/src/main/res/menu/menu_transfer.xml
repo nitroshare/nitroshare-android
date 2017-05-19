@@ -27,6 +27,11 @@
     <group android:id="@+id/grp3" android:checkableBehavior="none">
 
         <item
+            android:id="@+id/action_report"
+            android:title="@string/menu_transfer_item_report"
+            app:showAsAction="never" />
+
+        <item
             android:id="@+id/action_about"
             android:title="@string/menu_transfer_item_about"
             app:showAsAction="never" />

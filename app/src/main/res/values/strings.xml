@@ -12,6 +12,7 @@
     <string name="menu_transfer_item_send">Send Items</string>
     <string name="menu_transfer_item_settings">Settings</string>
     <string name="menu_transfer_item_intro">Intro</string>
+    <string name="menu_transfer_item_report">Report a Bug</string>
     <string name="menu_transfer_item_about">About</string>
 
     <!-- Intro activity -->
