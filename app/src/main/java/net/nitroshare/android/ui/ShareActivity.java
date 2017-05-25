@@ -1,8 +1,11 @@
 package net.nitroshare.android.ui;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.net.Uri;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -15,16 +18,11 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.youview.tinydnssd.DiscoverResolver;
-import com.youview.tinydnssd.MDNSDiscover;
-
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.util.Settings;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,71 +47,93 @@ public class ShareActivity extends AppCompatActivity {
          */
         private final Map<String, Device> mDevices = new HashMap<>();
 
-        private DiscoverResolver mDiscoverResolver;
+        private NsdManager mNsdManager;
         private String mThisDeviceName;
 
-        DiscoverResolver.Listener mListener = new DiscoverResolver.Listener() {
+        /**
+         * Listener for discovery events
+         */
+        private NsdManager.DiscoveryListener mDiscoveryListener = new NsdManager.DiscoveryListener() {
             @Override
-            public void onServicesChanged(Map<String, MDNSDiscover.Result> services) {
-                for (final MDNSDiscover.Result result : services.values()) {
-                    // We neither need nor want a FQDN
-                    final String name = result.srv.fqdn.replaceFirst(
-                            String.format("\\.%slocal$", Device.SERVICE_TYPE), "");
-                    if (name.equals(mThisDeviceName)) {
-                        continue;
-                    }
-                    if (result.srv.ttl == 0) {
+            public void onServiceFound(NsdServiceInfo serviceInfo) {
+                if (serviceInfo.getServiceName().equals(mThisDeviceName)) {
+                    return;
+                }
+                Log.d(TAG, String.format("found \"%s\"", serviceInfo.getServiceName()));
+                mNsdManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
+                    @Override
+                    public void onServiceResolved(final NsdServiceInfo serviceInfo) {
+                        Log.d(TAG, String.format("resolved \"%s\"", serviceInfo.getServiceName()));
+                        final Device device = new Device(
+                                serviceInfo.getServiceName(),
+                                "",
+                                serviceInfo.getHost(),
+                                serviceInfo.getPort()
+                        );
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                remove(name);
-                                mDevices.remove(name);
+                                mDevices.put(serviceInfo.getServiceName(), device);
+                                add(serviceInfo.getServiceName());
                             }
                         });
                     }
-                    InetAddress ipAddress = null;
-                    try {
-                        ipAddress = InetAddress.getByName(result.a.ipaddr);
-                    } catch (UnknownHostException ignored) {
+
+                    @Override
+                    public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                        Log.e(TAG, String.format("unable to resolve \"%s\"",
+                                serviceInfo.getServiceName()));
                     }
-                    final InetAddress host = ipAddress;
-                    /*
-                    final String uuid = result.txt.dict.get(Device.UUID);
-                    if (uuid == null) {
-                        continue;
+                });
+            }
+
+            @Override
+            public void onServiceLost(final NsdServiceInfo serviceInfo) {
+                Log.d(TAG, String.format("lost \"%s\"", serviceInfo.getServiceName()));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        remove(serviceInfo.getServiceName());
+                        mDevices.remove(serviceInfo.getServiceName());
                     }
-                    */
-                    Log.d(TAG, String.format("found new device \"%s\"", name));
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Device device = new Device(
-                                    name,
-                                    "",
-                                    host,
-                                    result.srv.port
-                            );
-                            mDevices.put(name, device);
-                            add(name);
-                        }
-                    });
-                }
+                });
+            }
+
+            @Override
+            public void onDiscoveryStarted(String serviceType) {
+                Log.d(TAG, "service discovery started");
+            }
+
+            @Override
+            public void onDiscoveryStopped(String serviceType) {
+                Log.d(TAG, "service discovery stopped");
+            }
+
+            @Override
+            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+                Log.e(TAG, "unable to start service discovery");
+            }
+
+            @Override
+            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
+                Log.e(TAG, "unable to stop service discovery");
             }
         };
 
         DeviceAdapter() {
             super(ShareActivity.this, R.layout.view_simple_list_item, android.R.id.text1);
-
-            mDiscoverResolver = new DiscoverResolver(ShareActivity.this, Device.SERVICE_TYPE, mListener);
-            mThisDeviceName = new Settings(getContext()).getString(Settings.Key.DEVICE_NAME);
         }
 
         void start() {
-            mDiscoverResolver.start();
+            mNsdManager = (NsdManager) getSystemService(Context.NSD_SERVICE);
+            mNsdManager.discoverServices(Device.SERVICE_TYPE,
+                    NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+
+            mThisDeviceName = new Settings(getContext()).getString(Settings.Key.DEVICE_NAME);
         }
 
         void stop() {
-            mDiscoverResolver.stop();
+            mNsdManager.stopServiceDiscovery(mDiscoveryListener);
         }
 
         /**
