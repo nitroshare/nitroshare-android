@@ -25,6 +25,7 @@ import net.nitroshare.android.util.Settings;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,8 +48,68 @@ public class ShareActivity extends AppCompatActivity {
          */
         private final Map<String, Device> mDevices = new HashMap<>();
 
+        /**
+         * Maintain a queue of devices to resolve
+         */
+        private final List<NsdServiceInfo> mQueue = new ArrayList<>();
+
         private NsdManager mNsdManager;
         private String mThisDeviceName;
+
+        /**
+         * Prepare to resolve the next service
+         *
+         * For some inexplicable reason, Android chokes miserably when
+         * resolving more than one service at a time. The queue performs each
+         * resolution sequentially.
+         */
+        private void prepareNextService() {
+            synchronized (mQueue) {
+                mQueue.remove(0);
+                if (mQueue.size() == 0) {
+                    return;
+                }
+            }
+            resolveNextService();
+        }
+
+        /**
+         * Resolve the next service in the queue
+         */
+        private void resolveNextService() {
+            NsdServiceInfo serviceInfo;
+            synchronized (mQueue) {
+                serviceInfo = mQueue.get(0);
+            }
+            Log.d(TAG, String.format("resolving \"%s\"", serviceInfo.getServiceName()));
+            mNsdManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
+                @Override
+                public void onServiceResolved(final NsdServiceInfo serviceInfo) {
+                    Log.d(TAG, String.format("resolved \"%s\"", serviceInfo.getServiceName()));
+                    final Device device = new Device(
+                            serviceInfo.getServiceName(),
+                            "",
+                            serviceInfo.getHost(),
+                            serviceInfo.getPort()
+                    );
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mDevices.put(serviceInfo.getServiceName(), device);
+                            add(serviceInfo.getServiceName());
+                        }
+                    });
+                    prepareNextService();
+                }
+
+                @Override
+                public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                    Log.e(TAG, String.format("unable to resolve \"%s\": %d",
+                            serviceInfo.getServiceName(), errorCode));
+                    prepareNextService();
+                }
+            });
+        }
 
         /**
          * Listener for discovery events
@@ -59,32 +120,15 @@ public class ShareActivity extends AppCompatActivity {
                 if (serviceInfo.getServiceName().equals(mThisDeviceName)) {
                     return;
                 }
-                Log.d(TAG, String.format("found \"%s\"", serviceInfo.getServiceName()));
-                mNsdManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
-                    @Override
-                    public void onServiceResolved(final NsdServiceInfo serviceInfo) {
-                        Log.d(TAG, String.format("resolved \"%s\"", serviceInfo.getServiceName()));
-                        final Device device = new Device(
-                                serviceInfo.getServiceName(),
-                                "",
-                                serviceInfo.getHost(),
-                                serviceInfo.getPort()
-                        );
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mDevices.put(serviceInfo.getServiceName(), device);
-                                add(serviceInfo.getServiceName());
-                            }
-                        });
-                    }
-
-                    @Override
-                    public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                        Log.e(TAG, String.format("unable to resolve \"%s\"",
-                                serviceInfo.getServiceName()));
-                    }
-                });
+                Log.d(TAG, String.format("found \"%s\"; queued for resolving", serviceInfo.getServiceName()));
+                boolean resolve;
+                synchronized (mQueue) {
+                    resolve = mQueue.size() == 0;
+                    mQueue.add(serviceInfo);
+                }
+                if (resolve) {
+                    resolveNextService();
+                }
             }
 
             @Override
