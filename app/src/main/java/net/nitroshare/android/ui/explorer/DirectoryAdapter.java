@@ -68,7 +68,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     }
 
     DirectoryAdapter(String directory, Context context, Listener listener) {
-        super(context, R.layout.view_simple_list_item_with_checkbox, android.R.id.text1);
+        super(context, R.layout.view_simple_list_item_explorer, android.R.id.text1);
         mContext = context;
         mListener = listener;
         mDirectory = directory;
@@ -172,13 +172,12 @@ class DirectoryAdapter extends ArrayAdapter<File> {
                         0
                 )
         );
-
         final ImageView imageView = (ImageView) view.findViewById(android.R.id.icon);
         imageView.setColorFilter(mColor);
         Picasso.with(mContext)
                 .load(file)
-                .resize(96, 96)
-                .centerInside()
+                .resizeDimen(R.dimen.explorer_icon_size, R.dimen.explorer_icon_size)
+                .centerCrop()
                 .placeholder(ContextCompat.getDrawable(
                         mContext, file.isDirectory() ? R.drawable.ic_folder : R.drawable.ic_file
                 ))
