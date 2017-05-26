@@ -10,12 +10,12 @@ android {
         versionCode 21
         versionName "0.4.0.20"
     }
-    buildTypes {
+    /*buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
-    }
+    }*/
 }
 
 dependencies {
