@@ -99,7 +99,7 @@ public class IntroActivity extends AppIntro {
         ));
 
         // Determine if the permission slide needs to be shown or not
-        mShowPermissionSlide = Permissions.haveStoragePermission(this);
+        mShowPermissionSlide = !Permissions.haveStoragePermission(this);
 
         // We only need to ask for the permission if the user is running Marshmallow or higher; on
         // previous versions of Android permissions are granted by default

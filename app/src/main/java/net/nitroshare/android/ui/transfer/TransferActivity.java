@@ -23,6 +23,7 @@ import net.nitroshare.android.ui.IntroActivity;
 import net.nitroshare.android.ui.SettingsActivity;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
+import net.nitroshare.android.util.Permissions;
 import net.nitroshare.android.util.Settings;
 
 public class TransferActivity extends AppCompatActivity
@@ -94,13 +95,12 @@ public class TransferActivity extends AppCompatActivity
 
         mSettings = new Settings(this);
 
-        // Launch the intro if the user hasn't seen it yet
-        if (!mSettings.getBoolean(Settings.Key.INTRO_SHOWN)) {
-            Log.i(TAG, "intro has not been shown; launching activity");
+        if (Permissions.haveStoragePermission(this)) {
+            finishInit();
+        } else {
+            Log.i(TAG, "permissions missing; launching activity");
             Intent introIntent = new Intent(this, IntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
-        } else {
-            finishInit();
         }
     }
 
@@ -162,7 +162,6 @@ public class TransferActivity extends AppCompatActivity
         if (requestCode == INTRO_REQUEST) {
             if (resultCode == RESULT_OK) {
                 Log.i(TAG, "intro finished");
-                mSettings.putBoolean(Settings.Key.INTRO_SHOWN, true);
                 finishInit();
             } else {
                 finish();
