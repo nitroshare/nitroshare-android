@@ -1,16 +1,12 @@
 package net.nitroshare.android.ui;
 
-import android.Manifest;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.ColorInt;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
@@ -24,13 +20,12 @@ import com.github.paolorotolo.appintro.AppIntroBaseFragment;
 import com.github.paolorotolo.appintro.AppIntroFragment;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.util.Permissions;
 
 /**
  * Display an interactive introduction to the application
  */
 public class IntroActivity extends AppIntro {
-
-    private static final int PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     /**
      * Custom fragment that adds a button for visiting the website
@@ -104,10 +99,7 @@ public class IntroActivity extends AppIntro {
         ));
 
         // Determine if the permission slide needs to be shown or not
-        mShowPermissionSlide = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
-                ContextCompat.checkSelfPermission(
-                        this, Manifest.permission.WRITE_EXTERNAL_STORAGE
-                ) != PackageManager.PERMISSION_GRANTED;
+        mShowPermissionSlide = Permissions.haveStoragePermission(this);
 
         // We only need to ask for the permission if the user is running Marshmallow or higher; on
         // previous versions of Android permissions are granted by default
@@ -138,9 +130,7 @@ public class IntroActivity extends AppIntro {
         super.onDonePressed(currentFragment);
 
         if (mShowPermissionSlide) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
+            Permissions.requestStoragePermission(this);
         } else {
             setResult(RESULT_OK);
             finish();
@@ -149,13 +139,9 @@ public class IntroActivity extends AppIntro {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    setResult(RESULT_OK);
-                    finish();
-                }
-                break;
+        if (Permissions.obtainedStoragePermission(requestCode, grantResults)) {
+            setResult(RESULT_OK);
+            finish();
         }
     }
 }
