@@ -39,6 +39,7 @@
     <!-- Share activity -->
     <string name="activity_share">Send with NitroShare</string>
     <string name="activity_share_label">Select a device from the list below to receive the transfer:</string>
+    <string name="activity_share_permissions">NitroShare cannot transfer data without access to storage.</string>
 
     <!-- Settings activity -->
     <string name="activity_settings">Settings</string>

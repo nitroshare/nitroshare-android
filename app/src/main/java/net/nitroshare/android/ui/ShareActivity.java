@@ -1,6 +1,8 @@
 package net.nitroshare.android.ui;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.DataSetObserver;
 import android.net.Uri;
@@ -21,6 +23,7 @@ import android.widget.TextView;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.util.Permissions;
 import net.nitroshare.android.util.Settings;
 
 import java.util.ArrayList;
@@ -218,12 +221,10 @@ public class ShareActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setTheme(new Settings(this).getTheme());
-        setContentView(R.layout.activity_share);
-
+    /**
+     * Finish initializing the activity
+     */
+    private void finishInit() {
         mDeviceAdapter = new DeviceAdapter();
         mDeviceAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
@@ -252,6 +253,37 @@ public class ShareActivity extends AppCompatActivity {
                 ShareActivity.this.finish();
             }
         });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setTheme(new Settings(this).getTheme());
+        setContentView(R.layout.activity_share);
+
+        // Attempt to obtain permission if it is somehow missing
+        if (Permissions.haveStoragePermission(this)) {
+            finishInit();
+        } else {
+            Permissions.requestStoragePermission(this);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        if (Permissions.obtainedStoragePermission(requestCode, grantResults)) {
+            finishInit();
+        } else {
+            new AlertDialog.Builder(this)
+                    .setMessage(R.string.activity_share_permissions)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create()
+                    .show();
+        }
     }
 
     @Override
