@@ -1,4 +1,4 @@
-package net.nitroshare.android.ui;
+package net.nitroshare.android.ui.settings;
 
 import android.os.Bundle;
 import android.preference.EditTextPreference;
@@ -80,6 +80,28 @@ public class SettingsActivity extends PreferenceActivity {
             return switchPreference;
         }
 
+        /**
+         * Create a DirectoryPreference for the specified preference
+         * @param titleResId resource ID to use for the title
+         * @param key preference key
+         * @return newly created preference
+         */
+        private DirectoryPreference createDirectoryPreference(@StringRes int titleResId, Settings.Key key) {
+            final DirectoryPreference directoryPreference = new DirectoryPreference(getActivity(), null);
+            directoryPreference.setDefaultValue(mSettings.getDefault(key));
+            directoryPreference.setKey(key.name());
+            directoryPreference.setSummary(mSettings.getString(key));
+            directoryPreference.setTitle(titleResId);
+            directoryPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+                @Override
+                public boolean onPreferenceChange(Preference preference, Object newValue) {
+                    directoryPreference.setSummary((String) newValue);
+                    return true;
+                }
+            });
+            return directoryPreference;
+        }
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
@@ -97,7 +119,7 @@ public class SettingsActivity extends PreferenceActivity {
 
             // Create the preferences
             general.addPreference(createEditTextPreference(R.string.activity_settings_pref_device_name, Settings.Key.DEVICE_NAME));
-            general.addPreference(createEditTextPreference(R.string.activity_settings_pref_transfer_directory, Settings.Key.TRANSFER_DIRECTORY));
+            general.addPreference(createDirectoryPreference(R.string.activity_settings_pref_transfer_directory, Settings.Key.TRANSFER_DIRECTORY));
             general.addPreference(createSwitchPreference(R.string.activity_settings_pref_behavior_receive, R.string.activity_settings_pref_behavior_receive_summary, Settings.Key.BEHAVIOR_RECEIVE));
             general.addPreference(createSwitchPreference(R.string.activity_settings_pref_behavior_overwrite, R.string.activity_settings_pref_behavior_overwrite_summary, Settings.Key.BEHAVIOR_OVERWRITE));
             appearance.addPreference(createSwitchPreference(R.string.activity_settings_darkTheme, R.string.activity_settings_darkTheme_summary, Settings.Key.UI_DARK));

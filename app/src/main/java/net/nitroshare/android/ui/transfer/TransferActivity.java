@@ -20,7 +20,7 @@ import android.widget.TextView;
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.AboutActivity;
 import net.nitroshare.android.ui.IntroActivity;
-import net.nitroshare.android.ui.SettingsActivity;
+import net.nitroshare.android.ui.settings.SettingsActivity;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.ui.explorer.ExplorerActivity;
 import net.nitroshare.android.util.Permissions;

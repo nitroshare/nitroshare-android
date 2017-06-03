@@ -58,7 +58,7 @@
 
         <!-- Settings activity -->
         <activity
-            android:name=".ui.SettingsActivity"
+            android:name=".ui.settings.SettingsActivity"
             android:label="@string/activity_settings"
             android:parentActivityName=".ui.transfer.TransferActivity"/>
 
