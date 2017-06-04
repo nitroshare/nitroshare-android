@@ -80,9 +80,13 @@ class DirectoryPreference extends DialogPreference {
             mPosition = position;
         }
 
+        /**
+         * Obtain the currently selected path
+         */
         String getSelection() {
             //noinspection ConstantConditions
-            return getItem(mPosition).getAbsolutePath();
+            return 0 <= mPosition && mPosition < getCount() ?
+                    getItem(mPosition).getAbsolutePath() : null;
         }
     }
 
@@ -149,8 +153,10 @@ class DirectoryPreference extends DialogPreference {
         if (positiveResult) {
             String path = mAdapter.getSelection();
 
-            callChangeListener(path);
-            persistString(path);
+            if (path != null) {
+                callChangeListener(path);
+                persistString(path);
+            }
         }
     }
 }
