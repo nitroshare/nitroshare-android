@@ -94,11 +94,13 @@ public class TransferActivity extends AppCompatActivity
         setContentView(R.layout.activity_transfer);
 
         mSettings = new Settings(this);
+        boolean introShown = mSettings.getBoolean(Settings.Key.INTRO_SHOWN);
+        Log.i(TAG, introShown ? "intro has been shown" : "intro has not been shown");
 
-        if (Permissions.haveStoragePermission(this)) {
+        if (introShown && Permissions.haveStoragePermission(this)) {
             finishInit();
         } else {
-            Log.i(TAG, "permissions missing; launching activity");
+            Log.i(TAG, "launching intro activity");
             Intent introIntent = new Intent(this, IntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
         }
@@ -162,6 +164,7 @@ public class TransferActivity extends AppCompatActivity
         if (requestCode == INTRO_REQUEST) {
             if (resultCode == RESULT_OK) {
                 Log.i(TAG, "intro finished");
+                mSettings.putBoolean(Settings.Key.INTRO_SHOWN, true);
                 finishInit();
             } else {
                 finish();

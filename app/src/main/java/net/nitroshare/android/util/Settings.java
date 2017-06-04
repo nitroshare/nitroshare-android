@@ -23,6 +23,7 @@ public class Settings {
         BEHAVIOR_OVERWRITE,    // Overwrite files with identical names
         DEVICE_NAME,           // Device name broadcast via mDNS
         DEVICE_UUID,           // Unique identifier for the device
+        INTRO_SHOWN,           // Intro has been shown to user?
         TRANSFER_DIRECTORY,    // Directory for storing received files
         TRANSFER_NOTIFICATION, // Default sounds, vibrate, etc. for transfers
         UI_DARK,               // Use a dark theme
@@ -56,6 +57,8 @@ public class Settings {
                 String uuid = String.format("{%s}", UUID.randomUUID().toString());
                 mSharedPreferences.edit().putString(Key.DEVICE_UUID.name(), uuid).apply();
                 return uuid;
+            case INTRO_SHOWN:
+                return false;
             case TRANSFER_DIRECTORY:
                 File storage = Environment.getExternalStorageDirectory();
                 File downloads = new File(storage, "Downloads");
@@ -77,6 +80,15 @@ public class Settings {
      */
     public boolean getBoolean(Key key) throws ClassCastException {
         return mSharedPreferences.getBoolean(key.name(), (boolean) getDefault(key));
+    }
+
+    /**
+     * Store a boolean value for the specified key
+     * @param key store a value for this key
+     * @param value store this value
+     */
+    public void putBoolean(Key key, boolean value) {
+        mSharedPreferences.edit().putBoolean(key.name(), value).apply();
     }
 
     /**
