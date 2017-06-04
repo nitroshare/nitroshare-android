@@ -1,53 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin">
+    android:paddingBottom="@dimen/explorer_vertical_margin"
+    android:paddingLeft="@dimen/explorer_horizontal_margin"
+    android:paddingRight="@dimen/explorer_horizontal_margin"
+    android:paddingTop="@dimen/explorer_vertical_margin">
 
     <ImageView
         android:id="@id/android:icon"
         android:layout_width="@dimen/explorer_icon_size"
         android:layout_height="@dimen/explorer_icon_size"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:tint="?attr/colorControlNormal" />
+        android:tint="?attr/colorControlNormal"/>
 
-    <TextView
-        android:id="@id/android:text1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_toStartOf="@id/android:checkbox"
-        android:layout_toLeftOf="@id/android:checkbox"
-        android:layout_toEndOf="@id/android:icon"
-        android:layout_toRightOf="@id/android:icon"
-        android:textStyle="bold"
-        android:ellipsize="end"
-        android:maxLines="1"/>
+    <View
+        android:layout_width="@dimen/explorer_horizontal_margin"
+        android:layout_height="wrap_content"/>
 
-    <TextView
-        android:id="@id/android:text2"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_below="@id/android:text1"
-        android:layout_toEndOf="@id/android:icon"
-        android:layout_toRightOf="@id/android:icon"
-        android:textColor="?android:textColorHint"/>
+        android:layout_gravity="center"
+        android:layout_weight="1">
 
-    <TextView
-        android:id="@+id/last_modified"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/android:text1"
-        android:layout_toStartOf="@id/android:checkbox"
-        android:layout_toLeftOf="@id/android:checkbox"
-        android:layout_toEndOf="@id/android:text2"
-        android:layout_toRightOf="@id/android:text2"
-        android:layout_alignWithParentIfMissing="true"
-        android:textColor="?android:textColorHint"
-        android:gravity="end"
-        android:paddingRight="@dimen/activity_horizontal_margin"/>
+        <TextView
+            android:id="@id/android:text1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@id/android:text2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?android:textColorHint"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/last_modified"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="?android:textColorHint"
+                android:gravity="end"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/spacer"
+        android:layout_width="@dimen/explorer_horizontal_margin"
+        android:layout_height="wrap_content"/>
 
     <CheckBox
         android:id="@id/android:checkbox"
@@ -55,8 +71,6 @@
         android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerVertical="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"/>
+        android:layout_gravity="center"/>
 
-</RelativeLayout>
+</LinearLayout>

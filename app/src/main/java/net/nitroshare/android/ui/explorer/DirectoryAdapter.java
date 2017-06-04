@@ -192,6 +192,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
                     public void onError() {
                     }
                 });
+        View spacer = view.findViewById(R.id.spacer);
         CheckBox checkBox = (CheckBox) view.findViewById(android.R.id.checkbox);
         if (mCheckboxes) {
             checkBox.setOnCheckedChangeListener(null);
@@ -209,8 +210,10 @@ class DirectoryAdapter extends ArrayAdapter<File> {
                     }
                 }
             });
+            spacer.setVisibility(View.VISIBLE);
             checkBox.setVisibility(View.VISIBLE);
         } else {
+            spacer.setVisibility(View.GONE);
             checkBox.setVisibility(View.GONE);
         }
         return view;
