@@ -12,7 +12,7 @@ import java.net.InetAddress;
  */
 public class Device implements Serializable {
 
-    public static final String SERVICE_TYPE = "_nitroshare._tcp.";
+    public static final String SERVICE_TYPE = "_nitroshare._tcp.local.";
 
     public static final String UUID = "uuid";
 
