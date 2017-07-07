@@ -97,12 +97,14 @@ public class TransferActivity extends AppCompatActivity
         boolean introShown = mSettings.getBoolean(Settings.Key.INTRO_SHOWN);
         Log.i(TAG, introShown ? "intro has been shown" : "intro has not been shown");
 
-        if (introShown && Permissions.haveStoragePermission(this)) {
-            finishInit();
-        } else {
+        if (!introShown) {
             Log.i(TAG, "launching intro activity");
             Intent introIntent = new Intent(this, IntroActivity.class);
             startActivityForResult(introIntent, INTRO_REQUEST);
+        } else if (!Permissions.haveStoragePermission(this)) {
+            Permissions.requestStoragePermission(this);
+        } else {
+            finishInit();
         }
     }
 
@@ -169,6 +171,15 @@ public class TransferActivity extends AppCompatActivity
             } else {
                 finish();
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        if (Permissions.obtainedStoragePermission(requestCode, grantResults)) {
+            finishInit();
+        } else {
+            finish();
         }
     }
 }
