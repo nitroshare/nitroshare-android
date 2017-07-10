@@ -9,7 +9,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.support.annotation.StringRes;
-
+import android.view.MenuItem;
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.util.Settings;
@@ -17,7 +17,7 @@ import net.nitroshare.android.util.Settings;
 /**
  * Settings for the application
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends AppCompatSettingsActivity {
 
     public static class SettingsFragment extends PreferenceFragment {
 
@@ -161,5 +161,19 @@ public class SettingsActivity extends PreferenceActivity {
                     .replace(android.R.id.content, new SettingsFragment())
                     .commit();
         }
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case android.R.id.home:
+                onBackPressed();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
