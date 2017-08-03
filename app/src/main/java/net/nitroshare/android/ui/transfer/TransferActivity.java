@@ -87,13 +87,13 @@ public class TransferActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTheme(new Settings(this).getTheme(
+        mSettings = new Settings(this);
+        setTheme(mSettings.getTheme(
                 R.style.LightTheme_NoActionBar,
                 R.style.DarkTheme_NoActionBar
         ));
         setContentView(R.layout.activity_transfer);
 
-        mSettings = new Settings(this);
         boolean introShown = mSettings.getBoolean(Settings.Key.INTRO_SHOWN);
         Log.i(TAG, introShown ? "intro has been shown" : "intro has not been shown");
 
