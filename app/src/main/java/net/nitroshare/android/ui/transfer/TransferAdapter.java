@@ -16,6 +16,7 @@ import net.nitroshare.android.transfer.Transfer;
 import net.nitroshare.android.transfer.TransferManager;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.ui.TintableButton;
+import net.nitroshare.android.util.Settings;
 
 /**
  * Adapter for transfers that are in progress
@@ -47,11 +48,14 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
         }
     }
 
+    private Settings mSettings;
+
     /**
      * Create a new transfer adapter
      */
     TransferAdapter(Context context) {
         super(context, R.layout.view_transfer_item, R.id.transfer_device);
+        mSettings = new Settings(context);
     }
 
     /**
@@ -126,14 +130,16 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
             case Succeeded:
                 stateTextView.setText(R.string.adapter_transfer_succeeded);
                 stateTextView.setTextColor(ContextCompat.getColor(getContext(),
-                        R.color.colorSuccess));
+                        mSettings.getTheme() == R.style.LightTheme ?
+                                R.color.colorSuccess : R.color.colorSuccessDark));
                 actionButton.setVisibility(View.GONE);
                 break;
             case Failed:
                 stateTextView.setText(getContext().getString(
                         R.string.adapter_transfer_failed, transferData.mError));
                 stateTextView.setTextColor(ContextCompat.getColor(getContext(),
-                        R.color.colorError));
+                        mSettings.getTheme() == R.style.LightTheme ?
+                                R.color.colorError : R.color.colorErrorDark));
                 /*
                 if (transferData.mDirection == Transfer.Direction.Send) {
                     actionButton.setVisibility(View.VISIBLE);
