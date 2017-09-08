@@ -13,6 +13,7 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.util.Settings;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class ExplorerFragment extends ListFragment
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getActivity().setTheme(new Settings(getActivity()).getTheme());
 
         setHasOptionsMenu(true);
 

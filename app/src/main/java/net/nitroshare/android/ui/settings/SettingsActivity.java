@@ -1,6 +1,7 @@
 package net.nitroshare.android.ui.settings;
 
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
@@ -9,7 +10,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.support.annotation.StringRes;
-
+import android.view.MenuItem;
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.util.Settings;
@@ -17,7 +18,7 @@ import net.nitroshare.android.util.Settings;
 /**
  * Settings for the application
  */
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends AppCompatSettingsActivity {
 
     public static class SettingsFragment extends PreferenceFragment {
 
@@ -64,20 +65,20 @@ public class SettingsActivity extends PreferenceActivity {
          * @param key preference key
          * @return newly created preference
          */
-        private SwitchPreference createSwitchPreference(@StringRes int titleResId, @StringRes int summaryResId, Settings.Key key) {
-            final SwitchPreference switchPreference = new SwitchPreference(getActivity());
-            switchPreference.setDefaultValue(mSettings.getDefault(key));
-            switchPreference.setKey(key.name());
-            switchPreference.setSummary(summaryResId);
-            switchPreference.setTitle(titleResId);
-            switchPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+        private CheckBoxPreference createCheckBoxPreference(@StringRes int titleResId, @StringRes int summaryResId, Settings.Key key) {
+            final CheckBoxPreference checkBoxPreference = new CheckBoxPreference(getActivity());
+            checkBoxPreference.setDefaultValue(mSettings.getDefault(key));
+            checkBoxPreference.setKey(key.name());
+            checkBoxPreference.setSummary(summaryResId);
+            checkBoxPreference.setTitle(titleResId);
+            checkBoxPreference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
                 @Override
                 public boolean onPreferenceChange(Preference preference, Object newValue) {
-                    switchPreference.setChecked((boolean) newValue);
+                    checkBoxPreference.setChecked((boolean) newValue);
                     return true;
                 }
             });
-            return switchPreference;
+            return checkBoxPreference;
         }
 
         /**
@@ -114,16 +115,19 @@ public class SettingsActivity extends PreferenceActivity {
 
             // Create the categories
             PreferenceCategory general = createCategory(R.string.activity_settings_category_general);
+            general.setLayoutResource(R.layout.preference_layout);
             PreferenceCategory appearance = createCategory(R.string.activity_settings_category_appearance);
+            appearance.setLayoutResource(R.layout.preference_layout);
             PreferenceCategory notifications = createCategory(R.string.activity_settings_category_notifications);
+            notifications.setLayoutResource(R.layout.preference_layout);
 
             // Create the preferences
             general.addPreference(createEditTextPreference(R.string.activity_settings_pref_device_name, Settings.Key.DEVICE_NAME));
             general.addPreference(createDirectoryPreference(R.string.activity_settings_pref_transfer_directory, Settings.Key.TRANSFER_DIRECTORY));
-            general.addPreference(createSwitchPreference(R.string.activity_settings_pref_behavior_receive, R.string.activity_settings_pref_behavior_receive_summary, Settings.Key.BEHAVIOR_RECEIVE));
-            general.addPreference(createSwitchPreference(R.string.activity_settings_pref_behavior_overwrite, R.string.activity_settings_pref_behavior_overwrite_summary, Settings.Key.BEHAVIOR_OVERWRITE));
-            appearance.addPreference(createSwitchPreference(R.string.activity_settings_darkTheme, R.string.activity_settings_darkTheme_summary, Settings.Key.UI_DARK));
-            notifications.addPreference(createSwitchPreference(R.string.activity_settings_pref_notification_sound, R.string.activity_settings_pref_notification_sound_summary, Settings.Key.TRANSFER_NOTIFICATION));
+            general.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_behavior_receive, R.string.activity_settings_pref_behavior_receive_summary, Settings.Key.BEHAVIOR_RECEIVE));
+            general.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_behavior_overwrite, R.string.activity_settings_pref_behavior_overwrite_summary, Settings.Key.BEHAVIOR_OVERWRITE));
+            appearance.addPreference(createCheckBoxPreference(R.string.activity_settings_darkTheme, R.string.activity_settings_darkTheme_summary, Settings.Key.UI_DARK));
+            notifications.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_notification_sound, R.string.activity_settings_pref_notification_sound_summary, Settings.Key.TRANSFER_NOTIFICATION));
 
             // Instantly enable/disable the transfer service when the "receive"
             // setting has been changed
@@ -161,5 +165,19 @@ public class SettingsActivity extends PreferenceActivity {
                     .replace(android.R.id.content, new SettingsFragment())
                     .commit();
         }
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        switch (item.getItemId())
+        {
+            case android.R.id.home:
+                onBackPressed();
+                break;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
