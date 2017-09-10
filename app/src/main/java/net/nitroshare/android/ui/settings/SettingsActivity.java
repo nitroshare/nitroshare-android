@@ -4,13 +4,12 @@ import android.os.Bundle;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
-import android.preference.SwitchPreference;
 import android.support.annotation.StringRes;
 import android.view.MenuItem;
+
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.util.Settings;
@@ -170,10 +169,8 @@ public class SettingsActivity extends AppCompatSettingsActivity {
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
-        switch (item.getItemId())
-        {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
                 break;
