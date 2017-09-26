@@ -15,6 +15,7 @@ import com.wdullaer.swipeactionadapter.SwipeDirection;
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferManager;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.transfer.TransferStatus;
 
 /**
  * Display list of current transfers
@@ -53,12 +54,12 @@ public class TransferFragment extends ListFragment {
             @Override
             public void onSwipe(int[] position, SwipeDirection[] direction) {
                 for (int i = 0; i < position.length; i++) {
-                    TransferAdapter.TransferData transferData = transferAdapter.getItem(position[i]);
-                    transferAdapter.remove(transferData);
+                    TransferStatus transferStatus = transferAdapter.getItem(position[i]);
+                    transferAdapter.remove(transferStatus);
                     //noinspection ConstantConditions
                     Intent removeIntent = new Intent(getContext(), TransferService.class)
                             .setAction(TransferService.ACTION_REMOVE_TRANSFER)
-                            .putExtra(TransferService.EXTRA_TRANSFER, transferData.mId);
+                            .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
                     getContext().startService(removeIntent);
                 }
             }

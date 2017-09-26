@@ -33,73 +33,14 @@ public class Transfer implements Runnable {
     private static final Gson mGson = new Gson();
 
     /**
-     * Listener for confirmation that the remote peer is connected
+     * Listener for status changes
      */
-    interface ConnectListener {
-        void onConnect();
+    interface StatusChangedListener {
+        void onStatusChanged(TransferStatus transferStatus);
     }
 
-    /**
-     * Listener for receiving the transfer header
-     */
-    interface HeaderListener {
-        void onHeader();
-    }
-
-    /**
-     * Listener for transfer progress events
-     */
-    interface ProgressListener {
-        void onProgress();
-    }
-
-    /**
-     * Listener for receiving individual items
-     */
-    interface ItemListener {
-        void onItem(Item item);
-    }
-
-    /**
-     * Listener for successful completion of the transfer
-     */
-    interface SuccessListener {
-        void onSuccess();
-    }
-
-    /**
-     * Listener for an error causing the transfer to abort
-     */
-    interface ErrorListener {
-        void onError();
-    }
-
-    /**
-     * Listener for transfer completion
-     *
-     * This callback is always invoked after all SuccessListeners and
-     * ErrorListeners have been invoked.
-     */
-    interface FinishListener {
-        void onFinish();
-    }
-
-    /**
-     * Direction of transfer relative to the current device
-     */
-    public enum Direction {
-        Receive,
-        Send,
-    }
-
-    /**
-     * State of the transfer
-     */
-    public enum State {
-        Connecting,
-        Transferring,
-        Failed,
-        Succeeded,
+    interface ItemReceivedListener {
+        void onItemReceived(Item item);
     }
 
     /**
@@ -119,21 +60,21 @@ public class Transfer implements Runnable {
         Finished,
     }
 
-    private final Object mSync = new Object();
-    private int mId;
-
+    private final TransferStatus mTransferStatus;
     private volatile boolean mStop = false;
-    private Selector mSelector = Selector.open();
-    private SocketChannel mSocketChannel;
+
+    private final List<StatusChangedListener> mStatusChangedListeners = new ArrayList<>();
+    private final List<ItemReceivedListener> mItemReceivedListeners = new ArrayList<>();
 
     private Device mDevice;
+    private Bundle mBundle;
     private String mDeviceName;
     private String mTransferDirectory;
     private boolean mOverwrite;
-    private Bundle mBundle;
 
-    private Direction mDirection;
-    private State mState;
+    private SocketChannel mSocketChannel;
+    private Selector mSelector = Selector.open();
+
     private InternalState mInternalState = InternalState.TransferHeader;
 
     private Packet mReceivingPacket;
@@ -147,17 +88,6 @@ public class Transfer implements Runnable {
     private int mItemIndex;
     private long mItemBytesRemaining;
 
-    private int mProgress;
-    private String mError;
-
-    private final List<ConnectListener> mConnectListeners = new ArrayList<>();
-    private final List<HeaderListener> mHeaderListeners = new ArrayList<>();
-    private final List<ProgressListener> mProgressListeners = new ArrayList<>();
-    private final List<ItemListener> mItemListeners = new ArrayList<>();
-    private final List<SuccessListener> mSuccessListeners = new ArrayList<>();
-    private final List<ErrorListener> mErrorListeners = new ArrayList<>();
-    private final List<FinishListener> mFinishListeners = new ArrayList<>();
-
     /**
      * Create a transfer for receiving items
      * @param socketChannel incoming channel
@@ -166,13 +96,12 @@ public class Transfer implements Runnable {
      * @param unknownDeviceName device name shown before being received
      */
     public Transfer(SocketChannel socketChannel, String transferDirectory, boolean overwrite, String unknownDeviceName) throws IOException {
-        mSocketChannel = socketChannel;
-        mSocketChannel.configureBlocking(false);
-        mDeviceName = unknownDeviceName;
+        mTransferStatus = new TransferStatus(unknownDeviceName,
+                TransferStatus.Direction.Receive, TransferStatus.State.Transferring);
         mTransferDirectory = transferDirectory;
         mOverwrite = overwrite;
-        mDirection = Direction.Receive;
-        mState = State.Transferring;
+        mSocketChannel = socketChannel;
+        mSocketChannel.configureBlocking(false);
     }
 
     /**
@@ -182,120 +111,34 @@ public class Transfer implements Runnable {
      * @param bundle bundle to transfer
      */
     public Transfer(Device device, String deviceName, Bundle bundle) throws IOException {
+        mTransferStatus = new TransferStatus(device.getName(),
+                TransferStatus.Direction.Send, TransferStatus.State.Connecting);
+        mDevice = device;
+        mBundle = bundle;
+        mDeviceName = deviceName;
         mSocketChannel = SocketChannel.open();
         mSocketChannel.configureBlocking(false);
-        mDevice = device;
-        mDeviceName = deviceName;
-        mBundle = bundle;
-        mDirection = Direction.Send;
-        mState = State.Connecting;
-        mTransferItems = mBundle.size();
-        mTransferBytesTotal = mBundle.getTotalSize();
+        mTransferItems = bundle.size();
+        mTransferBytesTotal = bundle.getTotalSize();
     }
 
     /**
-     * Set the ID for the transfer
+     * Set the transfer ID
      */
-    void setId(int id) {
-        mId = id;
-    }
-
-    /**
-     * Retrieve the transfer ID
-     */
-    int getId() {
-        return mId;
-    }
-
-    /**
-     * Retrieve the direction of the transfer
-     * @return transfer direction
-     */
-    Direction getDirection() {
-        return mDirection;
-    }
-
-    /**
-     * Retrieve the name of the remote device
-     * @return remote device name
-     */
-    String getRemoteDeviceName() {
-        synchronized (mSync) {
-            return mDirection == Direction.Receive ? mDeviceName : mDevice.getName();
+    public void setId(int id) {
+        synchronized (mTransferStatus) {
+            mTransferStatus.setId(id);
         }
     }
 
     /**
-     * Retrieve the current state of the transfer
+     * Retrieve the current transfer status
+     * @return copy of the current status
      */
-    State getState() {
-        synchronized (mSync) {
-            return mState;
+    public TransferStatus getStatus() {
+        synchronized (mTransferStatus) {
+            return new TransferStatus(mTransferStatus);
         }
-    }
-
-    /**
-     * Retrieve the current progress of the transfer
-     */
-    int getProgress() {
-        synchronized (mSync) {
-            return mProgress;
-        }
-    }
-
-    String getError() {
-        synchronized (mSync) {
-            return mError;
-        }
-    }
-
-    /**
-     * Add a listener for connection events
-     */
-    void addConnectListener(ConnectListener connectListener) {
-        mConnectListeners.add(connectListener);
-    }
-
-    /**
-     * Add a listener for receiving the transfer header
-     */
-    void addHeaderListener(HeaderListener headerListener) {
-        mHeaderListeners.add(headerListener);
-    }
-
-    /**
-     * Add a listener for progress events
-     */
-    void addProgressListener(ProgressListener progressListener) {
-        mProgressListeners.add(progressListener);
-    }
-
-    /**
-     * Add a listener for receiving items
-     */
-    void addItemListener(ItemListener itemListener) {
-        mItemListeners.add(itemListener);
-    }
-
-    /**
-     * Add a listener for success events
-     */
-    void addSuccessListener(SuccessListener successListener) {
-        mSuccessListeners.add(successListener);
-    }
-
-    /**
-     * Add a listener for error events
-     */
-    void addErrorListener(ErrorListener errorListener) {
-        mErrorListeners.add(errorListener);
-    }
-
-    /**
-     * Add a listener for completion events
-     */
-    void addFinishListener(FinishListener finishListener) {
-        mFinishListeners.add(finishListener);
     }
 
     /**
@@ -307,17 +150,42 @@ public class Transfer implements Runnable {
     }
 
     /**
-     * Update the progress notification
+     * Add a listener for status changes
+     *
+     * This method should not be invoked after starting the transfer.
+     */
+    void addStatusChangedListener(StatusChangedListener statusChangedListener) {
+        mStatusChangedListeners.add(statusChangedListener);
+    }
+
+    /**
+     * Add a listener for items being recieved
+     *
+     * This method should not be invoked after starting the transfer.
+     */
+    void addItemReceivedListener(ItemReceivedListener itemReceivedListener) {
+        mItemReceivedListeners.add(itemReceivedListener);
+    }
+
+    /**
+     * Notify all listeners that the status has changed
+     */
+    private void notifyStatusChangedListeners() {
+        for (StatusChangedListener statusChangedListener : mStatusChangedListeners) {
+            statusChangedListener.onStatusChanged(new TransferStatus(mTransferStatus));
+        }
+    }
+
+    /**
+     * Update current transfer progress
      */
     private void updateProgress() {
         int newProgress = (int) (100.0 * (mTransferBytesTotal != 0 ?
                 (double) mTransferBytesTransferred / (double) mTransferBytesTotal : 0.0));
-        if (newProgress != mProgress) {
-            synchronized (mSync) {
-                mProgress = newProgress;
-            }
-            for (ProgressListener progressListener : mProgressListeners) {
-                progressListener.onProgress();
+        if (newProgress != mTransferStatus.getProgress()) {
+            synchronized (mTransferStatus) {
+                mTransferStatus.setProgress(newProgress);
+                notifyStatusChangedListeners();
             }
         }
     }
@@ -334,18 +202,16 @@ public class Transfer implements Runnable {
         } catch (JsonSyntaxException e) {
             throw new IOException(e.getMessage());
         }
-        synchronized (mSync) {
-            mDeviceName = transferHeader.name;
+        synchronized (mTransferStatus) {
+            mTransferStatus.setRemoteDeviceName(transferHeader.name);
+            notifyStatusChangedListeners();
         }
         mTransferItems = Integer.parseInt(transferHeader.count);
         mTransferBytesTotal = Long.parseLong(transferHeader.size);
         mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
-        for (HeaderListener headerListener : mHeaderListeners) {
-            headerListener.onHeader();
-        }
     }
 
-    // TODO: no error handling here :O
+    // TODO: add better error handling for this method [2017-03-07] (does this still apply?)
 
     /**
      * Process the header for an individual item
@@ -387,11 +253,11 @@ public class Transfer implements Runnable {
         updateProgress();
         if (mItemBytesRemaining <= 0) {
             mItem.close();
-            for (ItemListener itemListener : mItemListeners) {
-                itemListener.onItem(mItem);
-            }
             mItemIndex += 1;
             mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
+            for (ItemReceivedListener itemReceivedListener : mItemReceivedListeners) {
+                itemReceivedListener.onItemReceived(mItem);
+            }
         }
     }
 
@@ -409,7 +275,7 @@ public class Transfer implements Runnable {
                 throw new IOException(new String(mReceivingPacket.getBuffer().array(),
                         Charset.forName("UTF-8")));
             }
-            if (mDirection == Direction.Receive) {
+            if (mTransferStatus.getDirection() == TransferStatus.Direction.Receive) {
                 if (mInternalState == InternalState.TransferHeader && mReceivingPacket.getType() == Packet.JSON) {
                     processTransferHeader();
                 } else if (mInternalState == InternalState.ItemHeader && mReceivingPacket.getType() == Packet.JSON) {
@@ -428,8 +294,9 @@ public class Transfer implements Runnable {
                     throw new IOException("unexpected packet");
                 }
             }
+        } else {
+            return true;
         }
-        return true;
     }
 
     /**
@@ -486,7 +353,7 @@ public class Transfer implements Runnable {
      */
     private boolean sendNextPacket() throws IOException {
         if (mSendingPacket == null) {
-            if (mDirection == Direction.Receive) {
+            if (mTransferStatus.getDirection() == TransferStatus.Direction.Receive) {
                 mSendingPacket = new Packet(Packet.SUCCESS);
             } else {
                 switch (mInternalState) {
@@ -521,13 +388,13 @@ public class Transfer implements Runnable {
             // Indicate which operations select() should select for
             SelectionKey selectionKey = mSocketChannel.register(
                     mSelector,
-                    mDirection == Direction.Receive ?
+                    mTransferStatus.getDirection() == TransferStatus.Direction.Receive ?
                             SelectionKey.OP_READ :
                             SelectionKey.OP_CONNECT
             );
 
             // For a sending transfer, connect to the remote device
-            if (mDirection == Direction.Send) {
+            if (mTransferStatus.getDirection() == TransferStatus.Direction.Send) {
                 mSocketChannel.connect(new InetSocketAddress(mDevice.getHost(), mDevice.getPort()));
             }
 
@@ -540,16 +407,14 @@ public class Transfer implements Runnable {
                     mSocketChannel.finishConnect();
                     selectionKey.interestOps(SelectionKey.OP_READ | SelectionKey.OP_WRITE);
 
-                    synchronized (mSync) {
-                        mState = State.Transferring;
-                    }
-                    for (ConnectListener connectListener : mConnectListeners) {
-                        connectListener.onConnect();
+                    synchronized (mTransferStatus) {
+                        mTransferStatus.setState(TransferStatus.State.Transferring);
+                        notifyStatusChangedListeners();
                     }
                 }
                 if (selectionKey.isReadable()) {
                     if (!processNextPacket()) {
-                        if (mDirection == Direction.Receive) {
+                        if (mTransferStatus.getDirection() == TransferStatus.Direction.Receive) {
                             selectionKey.interestOps(SelectionKey.OP_WRITE);
                         } else {
                             break;
@@ -558,7 +423,7 @@ public class Transfer implements Runnable {
                 }
                 if (selectionKey.isWritable()) {
                     if (!sendNextPacket()) {
-                        if (mDirection == Direction.Receive) {
+                        if (mTransferStatus.getDirection() == TransferStatus.Direction.Receive) {
                             break;
                         } else {
                             selectionKey.interestOps(SelectionKey.OP_READ);
@@ -576,26 +441,17 @@ public class Transfer implements Runnable {
             }
 
             // Indicate success
-            synchronized (mSync) {
-                mState = State.Succeeded;
-            }
-            for (SuccessListener successListener : mSuccessListeners) {
-                successListener.onSuccess();
+            synchronized (mTransferStatus) {
+                mTransferStatus.setState(TransferStatus.State.Succeeded);
+                notifyStatusChangedListeners();
             }
 
         } catch (IOException e) {
-            synchronized (mSync) {
-                mState = State.Failed;
-                mError = e.getMessage();
+            synchronized (mTransferStatus) {
+                mTransferStatus.setState(TransferStatus.State.Failed);
+                mTransferStatus.setError(e.getMessage());
+                notifyStatusChangedListeners();
             }
-            for (ErrorListener errorListener : mErrorListeners) {
-                errorListener.onError();
-            }
-        }
-
-        // Indicate that *everything* has completed
-        for (FinishListener finishListener : mFinishListeners) {
-            finishListener.onFinish();
         }
     }
 }

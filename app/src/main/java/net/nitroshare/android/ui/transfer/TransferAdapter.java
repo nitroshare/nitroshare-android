@@ -12,41 +12,16 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import net.nitroshare.android.R;
-import net.nitroshare.android.transfer.Transfer;
 import net.nitroshare.android.transfer.TransferManager;
 import net.nitroshare.android.transfer.TransferService;
+import net.nitroshare.android.transfer.TransferStatus;
 import net.nitroshare.android.ui.TintableButton;
 import net.nitroshare.android.util.Settings;
 
 /**
  * Adapter for transfers that are in progress
  */
-class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
-
-    /**
-     * Data for a specific transfer
-     */
-    class TransferData {
-
-        int mId;
-        Transfer.Direction mDirection;
-        String mDeviceName;
-        Transfer.State mState;
-        int mProgress;
-        String mError;
-
-        /**
-         * Create an instance from the data in an intent
-         */
-        TransferData(Intent intent) {
-            mId = intent.getIntExtra(TransferManager.EXTRA_ID, 0);
-            mDirection = (Transfer.Direction) intent.getSerializableExtra(TransferManager.EXTRA_DIRECTION);
-            mDeviceName = intent.getStringExtra(TransferManager.EXTRA_DEVICE_NAME);
-            mState = (Transfer.State) intent.getSerializableExtra(TransferManager.EXTRA_STATE);
-            mProgress = intent.getIntExtra(TransferManager.EXTRA_PROGRESS, 0);
-            mError = intent.getStringExtra(TransferManager.EXTRA_ERROR);
-        }
-    }
+class TransferAdapter extends ArrayAdapter<TransferStatus> {
 
     private Settings mSettings;
 
@@ -65,18 +40,18 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
      * new transfer is inserted at the front of the list.
      */
     void processIntent(Intent intent) {
-        TransferData transferData = new TransferData(intent);
-        if (transferData.mId != 0) {
+        TransferStatus transferStatus = (TransferStatus) intent.getParcelableExtra(TransferManager.EXTRA_STATUS);
+        if (transferStatus.getId() != 0) {
             for (int i = 0; i < getCount(); i++) {
                 //noinspection ConstantConditions
-                if (transferData.mId == getItem(i).mId) {
+                if (transferStatus.getId() == getItem(i).getId()) {
                     remove(getItem(i));
-                    insert(transferData, i);
+                    insert(transferStatus, i);
                     return;
                 }
             }
         }
-        insert(transferData, 0);
+        insert(transferStatus, 0);
     }
 
     @NonNull
@@ -86,31 +61,31 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
         convertView = super.getView(position, convertView, parent);
 
         // Retrieve the underlying transfer data
-        final TransferData transferData = getItem(position);
+        final TransferStatus transferStatus = getItem(position);
 
         // Set the icon, device name, and progress
         ((ImageView) convertView.findViewById(R.id.transfer_icon)).setImageResource(
-                transferData.mDirection == Transfer.Direction.Receive ?
+                transferStatus.getDirection() == TransferStatus.Direction.Receive ?
                         R.drawable.stat_download : R.drawable.stat_upload);
         ((TextView) convertView.findViewById(R.id.transfer_device)).setText(
-                transferData.mDeviceName);
+                transferStatus.getRemoteDeviceName());
         ((ProgressBar) convertView.findViewById(R.id.transfer_progress))
-                .setProgress(transferData.mProgress);
+                .setProgress(transferStatus.getProgress());
 
         // Find the other controls
         TextView stateTextView = (TextView) convertView.findViewById(R.id.transfer_state);
         TintableButton actionButton = (TintableButton) convertView.findViewById(R.id.transfer_action);
 
         // Set the appropriate attributes
-        switch (transferData.mState) {
+        switch (transferStatus.getState()) {
             case Connecting:
             case Transferring:
-                if (transferData.mState == Transfer.State.Connecting) {
+                if (transferStatus.getState() == TransferStatus.State.Connecting) {
                     stateTextView.setText(R.string.adapter_transfer_connecting);
                 } else {
                     stateTextView.setText(getContext().getString(
                             R.string.adapter_transfer_transferring,
-                            transferData.mProgress));
+                            transferStatus.getProgress()));
                 }
                 stateTextView.setTextColor(ContextCompat.getColor(getContext(),
                         android.R.color.darker_gray));
@@ -122,7 +97,7 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
                     public void onClick(View v) {
                         Intent stopIntent = new Intent(getContext(), TransferService.class)
                                 .setAction(TransferService.ACTION_STOP_TRANSFER)
-                                .putExtra(TransferService.EXTRA_TRANSFER, transferData.mId);
+                                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
                         getContext().startService(stopIntent);
                     }
                 });
@@ -136,7 +111,7 @@ class TransferAdapter extends ArrayAdapter<TransferAdapter.TransferData> {
                 break;
             case Failed:
                 stateTextView.setText(getContext().getString(
-                        R.string.adapter_transfer_failed, transferData.mError));
+                        R.string.adapter_transfer_failed, transferStatus.getError()));
                 stateTextView.setTextColor(ContextCompat.getColor(getContext(),
                         mSettings.getTheme() == R.style.LightTheme ?
                                 R.color.colorError : R.color.colorErrorDark));
