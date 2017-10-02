@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="send"
+        android:icon="@drawable/send"
+        android:shortcutShortLabel="@string/activity_explorer">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="net.nitroshare.android"
+            android:targetClass="net.nitroshare.android.ui.explorer.ExplorerActivity" />
+    </shortcut>
+</shortcuts>
