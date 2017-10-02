@@ -130,10 +130,48 @@ class TransferNotificationManager {
 
     /**
      * Update the notification to reflect the new status of a transfer
+     *
+     * If a transfer has finished, then show a notification.
      */
     synchronized void updateTransfer(TransferStatus transferStatus) {
         if (transferStatus.isFinished()) {
+
+            // Remove the transfer from the SparseArray
             mStatuses.remove(transferStatus.getId());
+
+            // Prepare an appropriate notification for the transfer
+            CharSequence contentText;
+            int icon;
+
+            // TODO: retry intent
+
+            if (transferStatus.getState() == TransferStatus.State.Succeeded) {
+                contentText = mService.getString(
+                        R.string.service_transfer_status_success,
+                        transferStatus.getRemoteDeviceName()
+                );
+                icon = R.drawable.ic_stat_success;
+            } else {
+                contentText = mService.getString(
+                        R.string.service_transfer_status_error,
+                        transferStatus.getRemoteDeviceName(),
+                        transferStatus.getError()
+                );
+                icon = R.drawable.ic_stat_error;
+            }
+
+            // Show the notification
+            boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
+            mNotificationManager.notify(
+                    transferStatus.getId(),
+                    createBuilder()
+                            .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
+                            .setContentIntent(mIntent)
+                            .setContentText(contentText)
+                            .setSmallIcon(icon)
+                            .build()
+            );
+
         } else {
             mStatuses.put(transferStatus.getId(), transferStatus);
         }
@@ -150,9 +188,14 @@ class TransferNotificationManager {
             return;
         }
 
-        // TODO: show all transfers in progress
+        // If there are no transfers, the notification should indicate the server is listening
+        if (mStatuses.size() == 0) {
+            mBuilder.setContentText(mService.getString(R.string.service_transfer_server_text));
+        } else {
 
-        mBuilder.setContentText("This is a test.");
+            // TODO: fix this
+            mBuilder.setContentText("This is a test.");
+        }
 
         // If the service hasn't been moved into the foreground yet, do so now
         if (!mActive) {
