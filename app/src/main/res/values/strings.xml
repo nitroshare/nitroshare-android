@@ -83,6 +83,10 @@
     <string name="service_transfer_status_error">Transfer with %1$s failed: %2$s</string>
     <string name="service_transfer_unknown_device">[unknown]</string>
 
+    <!-- Transfer notification manager -->
+    <string name="notification_channel_name">Transfers</string>
+    <string name="notification_channel_description">Transfer notification status.</string>
+
     <!-- Transfer adapter -->
     <string name="adapter_transfer_connecting">Connecting…</string>
     <string name="adapter_transfer_transferring">Transferring: %1$d%%</string>

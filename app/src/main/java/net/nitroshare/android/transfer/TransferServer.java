@@ -1,14 +1,10 @@
 package net.nitroshare.android.transfer;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.util.Log;
 
-import net.nitroshare.android.ui.transfer.TransferActivity;
 import net.nitroshare.android.R;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.util.Settings;
@@ -26,7 +22,6 @@ import java.nio.channels.SocketChannel;
 class TransferServer implements Runnable {
 
     private static final String TAG = "TransferServer";
-    private static final int NOTIFICATION_ID = 1;
 
     interface Listener {
         void onNewTransfer(Transfer transfer);
@@ -82,21 +77,6 @@ class TransferServer implements Runnable {
     void start() {
         if (!mThread.isAlive()) {
             mStop = false;
-
-            // Create the notification shown while the server is running
-            PendingIntent mainIntent = PendingIntent.getActivity(mContext, 0,
-                    new Intent(mContext, TransferActivity.class), 0);
-            mTransferNotificationManager.start(
-                    NOTIFICATION_ID,
-                    new Notification.Builder(mContext)
-                            .setContentIntent(mainIntent)
-                            .setContentTitle(mContext.getString(R.string.service_transfer_server_title))
-                            .setContentText(mContext.getString(R.string.service_transfer_server_text))
-                            .setPriority(Notification.PRIORITY_MIN)
-                            .setSmallIcon(R.drawable.ic_stat_transfer)
-                            .build()
-            );
-
             mThread.start();
         }
     }
@@ -121,6 +101,9 @@ class TransferServer implements Runnable {
     @Override
     public void run() {
         Log.i(TAG, "starting server...");
+
+        // Inform the notification manager that the server has started
+        mTransferNotificationManager.startListening();
 
         NsdManager nsdManager = null;
 
@@ -184,8 +167,8 @@ class TransferServer implements Runnable {
             nsdManager.unregisterService(mRegistrationListener);
         }
 
-        // Close the notification
-        mTransferNotificationManager.stop(NOTIFICATION_ID);
+        // Inform the notification manager that the server has stopped
+        mTransferNotificationManager.stopListening();
 
         Log.i(TAG, "server stopped");
     }

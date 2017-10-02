@@ -81,7 +81,7 @@ public class TransferService extends Service {
                 @Override
                 public void onNewTransfer(Transfer transfer) {
                     transfer.setId(mTransferNotificationManager.nextId());
-                    mTransferManager.addTransfer(transfer, null);
+                    mTransferManager.addTransfer(transfer);
                 }
             });
         } catch (IOException e) {
@@ -104,7 +104,6 @@ public class TransferService extends Service {
      */
     private int stopListening() {
         mTransferServer.stop();
-        mTransferNotificationManager.stop();
         return START_NOT_STICKY;
     }
 
@@ -222,9 +221,10 @@ public class TransferService extends Service {
             Transfer transfer = new Transfer(device,
                     mSettings.getString(Settings.Key.DEVICE_NAME), bundle);
             transfer.setId(nextId);
-            mTransferManager.addTransfer(transfer, intent);
+            mTransferManager.addTransfer(transfer);
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
+
             mTransferNotificationManager.stop();
         }
 
@@ -240,7 +240,7 @@ public class TransferService extends Service {
     }
 
     /**
-     * Remove a transfer that has completed
+     * Remove (dismiss) a transfer that has completed
      */
     private int removeTransfer(Intent intent) {
         mTransferManager.removeTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));

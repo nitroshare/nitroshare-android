@@ -1,38 +1,43 @@
 package net.nitroshare.android.transfer;
 
-import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.util.SparseArray;
 
 import net.nitroshare.android.R;
+import net.nitroshare.android.ui.transfer.TransferActivity;
 import net.nitroshare.android.util.Settings;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Manage notifications and service lifecycle
  *
- * This class simplifies what would otherwise be a very messy process.
- * Android requires that a service running in the foreground show a
- * persistent notification. This service runs in the foreground when a
- * transfer is in progress and/or when listening for new connections. This
- * means that startForeground() will be invoked multiple times.
- *
- * Herein lies the problem - stopForeground() will pull only the most
- * recent notification. And it isn't reference counted. That's where this
- * (ugly hack) class comes in.
- *
- * All methods in the class are thread-safe.
+ * This class manages the notification shown while the server is listening for
+ * incoming connections and during file transfers. Additional notifications
+ * are shown when transfers complete (either successfully or with error).
  */
 class TransferNotificationManager {
 
-    private final SparseArray<Notification> mNotifications = new SparseArray<>();
+    private static final String CHANNEL_ID = "transfer";
+    private static final int NOTIFICATION_ID = 1;
+
     private Service mService;
     private Settings mSettings;
+
     private NotificationManager mNotificationManager;
-    private AtomicInteger mNextId = new AtomicInteger(2);
+    private NotificationCompat.Builder mBuilder;
+    private PendingIntent mIntent;
+
+    private boolean mActive = false;
+    private boolean mListening = false;
+
+    private int mNextId = 2;
+    private SparseArray<TransferStatus> mStatuses = new SparseArray<>();
 
     /**
      * Create a notification manager for the specified service
@@ -43,89 +48,118 @@ class TransferNotificationManager {
         mSettings = new Settings(service);
         mNotificationManager = (NotificationManager) mService.getSystemService(
                 Service.NOTIFICATION_SERVICE);
+
+        // Android O requires a notification channel to be specified
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    mService.getString(R.string.notification_channel_name),
+                    NotificationManager.IMPORTANCE_DEFAULT
+            );
+            channel.setDescription(mService.getString(R.string.notification_channel_description));
+            channel.enableLights(true);
+            channel.setLightColor(Color.BLUE);
+            channel.enableVibration(true);
+            mNotificationManager.createNotificationChannel(channel);
+        }
+
+        // Create the intent for opening the main activity
+        mIntent = PendingIntent.getActivity(
+                mService,
+                0,
+                new Intent(mService, TransferActivity.class),
+                0
+        );
+
+        // Prepare the notification that will be shown during activity
+        mBuilder = createBuilder()
+                .setContentIntent(mIntent)
+                .setContentTitle(mService.getString(R.string.service_transfer_server_title))
+                .setSmallIcon(R.drawable.ic_stat_transfer);
     }
 
     /**
-     * Start showing a notification in the foreground
-     * @param notificationId unique ID for the notification
-     * @param notification notification to be shown
+     * Create a new notification
+     * @return notification
      */
-    void start(int notificationId, Notification notification) {
-        synchronized (mNotifications) {
-            mService.startForeground(notificationId, notification);
-            mNotifications.append(notificationId, notification);
+    private NotificationCompat.Builder createBuilder() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return new NotificationCompat.Builder(mService, CHANNEL_ID);
+        } else {
+            //noinspection deprecation
+            return new NotificationCompat.Builder(mService);
         }
     }
 
     /**
-     * Update the specified notification
-     * @param notificationId unique ID for the notification
-     * @param notification notification to be updated
+     * Retrieve the next unique integer for a transfer
+     * @return new ID
      */
-    void update(int notificationId, Notification notification) {
-        mNotificationManager.notify(notificationId, notification);
+    synchronized int nextId() {
+        return mNextId++;
     }
 
     /**
-     * Stop showing a notification and exit foreground if no others are left
-     * @param notificationId unique ID for the notification
-     *
-     * If no notifications remain, the service is stopped. Otherwise, the next
-     * most recent notification is then set for the foreground.
+     * Update the notification to reflect that the server is listening for transfers
      */
-    void stop(int notificationId) {
-        synchronized (mNotifications) {
-            mNotifications.remove(notificationId);
-            if (mNotifications.size() == 0) {
-                mService.stopSelf();
-            } else {
-                mService.startForeground(
-                        mNotifications.keyAt(mNotifications.size() - 1),
-                        mNotifications.valueAt(mNotifications.size() - 1)
-                );
-                mNotificationManager.cancel(notificationId);
-            }
+    synchronized void startListening() {
+        mListening = true;
+        updateNotification();
+    }
+
+    /**
+     * Update the notification to reflect that the server is no longer listening for transfers
+     */
+    synchronized void stopListening() {
+        mListening = false;
+        updateNotification();
+    }
+
+    /**
+     * Attempt to stop the service if there is no activity
+     * @return true if the service was stopped
+     */
+    synchronized boolean stop() {
+        if (!mListening && mStatuses.size() == 0) {
+            mActive = false;
+            mService.stopSelf();
+            return true;
         }
+        return false;
     }
 
     /**
-     * Stop the service if no notifications are being shown
+     * Update the notification to reflect the new status of a transfer
      */
-    void stop() {
-        synchronized (mNotifications) {
-            if (mNotifications.size() == 0) {
-                mService.stopSelf();
-            }
+    synchronized void updateTransfer(TransferStatus transferStatus) {
+        if (transferStatus.isFinished()) {
+            mStatuses.remove(transferStatus.getId());
+        } else {
+            mStatuses.put(transferStatus.getId(), transferStatus);
         }
+        updateNotification();
     }
 
     /**
-     * Show a notification with the specified information
-     * @param id unique identifier for the notification
-     * @param contentText text to display in the notification
-     * @param icon icon to use for the notification
-     * @param actions list of actions or null for none
+     * Show, hide, or update the notification based on current state
      */
-    void show(int id, CharSequence contentText, int icon, NotificationCompat.Action actions[]) {
-        boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mService)
-                .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
-                .setContentTitle(mService.getString(R.string.service_transfer_title))
-                .setContentText(contentText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
-                .setSmallIcon(icon);
-        if (actions != null) {
-            for (NotificationCompat.Action action : actions) {
-                builder.addAction(action);
-            }
+    private synchronized void updateNotification() {
+
+        // Shut the service down if nothing is happening
+        if (stop()) {
+            return;
         }
-        update(id, builder.build());
-    }
 
-    /**
-     * Retrieve the next unique integer ID
-     */
-    int nextId() {
-        return mNextId.getAndIncrement();
+        // TODO: show all transfers in progress
+
+        mBuilder.setContentText("This is a test.");
+
+        // If the service hasn't been moved into the foreground yet, do so now
+        if (!mActive) {
+            mService.startForeground(NOTIFICATION_ID, mBuilder.build());
+            mActive = true;
+        } else {
+            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+        }
     }
 }

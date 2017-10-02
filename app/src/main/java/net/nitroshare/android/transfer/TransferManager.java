@@ -1,15 +1,12 @@
 package net.nitroshare.android.transfer;
 
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.util.SparseArray;
 
-import net.nitroshare.android.R;
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.bundle.Item;
 
@@ -50,33 +47,6 @@ public class TransferManager {
     }
 
     /**
-     * Create the ongoing notification for a transfer
-     * @param transferStatus status of the transfer
-     * @return notification builder prepared for the transfer
-     */
-    private NotificationCompat.Builder createNotification(TransferStatus transferStatus) {
-
-        // Intent for stopping this particular service
-        Intent stopIntent = new Intent(mContext, TransferService.class)
-                .setAction(TransferService.ACTION_STOP_TRANSFER)
-                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
-
-        // Create the notification
-        return new NotificationCompat.Builder(mContext)
-                .setContentTitle(mContext.getString(R.string.service_transfer_title))
-                .setSmallIcon(transferStatus.getDirection() == TransferStatus.Direction.Receive ?
-                        android.R.drawable.stat_sys_download :
-                        android.R.drawable.stat_sys_upload
-                )
-                .setProgress(0, 0, true)
-                .addAction(new NotificationCompat.Action.Builder(
-                        R.drawable.ic_action_stop,
-                        mContext.getString(R.string.service_transfer_action_stop),
-                        PendingIntent.getService(mContext, 0, stopIntent, 0)
-                ).build());
-    }
-
-    /**
      * Broadcast the status of a transfer
      */
     private void broadcastTransferStatus(TransferStatus transferStatus) {
@@ -89,10 +59,7 @@ public class TransferManager {
     /**
      * Add a transfer to the list
      */
-    void addTransfer(final Transfer transfer, final Intent intent) {
-
-        // Create the notification for the transfer
-        final NotificationCompat.Builder builder = createNotification(transfer.getStatus());
+    void addTransfer(final Transfer transfer) {
 
         // Add a listener for status change events
         transfer.addStatusChangedListener(new Transfer.StatusChangedListener() {
@@ -103,74 +70,8 @@ public class TransferManager {
                 // Broadcast transfer status
                 broadcastTransferStatus(transferStatus);
 
-                // Deal with finished transfers
-                if (transferStatus.isFinished()) {
-                    switch (transferStatus.getState()) {
-                        case Succeeded:
-                            mTransferNotificationManager.show(
-                                    mTransferNotificationManager.nextId(),
-                                    mContext.getString(
-                                            R.string.service_transfer_status_success,
-                                            transferStatus.getRemoteDeviceName()
-                                    ),
-                                    R.drawable.ic_stat_success,
-                                    null
-                            );
-                            break;
-                        case Failed:
-                            // If the transfer is retried, the ongoing notification needs
-                            // to use the same ID as the error notification so that it
-                            // is replaced
-                            int newId = mTransferNotificationManager.nextId();
-
-                            NotificationCompat.Action action = null;
-                            if (transferStatus.getDirection() == TransferStatus.Direction.Send) {
-                                intent.putExtra(TransferService.EXTRA_ID, newId);
-                                action = new NotificationCompat.Action.Builder(
-                                        R.drawable.ic_action_retry,
-                                        mContext.getString(R.string.service_transfer_action_retry),
-                                        PendingIntent.getService(mContext, 0, intent,
-                                                PendingIntent.FLAG_UPDATE_CURRENT)
-                                ).build();
-                            }
-
-                            mTransferNotificationManager.show(
-                                    newId,
-                                    mContext.getString(
-                                            R.string.service_transfer_status_error,
-                                            transferStatus.getRemoteDeviceName(),
-                                            transferStatus.getError()
-                                    ),
-                                    R.drawable.ic_stat_error,
-                                    action != null ? new NotificationCompat.Action[] {action} : null
-                            );
-                            break;
-                    }
-
-                    // Indicate that the transfer has stopped
-                    mTransferNotificationManager.stop(transferStatus.getId());
-                    return;
-                }
-
-                // Update the notification manager
-                switch (transferStatus.getState()) {
-                    case Connecting:
-                        builder.setContentText(mContext.getString(
-                                R.string.service_transfer_status_connecting,
-                                transferStatus.getRemoteDeviceName()
-                        ));
-                        break;
-                    case Transferring:
-                        builder.setProgress(100, transferStatus.getProgress(), false);
-                        builder.setContentText(mContext.getString(
-                                transferStatus.getDirection() == TransferStatus.Direction.Send ?
-                                        R.string.service_transfer_status_sending :
-                                        R.string.service_transfer_status_receiving,
-                                transferStatus.getRemoteDeviceName()
-                        ));
-                        break;
-                }
-                mTransferNotificationManager.update(transferStatus.getId(), builder.build());
+                // Update the transfer notification manager
+                mTransferNotificationManager.updateTransfer(transferStatus);
             }
         });
 
