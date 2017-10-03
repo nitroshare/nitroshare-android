@@ -206,12 +206,23 @@ class TransferNotificationManager {
             for (int i = 0; i < mStatuses.size(); i++) {
                 TransferStatus transferStatus = mStatuses.valueAt(i);
 
+                // Create an intent for stopping the transfer
+                PendingIntent stopIntent = PendingIntent.getService(
+                        mService,
+                        0,
+                        new Intent(mService, TransferService.class)
+                                .setAction(TransferService.ACTION_STOP_TRANSFER)
+                                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId()),
+                        0
+                );
+
                 // Create the remote view for the transfer
                 RemoteViews transferView = new RemoteViews(mService.getPackageName(), R.layout.notification_item);
                 transferView.setTextViewText(R.id.notification_item_remote_name,
                         transferStatus.getRemoteDeviceName());
                 transferView.setTextViewText(R.id.notification_item_progress,
                         String.format("%d%%", transferStatus.getProgress()));
+                transferView.setOnClickPendingIntent(R.id.notification_item_stop, stopIntent);
 
                 contentView.addView(R.id.layout, transferView);
             }
