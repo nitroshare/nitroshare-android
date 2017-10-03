@@ -8,11 +8,19 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
+import android.text.TextUtils;
 import android.util.SparseArray;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.RemoteViews;
+import android.widget.TextView;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.transfer.TransferActivity;
 import net.nitroshare.android.util.Settings;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Manage notifications and service lifecycle
@@ -167,6 +175,7 @@ class TransferNotificationManager {
                     createBuilder()
                             .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
                             .setContentIntent(mIntent)
+                            .setContentTitle(mService.getString(R.string.service_transfer_server_title))
                             .setContentText(contentText)
                             .setSmallIcon(icon)
                             .build()
@@ -192,9 +201,22 @@ class TransferNotificationManager {
         if (mStatuses.size() == 0) {
             mBuilder.setContentText(mService.getString(R.string.service_transfer_server_text));
         } else {
+            RemoteViews contentView = new RemoteViews(mService.getPackageName(), R.layout.notification);
 
-            // TODO: fix this
-            mBuilder.setContentText("This is a test.");
+            for (int i = 0; i < mStatuses.size(); i++) {
+                TransferStatus transferStatus = mStatuses.valueAt(i);
+
+                // Create the remote view for the transfer
+                RemoteViews transferView = new RemoteViews(mService.getPackageName(), R.layout.notification_item);
+                transferView.setTextViewText(R.id.notification_item_remote_name,
+                        transferStatus.getRemoteDeviceName());
+                transferView.setTextViewText(R.id.notification_item_progress,
+                        String.format("%d%%", transferStatus.getProgress()));
+
+                contentView.addView(R.id.layout, transferView);
+            }
+
+            mBuilder.setContent(contentView);
         }
 
         // If the service hasn't been moved into the foreground yet, do so now
