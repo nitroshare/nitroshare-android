@@ -1,4 +1,4 @@
-> **Warning:** this application, although functional, is currently in alpha state. In other words, it is not yet stable enough for everyday use. Proceed with caution.
+> **Warning:** this application, although functional, is currently in beta. In other words, it is not yet stable enough for everyday use. Proceed with caution.
 
 ## NitroShare for Android
 
