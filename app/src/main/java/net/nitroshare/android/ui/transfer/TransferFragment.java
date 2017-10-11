@@ -5,79 +5,71 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.ListFragment;
+import android.support.v4.app.Fragment;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 
-import com.wdullaer.swipeactionadapter.SwipeActionAdapter;
-import com.wdullaer.swipeactionadapter.SwipeDirection;
-
-import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferManager;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.transfer.TransferStatus;
 
 /**
- * Display list of current transfers
- *
- * Information is exchanged with the TransferWrapper for each transfer by
- * binding to the
+ * Fragment that displays a single RecyclerView
  */
-public class TransferFragment extends ListFragment {
+public class TransferFragment extends Fragment {
+
+    private TransferAdapter mAdapter;
+    private RecyclerView mRecyclerView;
 
     private BroadcastReceiver mBroadcastReceiver;
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+        // Setup the adapter and recycler view
+        mAdapter = new TransferAdapter();
+        mRecyclerView = new RecyclerView(getContext());
+        mRecyclerView.setAdapter(mAdapter);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
 
-        final TransferAdapter transferAdapter = new TransferAdapter(getContext());
-        SwipeActionAdapter swipeActionAdapter = new SwipeActionAdapter(transferAdapter);
-        swipeActionAdapter.setListView(getListView());
-        swipeActionAdapter.setFadeOut(true);
-        swipeActionAdapter.setSwipeActionListener(new SwipeActionAdapter.SwipeActionListener() {
-            @Override
-            public boolean hasActions(int position, SwipeDirection direction) {
-                return direction.isLeft() || direction.isRight();
-            }
+        // Enable swipe-to-dismiss
+        new ItemTouchHelper(
+                new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START | ItemTouchHelper.END) {
+                    @Override
+                    public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                        return false;
+                    }
 
-            @Override
-            public boolean shouldDismiss(int position, SwipeDirection direction) {
-                return true;
-            }
-
-            @Override
-            public void onSwipe(int[] position, SwipeDirection[] direction) {
-                for (int i : position) {
-                    TransferStatus transferStatus = transferAdapter.getItem(i);
-                    transferAdapter.remove(transferStatus);
-                    //noinspection ConstantConditions
-                    Intent removeIntent = new Intent(getContext(), TransferService.class)
-                            .setAction(TransferService.ACTION_REMOVE_TRANSFER)
-                            .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
-                    getContext().startService(removeIntent);
+                    @Override
+                    public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                        // TODO: handle swipe
+                    }
                 }
-            }
-        });
-        setListAdapter(swipeActionAdapter);
+        ).attachToRecyclerView(mRecyclerView);
 
+        // Setup the broadcast receiver
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                transferAdapter.processIntent(intent);
+                TransferStatus transferStatus = intent.getParcelableExtra(TransferManager.EXTRA_STATUS);
+                mAdapter.update(transferStatus);
             }
         };
+
+        return mRecyclerView;
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
+        // Start listening for broadcasts
         getContext().registerReceiver(mBroadcastReceiver,
                 new IntentFilter(TransferManager.TRANSFER_UPDATED));
 
@@ -91,13 +83,7 @@ public class TransferFragment extends ListFragment {
     public void onStop() {
         super.onStop();
 
+        // Stop listening for broadcasts
         getContext().unregisterReceiver(mBroadcastReceiver);
-    }
-
-    @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        setEmptyText(getString(R.string.activity_transfer_empty_text));
     }
 }

@@ -27,7 +27,6 @@ dependencies {
     compile 'com.github.paolorotolo:appintro:4.1.0'
     compile 'com.google.code.gson:gson:2.8.2'
     compile 'com.squareup.picasso:picasso:2.5.2'
-    compile 'com.wdullaer:swipeactionadapter:2.0.0'
 }
 
 repositories {

@@ -1,156 +1,83 @@
 package net.nitroshare.android.ui.transfer;
 
-import android.content.Context;
-import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
-import android.text.format.Formatter;
+import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import net.nitroshare.android.R;
-import net.nitroshare.android.transfer.TransferManager;
-import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.transfer.TransferStatus;
 import net.nitroshare.android.ui.TintableButton;
-import net.nitroshare.android.util.Settings;
 
 /**
- * Adapter for transfers that are in progress
+ * Transfer adapter that shows transfers in progress
  */
-class TransferAdapter extends ArrayAdapter<TransferStatus> {
-
-    private Context mContext;
-    private Settings mSettings;
+class TransferAdapter extends RecyclerView.Adapter<TransferAdapter.ViewHolder> {
 
     /**
-     * Create a new transfer adapter
+     * View holder for individual transfers
      */
-    TransferAdapter(Context context) {
-        super(context, R.layout.view_transfer_item, R.id.transfer_device);
-        mContext = context;
-        mSettings = new Settings(context);
-    }
+    static class ViewHolder extends RecyclerView.ViewHolder {
 
-    /**
-     * Process an intent
-     *
-     * If a transfer with the ID already exists, it is replaced. If not, the
-     * new transfer is inserted at the front of the list.
-     */
-    void processIntent(Intent intent) {
-        TransferStatus transferStatus = (TransferStatus) intent.getParcelableExtra(TransferManager.EXTRA_STATUS);
-        if (transferStatus.getId() != 0) {
-            for (int i = 0; i < getCount(); i++) {
-                //noinspection ConstantConditions
-                if (transferStatus.getId() == getItem(i).getId()) {
-                    remove(getItem(i));
-                    insert(transferStatus, i);
-                    return;
-                }
-            }
+        private ImageView mIcon;
+        private TextView mDevice;
+        private TextView mState;
+        private ProgressBar mProgress;
+        private TextView mBytes;
+        private TintableButton mStop;
+
+        ViewHolder(View itemView) {
+            super(itemView);
+
+            mIcon = itemView.findViewById(R.id.transfer_icon);
+            mDevice = itemView.findViewById(R.id.transfer_device);
+            mState = itemView.findViewById(R.id.transfer_state);
+            mProgress = itemView.findViewById(R.id.transfer_progress);
+            mBytes = itemView.findViewById(R.id.transfer_bytes);
+            mStop = itemView.findViewById(R.id.transfer_action);
         }
-        insert(transferStatus, 0);
     }
 
-    @NonNull
+    private SparseArray<TransferStatus> mStatuses = new SparseArray<>();
+
+    /**
+     * Update the information for a transfer in the sparse array
+     */
+    void update(TransferStatus transferStatus) {
+        mStatuses.put(transferStatus.getId(), transferStatus);
+    }
+
+    /**
+     * Remove the specified transfer from the sparse array
+     */
+    void remove(int id) {
+        //...
+    }
+
     @Override
-    @SuppressWarnings("ConstantConditions")
-    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-        convertView = super.getView(position, convertView, parent);
+    public TransferAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.view_transfer_item, parent, false);
+        return new ViewHolder(view);
+    }
 
-        // Retrieve the underlying transfer data
-        final TransferStatus transferStatus = getItem(position);
+    @Override
+    public void onBindViewHolder(TransferAdapter.ViewHolder holder, int position) {
+        holder.mIcon.setImageResource(R.drawable.stat_download);
+        holder.mDevice.setText("My Device");
+        holder.mState.setText("Doing nothing");
+        holder.mProgress.setProgress(25);
+        holder.mBytes.setText("12 MB / 48 MB");
+        holder.mStop.setIcon(R.drawable.ic_action_stop);
+        holder.mStop.setText(R.string.adapter_transfer_stop);
+    }
 
-        // Generate transfer byte string
-        CharSequence bytesText;
-        if (transferStatus.getBytesTotal() == 0) {
-            bytesText = mContext.getString(R.string.adapter_transfer_unknown);
-        } else {
-            bytesText = mContext.getString(
-                    R.string.adapter_transfer_bytes,
-                    Formatter.formatShortFileSize(mContext, transferStatus.getBytesTransferred()),
-                    Formatter.formatShortFileSize(mContext, transferStatus.getBytesTotal())
-            );
-        }
-
-        // Set the icon, device name, and progress
-        ((ImageView) convertView.findViewById(R.id.transfer_icon)).setImageResource(
-                transferStatus.getDirection() == TransferStatus.Direction.Receive ?
-                        R.drawable.stat_download : R.drawable.stat_upload);
-        ((TextView) convertView.findViewById(R.id.transfer_device)).setText(
-                transferStatus.getRemoteDeviceName());
-        ((ProgressBar) convertView.findViewById(R.id.transfer_progress))
-                .setProgress(transferStatus.getProgress());
-        ((TextView) convertView.findViewById(R.id.transfer_bytes)).setText(bytesText);
-
-        // Find the other controls
-        TextView stateTextView = (TextView) convertView.findViewById(R.id.transfer_state);
-        TintableButton actionButton = (TintableButton) convertView.findViewById(R.id.transfer_action);
-
-        // Set the appropriate attributes
-        switch (transferStatus.getState()) {
-            case Connecting:
-            case Transferring:
-                if (transferStatus.getState() == TransferStatus.State.Connecting) {
-                    stateTextView.setText(R.string.adapter_transfer_connecting);
-                } else {
-                    stateTextView.setText(getContext().getString(
-                            R.string.adapter_transfer_transferring,
-                            transferStatus.getProgress()));
-                }
-                stateTextView.setTextColor(ContextCompat.getColor(getContext(),
-                        android.R.color.darker_gray));
-                actionButton.setVisibility(View.VISIBLE);
-                actionButton.setIcon(R.drawable.ic_action_stop);
-                actionButton.setText(R.string.adapter_transfer_stop);
-                actionButton.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        Intent stopIntent = new Intent(getContext(), TransferService.class)
-                                .setAction(TransferService.ACTION_STOP_TRANSFER)
-                                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
-                        getContext().startService(stopIntent);
-                    }
-                });
-                break;
-            case Succeeded:
-                stateTextView.setText(R.string.adapter_transfer_succeeded);
-                stateTextView.setTextColor(ContextCompat.getColor(getContext(),
-                        mSettings.getTheme() == R.style.LightTheme ?
-                                R.color.colorSuccess : R.color.colorSuccessDark));
-                actionButton.setVisibility(View.GONE);
-                break;
-            case Failed:
-                stateTextView.setText(getContext().getString(
-                        R.string.adapter_transfer_failed, transferStatus.getError()));
-                stateTextView.setTextColor(ContextCompat.getColor(getContext(),
-                        mSettings.getTheme() == R.style.LightTheme ?
-                                R.color.colorError : R.color.colorErrorDark));
-                /*
-                if (transferData.mDirection == Transfer.Direction.Send) {
-                    actionButton.setVisibility(View.VISIBLE);
-                    actionButton.setIcon(R.drawable.ic_action_retry);
-                    actionButton.setText(R.string.adapter_transfer_retry);
-                    actionButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // TODO: retry transfer
-                        }
-                    });
-                } else {
-                */
-                    actionButton.setVisibility(View.GONE);
-                /*
-                }
-                */
-                break;
-        }
-
-        return convertView;
+    @Override
+    public int getItemCount() {
+        //return mStatuses.size();
+        return 8;
     }
 }
