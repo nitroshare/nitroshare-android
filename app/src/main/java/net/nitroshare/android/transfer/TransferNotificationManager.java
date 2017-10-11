@@ -10,6 +10,7 @@ import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.transfer.TransferActivity;
@@ -23,6 +24,8 @@ import net.nitroshare.android.util.Settings;
  * enabling it to be individually cancelled or retried.
  */
 class TransferNotificationManager {
+
+    private static final String TAG = "TransferNotificationMgr";
 
     private static final String SERVICE_CHANNEL_ID = "service";
     private static final String TRANSFER_CHANNEL_ID = "transfer";
@@ -163,6 +166,7 @@ class TransferNotificationManager {
      */
     synchronized void updateTransfer(TransferStatus transferStatus, Intent intent) {
         if (transferStatus.isFinished()) {
+            Log.i(TAG, String.format("#%d complete - creating notification...", transferStatus.getId()));
 
             // Prepare an appropriate notification for the transfer
             CharSequence contentText;
@@ -270,6 +274,8 @@ class TransferNotificationManager {
     }
 
     private void updateNotification() {
+        Log.i(TAG, String.format("updating notification with %d transfer(s)...", mNumTransfers));
+
         if (mNumTransfers == 0) {
             mBuilder.setContentText(mService.getString(
                     R.string.service_transfer_server_listening_text));
@@ -283,6 +289,8 @@ class TransferNotificationManager {
 
     private boolean stop() {
         if (!mListening && mNumTransfers == 0) {
+            Log.i(TAG, "not listening and no transfers, shutting down...");
+
             mService.stopSelf();
             return true;
         }
