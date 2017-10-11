@@ -142,14 +142,12 @@ class TransferNotificationManager {
     /**
      * Update a transfer in progress
      */
-    synchronized void updateTransfer(TransferStatus transferStatus) {
+    synchronized void updateTransfer(TransferStatus transferStatus, Intent intent) {
         if (transferStatus.isFinished()) {
 
             // Prepare an appropriate notification for the transfer
             CharSequence contentText;
             int icon;
-
-            // TODO: retry intent
 
             if (transferStatus.getState() == TransferStatus.State.Succeeded) {
                 contentText = mService.getString(
@@ -166,18 +164,35 @@ class TransferNotificationManager {
                 icon = R.drawable.ic_stat_error;
             }
 
-            // Show the notification
+            // Build the notification
             boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
-            mNotificationManager.notify(
-                    transferStatus.getId(),
-                    createBuilder()
-                            .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
-                            .setContentIntent(mIntent)
-                            .setContentTitle(mService.getString(R.string.service_transfer_server_title))
-                            .setContentText(contentText)
-                            .setSmallIcon(icon)
-                            .build()
-            );
+            NotificationCompat.Builder builder = createBuilder()
+                    .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
+                    .setContentIntent(mIntent)
+                    .setContentTitle(mService.getString(R.string.service_transfer_server_title))
+                    .setContentText(contentText)
+                    .setSmallIcon(icon);
+
+            // For transfers that send files, it is possible to retry them
+            if (transferStatus.getDirection() == TransferStatus.Direction.Send) {
+
+                // Ensure the error notification is replaced by the next transfer (I have no idea
+                // why the first line is required but it works :P)
+                intent.setClass(mService, TransferService.class);
+                intent.putExtra(TransferService.EXTRA_ID, transferStatus.getId());
+
+                // Add the action
+                builder.addAction(
+                        new NotificationCompat.Action.Builder(
+                                R.drawable.ic_action_retry,
+                                mService.getString(R.string.service_transfer_action_retry),
+                                PendingIntent.getService(mService, transferStatus.getId(), intent, 0)
+                        ).build()
+                );
+            }
+
+            // Show the notification
+            mNotificationManager.notify(transferStatus.getId(), builder.build());
 
             mNumTransfers--;
 

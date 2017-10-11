@@ -81,7 +81,7 @@ public class TransferService extends Service {
                 @Override
                 public void onNewTransfer(Transfer transfer) {
                     transfer.setId(mTransferNotificationManager.nextId());
-                    mTransferManager.addTransfer(transfer);
+                    mTransferManager.addTransfer(transfer, null);
                 }
             });
         } catch (IOException e) {
@@ -211,7 +211,7 @@ public class TransferService extends Service {
         // Build the parameters needed to start the transfer
         Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
 
-        // Add each of the items to the bundle and shortcut_send it
+        // Add each of the items to the bundle and send it
         try {
             Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
             int nextId = intent.getIntExtra(EXTRA_ID, 0);
@@ -221,7 +221,7 @@ public class TransferService extends Service {
             Transfer transfer = new Transfer(device,
                     mSettings.getString(Settings.Key.DEVICE_NAME), bundle);
             transfer.setId(nextId);
-            mTransferManager.addTransfer(transfer);
+            mTransferManager.addTransfer(transfer, intent);
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
 

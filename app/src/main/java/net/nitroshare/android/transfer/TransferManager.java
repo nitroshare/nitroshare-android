@@ -59,7 +59,7 @@ public class TransferManager {
     /**
      * Add a transfer to the list
      */
-    void addTransfer(final Transfer transfer) {
+    void addTransfer(final Transfer transfer, final Intent intent) {
 
         // Add a listener for status change events
         transfer.addStatusChangedListener(new Transfer.StatusChangedListener() {
@@ -70,7 +70,7 @@ public class TransferManager {
                 broadcastTransferStatus(transferStatus);
 
                 // Update the transfer notification manager
-                mTransferNotificationManager.updateTransfer(transferStatus);
+                mTransferNotificationManager.updateTransfer(transferStatus, intent);
             }
         });
 
@@ -93,7 +93,7 @@ public class TransferManager {
 
         // Add the transfer to the notification manager and immediately update it
         mTransferNotificationManager.addTransfer();
-        mTransferNotificationManager.updateTransfer(transfer.getStatus());
+        mTransferNotificationManager.updateTransfer(transfer.getStatus(), intent);
 
         // Create a new thread and run the transfer in it
         new Thread(transfer).start();
