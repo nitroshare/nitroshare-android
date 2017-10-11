@@ -211,7 +211,7 @@ public class TransferService extends Service {
         // Build the parameters needed to start the transfer
         Device device = (Device) intent.getSerializableExtra(EXTRA_DEVICE);
 
-        // Add each of the items to the bundle and send it
+        // Add each of the items to the bundle and shortcut_send it
         try {
             Bundle bundle = createBundle(intent.getParcelableArrayListExtra(EXTRA_URIS));
             int nextId = intent.getIntExtra(EXTRA_ID, 0);

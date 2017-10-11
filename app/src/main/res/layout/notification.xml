@@ -11,8 +11,14 @@
         android:text="@string/service_transfer_server_title"
         android:textStyle="bold" />
 
+    <TextView
+        android:id="@+id/notification_none"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/service_transfer_server_text" />
+
     <LinearLayout
-        android:id="@+id/layout"
+        android:id="@+id/notification_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical" />

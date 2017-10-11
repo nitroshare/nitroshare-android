@@ -65,7 +65,6 @@ public class TransferManager {
         transfer.addStatusChangedListener(new Transfer.StatusChangedListener() {
             @Override
             public void onStatusChanged(TransferStatus transferStatus) {
-                Log.d(TAG, String.format("transfer #%d status changed", transferStatus.getId()));
 
                 // Broadcast transfer status
                 broadcastTransferStatus(transferStatus);
@@ -91,6 +90,9 @@ public class TransferManager {
         synchronized (mTransfers) {
             mTransfers.append(transfer.getStatus().getId(), transfer);
         }
+
+        // Add the transfer to the notification manager
+        mTransferNotificationManager.updateTransfer(transfer.getStatus());
 
         // Create a new thread and run the transfer in it
         new Thread(transfer).start();
