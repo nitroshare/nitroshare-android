@@ -79,7 +79,6 @@ class TransferNotificationManager {
         // Prepare the notification that will be shown during activity
         mBuilder = createBuilder()
                 .setContentIntent(mIntent)
-                .setContentTitle(mService.getString(R.string.service_transfer_server_title))
                 .setSmallIcon(R.drawable.ic_stat_transfer);
     }
 
@@ -196,18 +195,26 @@ class TransferNotificationManager {
      */
     private void updateNotification() {
 
+        // RemoteViews must be cached somewhere. Even though the RemoteViews
+        // are recreated *EVERY* time, views are mysteriously hidden and must
+        // manually be shown. I'm sure a lot of what follows is inefficient.
+        // However, it works.
+
         // Create the parent remote view
         RemoteViews parentView = new RemoteViews(mService.getPackageName(), R.layout.notification);
 
         if (mStatuses.size() == 0) {
 
             // Hide the layout
+            parentView.setViewVisibility(R.id.notification_none, ViewGroup.VISIBLE);
             parentView.setViewVisibility(R.id.notification_layout, ViewGroup.GONE);
 
         } else {
 
             // Hide the service text
             parentView.setViewVisibility(R.id.notification_none, ViewGroup.GONE);
+            parentView.setViewVisibility(R.id.notification_layout, ViewGroup.VISIBLE);
+            parentView.removeAllViews(R.id.notification_layout);
 
             // Create a remote view for each transfer in progress
             for (int i = 0; i < mStatuses.size(); i++) {
@@ -217,7 +224,7 @@ class TransferNotificationManager {
                 // Create the stop intent for the transfer
                 PendingIntent stopIntent = PendingIntent.getService(
                         mService,
-                        0,
+                        transferStatus.getId(),
                         new Intent(mService, TransferService.class)
                                 .setAction(TransferService.ACTION_STOP_TRANSFER)
                                 .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId()),
