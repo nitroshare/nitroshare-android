@@ -31,6 +31,8 @@ public class TransferStatus implements Parcelable {
     private String mRemoteDeviceName;
     private State mState;
     private int mProgress;
+    private long mBytesTransferred = 0;
+    private long mBytesTotal = 0;
     private String mError;
 
     /**
@@ -51,18 +53,22 @@ public class TransferStatus implements Parcelable {
         this.mRemoteDeviceName = status.mRemoteDeviceName;
         this.mState = status.mState;
         this.mProgress = status.mProgress;
+        this.mBytesTransferred = status.mBytesTransferred;
+        this.mBytesTotal = status.mBytesTotal;
         this.mError = status.mError;
     }
 
     /**
      * Initialize transfer status from a parcel
      */
-    TransferStatus(Parcel in) {
+    private TransferStatus(Parcel in) {
         this.mId = in.readInt();
         this.mDirection = Direction.valueOf(in.readString());
         this.mRemoteDeviceName = in.readString();
         this.mState = State.valueOf(in.readString());
         this.mProgress = in.readInt();
+        this.mBytesTransferred = in.readLong();
+        this.mBytesTotal = in.readLong();
         this.mError = in.readString();
     }
 
@@ -90,6 +96,8 @@ public class TransferStatus implements Parcelable {
         out.writeString(mRemoteDeviceName);
         out.writeString(mState.name());
         out.writeInt(mProgress);
+        out.writeLong(mBytesTransferred);
+        out.writeLong(mBytesTotal);
         out.writeString(mError);
     }
 
@@ -131,6 +139,22 @@ public class TransferStatus implements Parcelable {
 
     public void setProgress(int progress) {
         mProgress = progress;
+    }
+
+    public long getBytesTransferred() {
+        return mBytesTransferred;
+    }
+
+    public void setBytesTransferred(long bytesTransferred) {
+        mBytesTransferred = bytesTransferred;
+    }
+
+    public long getBytesTotal() {
+        return mBytesTotal;
+    }
+
+    public void setBytesTotal(long bytesTotal) {
+        mBytesTotal = bytesTotal;
     }
 
     public String getError() {

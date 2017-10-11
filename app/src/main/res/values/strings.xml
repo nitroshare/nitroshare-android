@@ -93,6 +93,8 @@
     <string name="adapter_transfer_transferring">Transferring: %1$d%%</string>
     <string name="adapter_transfer_failed">Failed: %1$s</string>
     <string name="adapter_transfer_succeeded">Succeeded</string>
+    <string name="adapter_transfer_unknown">unknown</string>
+    <string name="adapter_transfer_bytes">%1$s / %2$s</string>
     <string name="adapter_transfer_stop">Stop</string>
     <string name="adapter_transfer_retry">Retry</string>
 

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
+import android.text.format.Formatter;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -23,6 +24,7 @@ import net.nitroshare.android.util.Settings;
  */
 class TransferAdapter extends ArrayAdapter<TransferStatus> {
 
+    private Context mContext;
     private Settings mSettings;
 
     /**
@@ -30,6 +32,7 @@ class TransferAdapter extends ArrayAdapter<TransferStatus> {
      */
     TransferAdapter(Context context) {
         super(context, R.layout.view_transfer_item, R.id.transfer_device);
+        mContext = context;
         mSettings = new Settings(context);
     }
 
@@ -63,6 +66,18 @@ class TransferAdapter extends ArrayAdapter<TransferStatus> {
         // Retrieve the underlying transfer data
         final TransferStatus transferStatus = getItem(position);
 
+        // Generate transfer byte string
+        CharSequence bytesText;
+        if (transferStatus.getBytesTotal() == 0) {
+            bytesText = mContext.getString(R.string.adapter_transfer_unknown);
+        } else {
+            bytesText = mContext.getString(
+                    R.string.adapter_transfer_bytes,
+                    Formatter.formatShortFileSize(mContext, transferStatus.getBytesTransferred()),
+                    Formatter.formatShortFileSize(mContext, transferStatus.getBytesTotal())
+            );
+        }
+
         // Set the icon, device name, and progress
         ((ImageView) convertView.findViewById(R.id.transfer_icon)).setImageResource(
                 transferStatus.getDirection() == TransferStatus.Direction.Receive ?
@@ -71,6 +86,7 @@ class TransferAdapter extends ArrayAdapter<TransferStatus> {
                 transferStatus.getRemoteDeviceName());
         ((ProgressBar) convertView.findViewById(R.id.transfer_progress))
                 .setProgress(transferStatus.getProgress());
+        ((TextView) convertView.findViewById(R.id.transfer_bytes)).setText(bytesText);
 
         // Find the other controls
         TextView stateTextView = (TextView) convertView.findViewById(R.id.transfer_state);

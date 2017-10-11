@@ -120,6 +120,7 @@ public class Transfer implements Runnable {
         mSocketChannel.configureBlocking(false);
         mTransferItems = bundle.size();
         mTransferBytesTotal = bundle.getTotalSize();
+        mTransferStatus.setBytesTotal(mTransferBytesTotal);
     }
 
     /**
@@ -185,6 +186,7 @@ public class Transfer implements Runnable {
         if (newProgress != mTransferStatus.getProgress()) {
             synchronized (mTransferStatus) {
                 mTransferStatus.setProgress(newProgress);
+                mTransferStatus.setBytesTransferred(mTransferBytesTransferred);
                 notifyStatusChangedListeners();
             }
         }
@@ -202,13 +204,14 @@ public class Transfer implements Runnable {
         } catch (JsonSyntaxException e) {
             throw new IOException(e.getMessage());
         }
-        synchronized (mTransferStatus) {
-            mTransferStatus.setRemoteDeviceName(transferHeader.name);
-            notifyStatusChangedListeners();
-        }
         mTransferItems = Integer.parseInt(transferHeader.count);
         mTransferBytesTotal = Long.parseLong(transferHeader.size);
         mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
+        synchronized (mTransferStatus) {
+            mTransferStatus.setRemoteDeviceName(transferHeader.name);
+            mTransferStatus.setBytesTotal(mTransferBytesTotal);
+            notifyStatusChangedListeners();
+        }
     }
 
     // TODO: add better error handling for this method [2017-03-07] (does this still apply?)
