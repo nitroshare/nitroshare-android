@@ -61,6 +61,11 @@ public class TransferManager {
      */
     void addTransfer(final Transfer transfer, final Intent intent) {
 
+        // Grab the initial status
+        TransferStatus transferStatus = transfer.getStatus();
+
+        Log.i(TAG, String.format("starting transfer #%d...", transferStatus.getId()));
+
         // Add a listener for status change events
         transfer.addStatusChangedListener(new Transfer.StatusChangedListener() {
             @Override
@@ -88,12 +93,12 @@ public class TransferManager {
 
         // Add the transfer to the list
         synchronized (mTransfers) {
-            mTransfers.append(transfer.getStatus().getId(), transfer);
+            mTransfers.append(transferStatus.getId(), transfer);
         }
 
         // Add the transfer to the notification manager and immediately update it
-        mTransferNotificationManager.addTransfer();
-        mTransferNotificationManager.updateTransfer(transfer.getStatus(), intent);
+        mTransferNotificationManager.addTransfer(transferStatus);
+        mTransferNotificationManager.updateTransfer(transferStatus, intent);
 
         // Create a new thread and run the transfer in it
         new Thread(transfer).start();

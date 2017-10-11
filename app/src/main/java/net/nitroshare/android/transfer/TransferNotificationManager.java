@@ -156,9 +156,12 @@ class TransferNotificationManager {
     /**
      * Add a new transfer
      */
-    synchronized void addTransfer() {
+    synchronized void addTransfer(TransferStatus transferStatus) {
         mNumTransfers++;
         updateNotification();
+
+        // Clear any existing notification (this shouldn't be necessary, but it is :P)
+        mNotificationManager.cancel(transferStatus.getId());
     }
 
     /**
@@ -166,7 +169,10 @@ class TransferNotificationManager {
      */
     synchronized void updateTransfer(TransferStatus transferStatus, Intent intent) {
         if (transferStatus.isFinished()) {
-            Log.i(TAG, String.format("#%d complete - creating notification...", transferStatus.getId()));
+            Log.i(TAG, String.format("#%d finished - creating notification...", transferStatus.getId()));
+
+            // Close the ongoing notification (yes, again)
+            mNotificationManager.cancel(transferStatus.getId());
 
             // Prepare an appropriate notification for the transfer
             CharSequence contentText;
@@ -209,7 +215,10 @@ class TransferNotificationManager {
                         new NotificationCompat.Action.Builder(
                                 R.drawable.ic_action_retry,
                                 mService.getString(R.string.service_transfer_action_retry),
-                                PendingIntent.getService(mService, transferStatus.getId(), intent, 0)
+                                PendingIntent.getService(
+                                        mService, transferStatus.getId(),
+                                        intent, PendingIntent.FLAG_ONE_SHOT
+                                )
                         ).build()
                 );
             }
@@ -259,6 +268,7 @@ class TransferNotificationManager {
                             .setContentIntent(mIntent)
                             .setContentTitle(mService.getString(R.string.service_transfer_title))
                             .setContentText(contentText)
+                            .setOngoing(true)
                             .setProgress(100, transferStatus.getProgress(), false)
                             .setSmallIcon(icon)
                             .addAction(
