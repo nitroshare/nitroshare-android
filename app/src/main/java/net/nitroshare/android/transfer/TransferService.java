@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcelable;
 import android.provider.MediaStore;
@@ -62,7 +63,13 @@ public class TransferService extends Service {
             Log.i(TAG, "sending intent to stop service");
             intent.setAction(ACTION_STOP_LISTENING);
         }
-        context.startService(intent);
+
+        // Android O doesn't allow certain broadcasts to start services as per usual
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     private TransferNotificationManager mTransferNotificationManager;
