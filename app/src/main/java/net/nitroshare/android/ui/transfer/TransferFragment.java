@@ -53,8 +53,8 @@ public class TransferFragment extends ListFragment {
 
             @Override
             public void onSwipe(int[] position, SwipeDirection[] direction) {
-                for (int i = 0; i < position.length; i++) {
-                    TransferStatus transferStatus = transferAdapter.getItem(position[i]);
+                for (int i : position) {
+                    TransferStatus transferStatus = transferAdapter.getItem(i);
                     transferAdapter.remove(transferStatus);
                     //noinspection ConstantConditions
                     Intent removeIntent = new Intent(getContext(), TransferService.class)
