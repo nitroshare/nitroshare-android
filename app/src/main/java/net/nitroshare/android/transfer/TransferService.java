@@ -65,7 +65,7 @@ public class TransferService extends Service {
         }
 
         // Android O doesn't allow certain broadcasts to start services as per usual
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (start && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
             context.startService(intent);
