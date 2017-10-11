@@ -5,8 +5,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Build;
+import android.support.annotation.RequiresApi;
+import android.support.annotation.StringRes;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 
@@ -23,7 +24,10 @@ import net.nitroshare.android.util.Settings;
  */
 class TransferNotificationManager {
 
-    private static final String CHANNEL_ID = "transfer";
+    private static final String SERVICE_CHANNEL_ID = "service";
+    private static final String TRANSFER_CHANNEL_ID = "transfer";
+    private static final String NOTIFICATION_CHANNEL_ID = "notification";
+
     private static final int NOTIFICATION_ID = 1;
 
     private Service mService;
@@ -48,18 +52,14 @@ class TransferNotificationManager {
         mNotificationManager = (NotificationManager) mService.getSystemService(
                 Service.NOTIFICATION_SERVICE);
 
-        // Android O requires a notification channel to be specified
+        // Android O requires the notification channels to be created
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    mService.getString(R.string.notification_channel_name),
-                    NotificationManager.IMPORTANCE_DEFAULT
-            );
-            channel.setDescription(mService.getString(R.string.notification_channel_description));
-            channel.enableLights(true);
-            channel.setLightColor(Color.BLUE);
-            channel.enableVibration(true);
-            mNotificationManager.createNotificationChannel(channel);
+            createChannel(SERVICE_CHANNEL_ID, R.string.channel_service_name,
+                    NotificationManager.IMPORTANCE_MIN, false);
+            createChannel(TRANSFER_CHANNEL_ID, R.string.channel_transfer_name,
+                    NotificationManager.IMPORTANCE_LOW, false);
+            createChannel(NOTIFICATION_CHANNEL_ID, R.string.channel_notification_name,
+                    NotificationManager.IMPORTANCE_DEFAULT, true);
         }
 
         // Create the intent for opening the main activity
@@ -71,7 +71,7 @@ class TransferNotificationManager {
         );
 
         // Create the builder
-        mBuilder = createBuilder()
+        mBuilder = createBuilder(SERVICE_CHANNEL_ID)
                 .setContentIntent(mIntent)
                 .setContentTitle(mService.getString(R.string.service_transfer_server_title))
                 .setSmallIcon(R.drawable.ic_stat_transfer);
@@ -85,12 +85,31 @@ class TransferNotificationManager {
     }
 
     /**
+     * Create and register a notification channel
+     * @param channelId unique ID for the channel
+     * @param nameResId string resource for the channel name
+     * @param importance notification priority
+     * @param flash true to enable lights and vibration
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void createChannel(String channelId, @StringRes int nameResId, int importance, boolean flash) {
+        NotificationChannel channel = new NotificationChannel(channelId,
+                mService.getString(nameResId), importance);
+        if (flash) {
+            channel.enableLights(true);
+            channel.enableVibration(true);
+            channel.setShowBadge(true);
+        }
+        mNotificationManager.createNotificationChannel(channel);
+    }
+
+    /**
      * Create a new notification using the method appropriate to the build
      * @return notification
      */
-    private NotificationCompat.Builder createBuilder() {
+    private NotificationCompat.Builder createBuilder(String channelId) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return new NotificationCompat.Builder(mService, CHANNEL_ID);
+            return new NotificationCompat.Builder(mService, channelId);
         } else {
             //noinspection deprecation
             return new NotificationCompat.Builder(mService);
@@ -166,7 +185,7 @@ class TransferNotificationManager {
 
             // Build the notification
             boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
-            NotificationCompat.Builder builder = createBuilder()
+            NotificationCompat.Builder builder = createBuilder(NOTIFICATION_CHANNEL_ID)
                     .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
                     .setContentIntent(mIntent)
                     .setContentTitle(mService.getString(R.string.service_transfer_server_title))
@@ -232,7 +251,7 @@ class TransferNotificationManager {
             // Update the notification
             mNotificationManager.notify(
                     transferStatus.getId(),
-                    createBuilder()
+                    createBuilder(TRANSFER_CHANNEL_ID)
                             .setContentIntent(mIntent)
                             .setContentTitle(mService.getString(R.string.service_transfer_title))
                             .setContentText(contentText)
