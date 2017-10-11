@@ -41,11 +41,11 @@ public class TransferActivity extends AppCompatActivity
         Log.i(TAG, "finishing initialization of activity");
 
         // Setup the action bar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Connect the action bar and navigation drawer
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar,
                 R.string.activity_transfer_navigation_drawer_open,
@@ -55,7 +55,7 @@ public class TransferActivity extends AppCompatActivity
         toggle.syncState();
 
         // Process items in the navigation drawer
-        NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         // TODO: update this every time the activity is shown
@@ -66,7 +66,7 @@ public class TransferActivity extends AppCompatActivity
                 getString(R.string.menu_transfer_subtitle, deviceName));
 
         // Setup the floating action button
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 startActivity(new Intent(TransferActivity.this, ExplorerActivity.class));
@@ -127,7 +127,7 @@ public class TransferActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -155,7 +155,7 @@ public class TransferActivity extends AppCompatActivity
                 startActivity(new Intent(this, AboutActivity.class));
                 break;
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
