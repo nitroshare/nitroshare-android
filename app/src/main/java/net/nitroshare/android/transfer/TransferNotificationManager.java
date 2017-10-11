@@ -8,10 +8,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.os.Build;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
-import android.util.SparseArray;
-import android.view.ViewGroup;
-import android.widget.RemoteViews;
+import android.support.v4.app.NotificationManagerCompat;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.ui.transfer.TransferActivity;
@@ -20,13 +17,11 @@ import net.nitroshare.android.util.Settings;
 /**
  * Manage notifications and service lifecycle
  *
- * This class manages the notification shown while the server is listening for
- * incoming connections and during file transfers. Additional notifications
- * are shown when transfers complete (either successfully or with error).
+ * A persistent notification is shown as long as the transfer service is
+ * running. A notification is also shown for each transfer in progress,
+ * enabling it to be individually cancelled or retried.
  */
 class TransferNotificationManager {
-
-    private static final String TAG = "TransferNotificationMgr";
 
     private static final String CHANNEL_ID = "transfer";
     private static final int NOTIFICATION_ID = 1;
@@ -38,11 +33,10 @@ class TransferNotificationManager {
     private NotificationCompat.Builder mBuilder;
     private PendingIntent mIntent;
 
-    private boolean mActive = false;
     private boolean mListening = false;
+    private int mNumTransfers = 0;
 
     private int mNextId = 2;
-    private SparseArray<TransferStatus> mStatuses = new SparseArray<>();
 
     /**
      * Create a notification manager for the specified service
@@ -76,14 +70,22 @@ class TransferNotificationManager {
                 0
         );
 
-        // Prepare the notification that will be shown during activity
+        // Create the builder
         mBuilder = createBuilder()
                 .setContentIntent(mIntent)
+                .setContentTitle(mService.getString(R.string.service_transfer_server_title))
                 .setSmallIcon(R.drawable.ic_stat_transfer);
+
+        // Set the priority
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            mBuilder.setPriority(NotificationManagerCompat.IMPORTANCE_MIN);
+        } else {
+            mBuilder.setPriority(NotificationCompat.PRIORITY_MIN);
+        }
     }
 
     /**
-     * Create a new notification
+     * Create a new notification using the method appropriate to the build
      * @return notification
      */
     private NotificationCompat.Builder createBuilder() {
@@ -98,6 +100,9 @@ class TransferNotificationManager {
     /**
      * Retrieve the next unique integer for a transfer
      * @return new ID
+     *
+     * The notification with ID equal to 1 is for the persistent notification
+     * shown while the service is active.
      */
     synchronized int nextId() {
         return mNextId++;
@@ -112,7 +117,7 @@ class TransferNotificationManager {
     }
 
     /**
-     * Indicate that the server is no longer listening for transfers
+     * Indicate that the server has stopped listening for transfers
      */
     synchronized void stopListening() {
         mListening = false;
@@ -120,23 +125,22 @@ class TransferNotificationManager {
     }
 
     /**
-     * Attempt to stop the service if there is no activity
-     * @return true if the service was stopped
+     * Stop the service if no tasks are active
      */
-    synchronized boolean stop() {
-        if (!mListening && mStatuses.size() == 0) {
-            Log.d(TAG, "no more activity; shutting down service...");
-
-            mActive = false;
-            mService.stopSelf();
-            return true;
-        }
-        updateNotification();
-        return false;
+    synchronized void stopService() {
+        stop();
     }
 
     /**
-     * Update the notification to reflect the new status of a transfer
+     * Add a new transfer
+     */
+    synchronized void addTransfer() {
+        mNumTransfers++;
+        updateNotification();
+    }
+
+    /**
+     * Update a transfer in progress
      */
     synchronized void updateTransfer(TransferStatus transferStatus) {
         if (transferStatus.isFinished()) {
@@ -175,89 +179,79 @@ class TransferNotificationManager {
                             .build()
             );
 
-            // Remove the transfer from the SparseArray
-            mStatuses.remove(transferStatus.getId());
+            mNumTransfers--;
 
-            // Terminate here if nothing else is running
+            // Stop the service if there are no active tasks
             if (stop()) {
                 return;
             }
 
-        } else {
-            mStatuses.put(transferStatus.getId(), transferStatus);
-        }
+            // Update the notification
+            updateNotification();
 
-        updateNotification();
+        } else {
+
+            // Prepare the appropriate text for the transfer
+            CharSequence contentText;
+            int icon;
+
+            if (transferStatus.getDirection() == TransferStatus.Direction.Receive) {
+                contentText = mService.getString(
+                        R.string.service_transfer_status_receiving,
+                        transferStatus.getRemoteDeviceName()
+                );
+                icon = android.R.drawable.stat_sys_download;
+            } else {
+                contentText = mService.getString(
+                        R.string.service_transfer_status_sending,
+                        transferStatus.getRemoteDeviceName()
+                );
+                icon = android.R.drawable.stat_sys_upload;
+            }
+
+            // Intent for stopping this particular service
+            Intent stopIntent = new Intent(mService, TransferService.class)
+                    .setAction(TransferService.ACTION_STOP_TRANSFER)
+                    .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
+
+            // Update the notification
+            mNotificationManager.notify(
+                    transferStatus.getId(),
+                    createBuilder()
+                            .setContentIntent(mIntent)
+                            .setContentTitle(mService.getString(R.string.service_transfer_title))
+                            .setContentText(contentText)
+                            .setProgress(100, transferStatus.getProgress(), false)
+                            .setSmallIcon(icon)
+                            .addAction(
+                                    new NotificationCompat.Action.Builder(
+                                            R.drawable.ic_action_stop,
+                                            mService.getString(R.string.service_transfer_action_stop),
+                                            PendingIntent.getService(mService, transferStatus.getId(), stopIntent, 0)
+                                    ).build()
+                            )
+                            .build()
+            );
+        }
     }
 
-    /**
-     * Create the notification
-     */
     private void updateNotification() {
-
-        // RemoteViews must be cached somewhere. Even though the RemoteViews
-        // are recreated *EVERY* time, views are mysteriously hidden and must
-        // manually be shown. I'm sure a lot of what follows is inefficient.
-        // However, it works.
-
-        // Create the parent remote view
-        RemoteViews parentView = new RemoteViews(mService.getPackageName(), R.layout.notification);
-
-        if (mStatuses.size() == 0) {
-
-            // Hide the layout
-            parentView.setViewVisibility(R.id.notification_none, ViewGroup.VISIBLE);
-            parentView.setViewVisibility(R.id.notification_layout, ViewGroup.GONE);
-
+        if (mNumTransfers == 0) {
+            mBuilder.setContentText(mService.getString(
+                    R.string.service_transfer_server_listening_text));
         } else {
-
-            // Hide the service text
-            parentView.setViewVisibility(R.id.notification_none, ViewGroup.GONE);
-            parentView.setViewVisibility(R.id.notification_layout, ViewGroup.VISIBLE);
-            parentView.removeAllViews(R.id.notification_layout);
-
-            // Create a remote view for each transfer in progress
-            for (int i = 0; i < mStatuses.size(); i++) {
-
-                TransferStatus transferStatus = mStatuses.valueAt(i);
-
-                // Create the stop intent for the transfer
-                PendingIntent stopIntent = PendingIntent.getService(
-                        mService,
-                        transferStatus.getId(),
-                        new Intent(mService, TransferService.class)
-                                .setAction(TransferService.ACTION_STOP_TRANSFER)
-                                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId()),
-                        0
-                );
-
-                // Create the view
-                RemoteViews childView = new RemoteViews(mService.getPackageName(), R.layout.notification_item);
-                childView.setImageViewResource(R.id.notification_item_icon,
-                        transferStatus.getDirection() == TransferStatus.Direction.Send ?
-                                R.drawable.send : R.drawable.receive
-                );
-                childView.setTextViewText(R.id.notification_item_remote_name,
-                        transferStatus.getRemoteDeviceName());
-                childView.setTextViewText(R.id.notification_item_progress,
-                        String.format("%d%%", transferStatus.getProgress()));
-                childView.setOnClickPendingIntent(R.id.notification_item_stop, stopIntent);
-
-                // Add the view to the parent
-                parentView.addView(R.id.notification_layout, childView);
-            }
+            mBuilder.setContentText(mService.getResources().getQuantityString(
+                    R.plurals.service_transfer_server_transferring_text,
+                    mNumTransfers, mNumTransfers));
         }
+        mService.startForeground(NOTIFICATION_ID, mBuilder.build());
+    }
 
-        // Update the notification
-        mBuilder.setContent(parentView);
-
-        // If the notification was not active, start the service in the
-        // foreground; otherwise, update the existing notification
-        if (!mActive) {
-            mService.startForeground(NOTIFICATION_ID, mBuilder.build());
-            mActive = true;
-        } else {
-            mNotificationManager.notify(NOTIFICATION_ID, mBuilder.build());
+    private boolean stop() {
+        if (!mListening && mNumTransfers == 0) {
+            mService.stopSelf();
+            return true;
         }
+        return false;
     }
 }

@@ -225,7 +225,7 @@ public class TransferService extends Service {
         } catch (IOException e) {
             Log.e(TAG, e.getMessage());
 
-            mTransferNotificationManager.stop();
+            mTransferNotificationManager.stopService();
         }
 
         return START_NOT_STICKY;
@@ -244,7 +244,7 @@ public class TransferService extends Service {
      */
     private int removeTransfer(Intent intent) {
         mTransferManager.removeTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
-        mTransferNotificationManager.stop();
+        mTransferNotificationManager.stopService();
         return START_NOT_STICKY;
     }
 
@@ -253,7 +253,7 @@ public class TransferService extends Service {
      */
     private int broadcast() {
         mTransferManager.broadcastTransfers();
-        mTransferNotificationManager.stop();
+        mTransferNotificationManager.stopService();
         return START_NOT_STICKY;
     }
 

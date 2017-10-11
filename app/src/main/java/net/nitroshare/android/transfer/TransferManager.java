@@ -91,7 +91,8 @@ public class TransferManager {
             mTransfers.append(transfer.getStatus().getId(), transfer);
         }
 
-        // Add the transfer to the notification manager
+        // Add the transfer to the notification manager and immediately update it
+        mTransferNotificationManager.addTransfer();
         mTransferNotificationManager.updateTransfer(transfer.getStatus());
 
         // Create a new thread and run the transfer in it

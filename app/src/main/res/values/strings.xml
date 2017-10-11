@@ -75,7 +75,7 @@
     <string name="service_transfer_action_stop">Stop</string>
     <string name="service_transfer_action_retry">Retry</string>
     <string name="service_transfer_server_title">NitroShare Service</string>
-    <string name="service_transfer_server_text">Listening for incoming transfers</string>
+    <string name="service_transfer_server_listening_text">Listening for incoming transfers</string>
     <string name="service_transfer_status_connecting">Connecting to %1$s…</string>
     <string name="service_transfer_status_receiving">Receiving items from %1$s…</string>
     <string name="service_transfer_status_sending">Sending items to %1$s…</string>

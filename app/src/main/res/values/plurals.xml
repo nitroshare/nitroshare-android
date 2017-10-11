@@ -11,4 +11,9 @@
         <item quantity="other">%1$d bytes</item>
     </plurals>
 
+    <plurals name="service_transfer_server_transferring_text">
+        <item quantity="one">%1$d transfer in progress</item>
+        <item quantity="other">%1$d transfers in progress</item>
+    </plurals>
+
 </resources>
