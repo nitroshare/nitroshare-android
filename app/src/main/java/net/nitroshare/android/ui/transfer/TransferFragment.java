@@ -6,10 +6,13 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,8 +26,7 @@ import net.nitroshare.android.transfer.TransferStatus;
  */
 public class TransferFragment extends Fragment {
 
-    private TransferAdapter mAdapter;
-    private RecyclerView mRecyclerView;
+    private static final String TAG = "TransferFragment";
 
     private BroadcastReceiver mBroadcastReceiver;
 
@@ -32,11 +34,12 @@ public class TransferFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         // Setup the adapter and recycler view
-        mAdapter = new TransferAdapter();
-        mRecyclerView = new RecyclerView(getContext());
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        final TransferAdapter adapter = new TransferAdapter(getContext());
+        RecyclerView recyclerView = new RecyclerView(getContext());
+        recyclerView.setAdapter(adapter);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
 
         // Enable swipe-to-dismiss
         new ItemTouchHelper(
@@ -48,26 +51,43 @@ public class TransferFragment extends Fragment {
 
                     @Override
                     public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                        // TODO: handle swipe
+
+                        // Calculate the position of the item and retrieve its status
+                        int position = viewHolder.getAdapterPosition();
+                        TransferStatus transferStatus = adapter.getStatus(position);
+
+                        // Remove the item from the adapter
+                        adapter.remove(position);
+
+                        // Remove the item from the service
+                        Intent removeIntent = new Intent(getContext(), TransferService.class)
+                                .setAction(TransferService.ACTION_REMOVE_TRANSFER)
+                                .putExtra(TransferService.EXTRA_TRANSFER, transferStatus.getId());
+                        getContext().startService(removeIntent);
                     }
                 }
-        ).attachToRecyclerView(mRecyclerView);
+        ).attachToRecyclerView(recyclerView);
+
+        // Disable change animations (because they are really, really ugly)
+        ((DefaultItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
         // Setup the broadcast receiver
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 TransferStatus transferStatus = intent.getParcelableExtra(TransferManager.EXTRA_STATUS);
-                mAdapter.update(transferStatus);
+                adapter.update(transferStatus);
             }
         };
 
-        return mRecyclerView;
+        return recyclerView;
     }
 
     @Override
     public void onStart() {
         super.onStart();
+
+        Log.i(TAG, "registering broadcast receiver");
 
         // Start listening for broadcasts
         getContext().registerReceiver(mBroadcastReceiver,
@@ -82,6 +102,8 @@ public class TransferFragment extends Fragment {
     @Override
     public void onStop() {
         super.onStop();
+
+        Log.i(TAG, "unregistering broadcast receiver");
 
         // Stop listening for broadcasts
         getContext().unregisterReceiver(mBroadcastReceiver);
