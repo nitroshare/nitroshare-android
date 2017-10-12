@@ -250,7 +250,9 @@ public class TransferService extends Service {
      * Remove (dismiss) a transfer that has completed
      */
     private int removeTransfer(Intent intent) {
-        mTransferManager.removeTransfer(intent.getIntExtra(EXTRA_TRANSFER, -1));
+        int id = intent.getIntExtra(EXTRA_TRANSFER, -1);
+        mTransferManager.removeTransfer(id);
+        mTransferNotificationManager.removeNotification(id);
         mTransferNotificationManager.stopService();
         return START_NOT_STICKY;
     }

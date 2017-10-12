@@ -154,6 +154,13 @@ class TransferNotificationManager {
     }
 
     /**
+     * Remove a notification
+     */
+    void removeNotification(int id) {
+        mNotificationManager.cancel(id);
+    }
+
+    /**
      * Add a new transfer
      */
     synchronized void addTransfer(TransferStatus transferStatus) {
@@ -161,7 +168,7 @@ class TransferNotificationManager {
         updateNotification();
 
         // Clear any existing notification (this shouldn't be necessary, but it is :P)
-        mNotificationManager.cancel(transferStatus.getId());
+        removeNotification(transferStatus.getId());
     }
 
     /**
