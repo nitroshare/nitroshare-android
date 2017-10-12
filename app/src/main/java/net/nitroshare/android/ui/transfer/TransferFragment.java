@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferManager;
 import net.nitroshare.android.transfer.TransferService;
 import net.nitroshare.android.transfer.TransferStatus;
@@ -40,6 +42,19 @@ public class TransferFragment extends Fragment {
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+
+        // Hide the FAB when the user scrolls
+        final FloatingActionButton fab = getActivity().findViewById(R.id.fab);
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if (dy > 0) {
+                    fab.hide();
+                } else {
+                    fab.show();
+                }
+            }
+        });
 
         // Enable swipe-to-dismiss
         new ItemTouchHelper(
