@@ -209,8 +209,9 @@ class TransferNotificationManager {
                     .setContentText(contentText)
                     .setSmallIcon(icon);
 
-            // For transfers that send files, it is possible to retry them
-            if (transferStatus.getDirection() == TransferStatus.Direction.Send) {
+            // For transfers that send files (and fail), it is possible to retry them
+            if (transferStatus.getState() == TransferStatus.State.Failed &&
+                    transferStatus.getDirection() == TransferStatus.Direction.Send) {
 
                 // Ensure the error notification is replaced by the next transfer (I have no idea
                 // why the first line is required but it works :P)
