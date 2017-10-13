@@ -201,11 +201,11 @@ public class Transfer implements Runnable {
             transferHeader = mGson.fromJson(new String(
                     mReceivingPacket.getBuffer().array(), Charset.forName("UTF-8")),
                     TransferHeader.class);
-        } catch (JsonSyntaxException e) {
+            mTransferItems = Integer.parseInt(transferHeader.count);
+            mTransferBytesTotal = Long.parseLong(transferHeader.size);
+        } catch (JsonSyntaxException|NumberFormatException e) {
             throw new IOException(e.getMessage());
         }
-        mTransferItems = Integer.parseInt(transferHeader.count);
-        mTransferBytesTotal = Long.parseLong(transferHeader.size);
         mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
         synchronized (mTransferStatus) {
             mTransferStatus.setRemoteDeviceName(transferHeader.name);
