@@ -154,6 +154,10 @@ public class TransferActivity extends AppCompatActivity
             case R.id.action_about:
                 startActivity(new Intent(this, AboutActivity.class));
                 break;
+            case R.id.action_exit:
+                TransferService.startStopService(this, false);
+                finish();
+                break;
         }
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);

@@ -38,4 +38,13 @@
 
     </group>
 
+    <group android:id="@+id/grp4" android:checkableBehavior="none">
+
+        <item
+            android:id="@+id/action_exit"
+            android:title="@string/menu_transfer_item_exit"
+            app:showAsAction="never" />
+
+    </group>
+
 </menu>
