@@ -39,6 +39,9 @@ public class Transfer implements Runnable {
         void onStatusChanged(TransferStatus transferStatus);
     }
 
+    /**
+     * Listener for item received events
+     */
     interface ItemReceivedListener {
         void onItemReceived(Item item);
     }

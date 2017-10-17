@@ -244,7 +244,7 @@ public class ShareActivity extends AppCompatActivity {
         mDeviceAdapter.start();
 
         final ArrayList<Uri> uriList = buildUriList();
-        final ListView listView = (ListView) findViewById(R.id.selectList);
+        final ListView listView = findViewById(R.id.selectList);
         listView.setAdapter(mDeviceAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
