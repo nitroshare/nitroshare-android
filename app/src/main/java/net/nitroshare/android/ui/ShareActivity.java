@@ -207,16 +207,25 @@ public class ShareActivity extends AppCompatActivity {
     private DeviceAdapter mDeviceAdapter;
 
     /**
-     * Given a SEND intent, build a list of URIs
-     * @param intent intent received
+     * Ensure that the intent passed to the activity is valid
+     * @return true if the intent is valid
+     */
+    private boolean isValidIntent() {
+        return (getIntent().getAction().equals(Intent.ACTION_SEND_MULTIPLE) ||
+                getIntent().getAction().equals(Intent.ACTION_SEND)) &&
+                getIntent().hasExtra(Intent.EXTRA_STREAM);
+    }
+
+    /**
+     * Given a SEND or SEND_MULTIPLE intent, build a list of URIs
      * @return list of URIs
      */
-    private ArrayList<Uri> buildUriList(Intent intent) {
-        if (intent.getAction().equals("android.intent.action.SEND_MULTIPLE")) {
-            return intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+    private ArrayList<Uri> buildUriList() {
+        if (getIntent().getAction().equals(Intent.ACTION_SEND_MULTIPLE)) {
+            return getIntent().getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         } else {
             ArrayList<Uri> uriList = new ArrayList<>();
-            uriList.add((Uri) intent.getParcelableExtra(Intent.EXTRA_STREAM));
+            uriList.add((Uri) getIntent().getParcelableExtra(Intent.EXTRA_STREAM));
             return uriList;
         }
     }
@@ -234,7 +243,7 @@ public class ShareActivity extends AppCompatActivity {
         });
         mDeviceAdapter.start();
 
-        final ArrayList<Uri> uriList = buildUriList(getIntent());
+        final ArrayList<Uri> uriList = buildUriList();
         final ListView listView = (ListView) findViewById(R.id.selectList);
         listView.setAdapter(mDeviceAdapter);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -261,11 +270,26 @@ public class ShareActivity extends AppCompatActivity {
         setTheme(new Settings(this).getTheme());
         setContentView(R.layout.activity_share);
 
-        // Attempt to obtain permission if it is somehow missing
-        if (Permissions.haveStoragePermission(this)) {
-            finishInit();
+        // Ensure valid data is present in the intent
+        if (isValidIntent()) {
+
+            // Attempt to obtain permission if it is somehow missing
+            if (Permissions.haveStoragePermission(this)) {
+                finishInit();
+            } else {
+                Permissions.requestStoragePermission(this);
+            }
         } else {
-            Permissions.requestStoragePermission(this);
+            new AlertDialog.Builder(this)
+                    .setMessage(R.string.activity_share_intent)
+                    .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int id) {
+                            dialog.dismiss();
+                        }
+                    })
+                    .create()
+                    .show();
         }
     }
 
