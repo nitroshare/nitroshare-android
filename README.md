@@ -1,5 +1,3 @@
-> **Warning:** this application, although functional, is currently in beta. In other words, it is not yet stable enough for everyday use. Proceed with caution.
-
 ## NitroShare for Android
 
 [![Build Status](https://travis-ci.org/nitroshare/nitroshare-android.svg?branch=master)](https://travis-ci.org/nitroshare/nitroshare-android)
