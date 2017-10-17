@@ -9,6 +9,9 @@ import android.util.SparseArray;
 
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.bundle.Item;
+import net.nitroshare.android.bundle.UrlItem;
+
+import java.io.IOException;
 
 /**
  * Manage active transfers
@@ -87,6 +90,12 @@ public class TransferManager {
                         item instanceof FileItem) {
                     String path = ((FileItem) item).getPath();
                     mMediaScannerConnection.scanFile(path, null);
+                } else if (item instanceof UrlItem) {
+                    try {
+                        mTransferNotificationManager.showUrl(((UrlItem) item).getUrl());
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage());
+                    }
                 }
             }
         });

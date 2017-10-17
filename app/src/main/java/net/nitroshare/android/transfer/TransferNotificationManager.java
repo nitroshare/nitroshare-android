@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.annotation.StringRes;
@@ -289,6 +290,29 @@ class TransferNotificationManager {
                             .build()
             );
         }
+    }
+
+    /**
+     * Create a notification for URLs
+     * @param url full URL
+     */
+    void showUrl(String url) {
+        int id = nextId();
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                mService,
+                id,
+                new Intent(Intent.ACTION_VIEW, Uri.parse(url)),
+                0
+        );
+        mNotificationManager.notify(
+                id,
+                createBuilder(NOTIFICATION_CHANNEL_ID)
+                        .setContentIntent(pendingIntent)
+                        .setContentTitle(mService.getString(R.string.service_transfer_notification_url))
+                        .setContentText(url)
+                        .setSmallIcon(R.drawable.ic_url)
+                        .build()
+        );
     }
 
     private void updateNotification() {

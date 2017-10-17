@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import net.nitroshare.android.bundle.Bundle;
 import net.nitroshare.android.bundle.FileItem;
 import net.nitroshare.android.bundle.Item;
+import net.nitroshare.android.bundle.UrlItem;
 import net.nitroshare.android.discovery.Device;
 
 import java.io.IOException;
@@ -233,6 +234,9 @@ public class Transfer implements Runnable {
         switch (itemType) {
             case FileItem.TYPE_NAME:
                 mItem = new FileItem(mTransferDirectory, map, mOverwrite);
+                break;
+            case UrlItem.TYPE_NAME:
+                mItem = new UrlItem(map);
                 break;
             default:
                 throw new IOException("unrecognized item type");

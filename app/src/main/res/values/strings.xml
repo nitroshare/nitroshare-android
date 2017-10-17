@@ -84,6 +84,7 @@
     <string name="service_transfer_status_success">Transfer with %1$s completed</string>
     <string name="service_transfer_status_error">Transfer with %1$s failed: %2$s</string>
     <string name="service_transfer_unknown_device">[unknown]</string>
+    <string name="service_transfer_notification_url">URL</string>
 
     <!-- Transfer notification manager -->
     <string name="channel_service_name">Transfer Service</string>

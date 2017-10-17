@@ -36,6 +36,13 @@ public class UrlItem extends Item {
         mProperties.put(SIZE, 0);
     }
 
+    /**
+     * Retrieve the URL
+     */
+    public String getUrl() throws IOException {
+        return getStringProperty(NAME, true);
+    }
+
     @Override
     public Map<String, Object> getProperties() {
         return mProperties;
