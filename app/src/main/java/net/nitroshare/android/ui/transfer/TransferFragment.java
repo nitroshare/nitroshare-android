@@ -11,12 +11,14 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferManager;
@@ -32,20 +34,44 @@ public class TransferFragment extends Fragment {
 
     private BroadcastReceiver mBroadcastReceiver;
 
+    RecyclerView mRecyclerView;
+    TextView mTextView;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
+        // Create layout parameters for full expansion
+        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+
+        // Create a container
+        ViewGroup parentView = new LinearLayout(getContext());
+        parentView.setLayoutParams(layoutParams);
+
         // Setup the adapter and recycler view
         final TransferAdapter adapter = new TransferAdapter(getContext());
-        RecyclerView recyclerView = new RecyclerView(getContext());
-        recyclerView.setAdapter(adapter);
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        mRecyclerView = new RecyclerView(getContext());
+        mRecyclerView.setAdapter(adapter);
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        mRecyclerView.setLayoutParams(layoutParams);
+        mRecyclerView.setVisibility(View.GONE);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(getContext(), DividerItemDecoration.VERTICAL));
+        parentView.addView(mRecyclerView);
+
+        // Setup the empty view
+        mTextView = new TextView(getContext());
+        mTextView.setGravity(Gravity.CENTER);
+        mTextView.setLayoutParams(layoutParams);
+        mTextView.setTextColor(mTextView.getTextColors().withAlpha(60));
+        mTextView.setText(R.string.activity_transfer_empty_text);
+        parentView.addView(mTextView);
 
         // Hide the FAB when the user scrolls
         final FloatingActionButton fab = getActivity().findViewById(R.id.fab);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0) {
@@ -74,6 +100,12 @@ public class TransferFragment extends Fragment {
                         // Remove the item from the adapter
                         adapter.remove(position);
 
+                        // If none remain, reshow the empty text
+                        if (adapter.getItemCount() == 0) {
+                            mRecyclerView.setVisibility(View.GONE);
+                            mTextView.setVisibility(View.VISIBLE);
+                        }
+
                         // Remove the item from the service
                         Intent removeIntent = new Intent(getContext(), TransferService.class)
                                 .setAction(TransferService.ACTION_REMOVE_TRANSFER)
@@ -81,10 +113,10 @@ public class TransferFragment extends Fragment {
                         getContext().startService(removeIntent);
                     }
                 }
-        ).attachToRecyclerView(recyclerView);
+        ).attachToRecyclerView(mRecyclerView);
 
         // Disable change animations (because they are really, really ugly)
-        ((DefaultItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
+        ((DefaultItemAnimator) mRecyclerView.getItemAnimator()).setSupportsChangeAnimations(false);
 
         // Setup the broadcast receiver
         mBroadcastReceiver = new BroadcastReceiver() {
@@ -92,10 +124,15 @@ public class TransferFragment extends Fragment {
             public void onReceive(Context context, Intent intent) {
                 TransferStatus transferStatus = intent.getParcelableExtra(TransferManager.EXTRA_STATUS);
                 adapter.update(transferStatus);
+
+                if (adapter.getItemCount() == 1) {
+                    mRecyclerView.setVisibility(View.VISIBLE);
+                    mTextView.setVisibility(View.GONE);
+                }
             }
         };
 
-        return recyclerView;
+        return parentView;
     }
 
     @Override
