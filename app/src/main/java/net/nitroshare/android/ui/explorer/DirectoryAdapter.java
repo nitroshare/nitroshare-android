@@ -52,7 +52,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     private void init() {
         File[] files = new File(mDirectory).listFiles();
         if (files == null) {
-            mListener.onError(mContext.getString(R.string.activity_explorer_error));
+            mListener.onError(mContext.getString(R.string.activity_explorer_error, mDirectory));
             return;
         }
         Arrays.sort(files, new Comparator<File>() {
