@@ -34,6 +34,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
 
     interface Listener {
         void onAllItemsDeselected();
+        void onError(String message);
     }
 
     private Context mContext;
@@ -50,6 +51,10 @@ class DirectoryAdapter extends ArrayAdapter<File> {
      */
     private void init() {
         File[] files = new File(mDirectory).listFiles();
+        if (files == null) {
+            mListener.onError(mContext.getString(R.string.activity_explorer_error));
+            return;
+        }
         Arrays.sort(files, new Comparator<File>() {
             @Override
             public int compare(File o1, File o2) {

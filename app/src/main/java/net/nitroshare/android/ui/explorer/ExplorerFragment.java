@@ -139,4 +139,9 @@ public class ExplorerFragment extends ListFragment
     public void onAllItemsDeselected() {
         mActionMode.finish();
     }
+
+    @Override
+    public void onError(String message) {
+        setEmptyText(message);
+    }
 }
