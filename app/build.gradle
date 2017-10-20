@@ -24,7 +24,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:26.1.0'
     compile 'com.android.support:design:26.1.0'
     compile 'com.android.support:recyclerview-v7:26.1.0'
-    compile 'com.github.paolorotolo:appintro:4.1.0'
+    compile 'com.github.apl-devs:appintro:v4.2.2'
     compile 'com.google.code.gson:gson:2.8.2'
     compile 'com.squareup.picasso:picasso:2.5.2'
 }
@@ -32,5 +32,8 @@ dependencies {
 repositories {
     maven {
         url 'https://maven.google.com'
+    }
+    maven {
+        url 'https://jitpack.io'
     }
 }
