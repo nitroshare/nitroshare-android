@@ -312,7 +312,9 @@ public class ShareActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        mDeviceAdapter.stop();
+        if (mDeviceAdapter != null) {
+            mDeviceAdapter.stop();
+        }
         super.onDestroy();
     }
 }
