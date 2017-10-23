@@ -150,7 +150,7 @@ class DirectoryPreference extends DialogPreference {
     protected void onDialogClosed(boolean positiveResult) {
         super.onDialogClosed(positiveResult);
 
-        if (positiveResult) {
+        if (mAdapter != null && positiveResult) {
             String path = mAdapter.getSelection();
 
             if (path != null) {
