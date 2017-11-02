@@ -247,8 +247,7 @@ public class Transfer implements Runnable {
             mItem.open(Item.Mode.Write);
             mItemBytesRemaining = itemSize;
         } else {
-            mItemIndex += 1;
-            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
+            processNext();
         }
     }
 
@@ -263,11 +262,18 @@ public class Transfer implements Runnable {
         updateProgress();
         if (mItemBytesRemaining <= 0) {
             mItem.close();
-            mItemIndex += 1;
-            mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
-            for (ItemReceivedListener itemReceivedListener : mItemReceivedListeners) {
-                itemReceivedListener.onItemReceived(mItem);
-            }
+            processNext();
+        }
+    }
+
+    /**
+     * Prepare to process the next item
+     */
+    private void processNext() {
+        mItemIndex += 1;
+        mInternalState = mItemIndex == mTransferItems ? InternalState.Finished : InternalState.ItemHeader;
+        for (ItemReceivedListener itemReceivedListener : mItemReceivedListeners) {
+            itemReceivedListener.onItemReceived(mItem);
         }
     }
 
