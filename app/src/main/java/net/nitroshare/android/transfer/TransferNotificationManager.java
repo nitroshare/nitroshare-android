@@ -177,63 +177,68 @@ class TransferNotificationManager {
      */
     synchronized void updateTransfer(TransferStatus transferStatus, Intent intent) {
         if (transferStatus.isFinished()) {
-            Log.i(TAG, String.format("#%d finished - creating notification...", transferStatus.getId()));
+            Log.i(TAG, String.format("#%d finished", transferStatus.getId()));
 
             // Close the ongoing notification (yes, again)
             mNotificationManager.cancel(transferStatus.getId());
 
-            // Prepare an appropriate notification for the transfer
-            CharSequence contentText;
-            int icon;
+            // Do not show a notification for successful transfers that contain no content
+            if (transferStatus.getState() != TransferStatus.State.Succeeded ||
+                    transferStatus.getBytesTotal() > 0) {
 
-            if (transferStatus.getState() == TransferStatus.State.Succeeded) {
-                contentText = mService.getString(
-                        R.string.service_transfer_status_success,
-                        transferStatus.getRemoteDeviceName()
-                );
-                icon = R.drawable.ic_stat_success;
-            } else {
-                contentText = mService.getString(
-                        R.string.service_transfer_status_error,
-                        transferStatus.getRemoteDeviceName(),
-                        transferStatus.getError()
-                );
-                icon = R.drawable.ic_stat_error;
+                // Prepare an appropriate notification for the transfer
+                CharSequence contentText;
+                int icon;
+
+                if (transferStatus.getState() == TransferStatus.State.Succeeded) {
+                    contentText = mService.getString(
+                            R.string.service_transfer_status_success,
+                            transferStatus.getRemoteDeviceName()
+                    );
+                    icon = R.drawable.ic_stat_success;
+                } else {
+                    contentText = mService.getString(
+                            R.string.service_transfer_status_error,
+                            transferStatus.getRemoteDeviceName(),
+                            transferStatus.getError()
+                    );
+                    icon = R.drawable.ic_stat_error;
+                }
+
+                // Build the notification
+                boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
+                NotificationCompat.Builder builder = createBuilder(NOTIFICATION_CHANNEL_ID)
+                        .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
+                        .setContentIntent(mIntent)
+                        .setContentTitle(mService.getString(R.string.service_transfer_server_title))
+                        .setContentText(contentText)
+                        .setSmallIcon(icon);
+
+                // For transfers that send files (and fail), it is possible to retry them
+                if (transferStatus.getState() == TransferStatus.State.Failed &&
+                        transferStatus.getDirection() == TransferStatus.Direction.Send) {
+
+                    // Ensure the error notification is replaced by the next transfer (I have no idea
+                    // why the first line is required but it works :P)
+                    intent.setClass(mService, TransferService.class);
+                    intent.putExtra(TransferService.EXTRA_ID, transferStatus.getId());
+
+                    // Add the action
+                    builder.addAction(
+                            new NotificationCompat.Action.Builder(
+                                    R.drawable.ic_action_retry,
+                                    mService.getString(R.string.service_transfer_action_retry),
+                                    PendingIntent.getService(
+                                            mService, transferStatus.getId(),
+                                            intent, PendingIntent.FLAG_ONE_SHOT
+                                    )
+                            ).build()
+                    );
+                }
+
+                // Show the notification
+                mNotificationManager.notify(transferStatus.getId(), builder.build());
             }
-
-            // Build the notification
-            boolean notifications = mSettings.getBoolean(Settings.Key.TRANSFER_NOTIFICATION);
-            NotificationCompat.Builder builder = createBuilder(NOTIFICATION_CHANNEL_ID)
-                    .setDefaults(notifications ? NotificationCompat.DEFAULT_ALL : 0)
-                    .setContentIntent(mIntent)
-                    .setContentTitle(mService.getString(R.string.service_transfer_server_title))
-                    .setContentText(contentText)
-                    .setSmallIcon(icon);
-
-            // For transfers that send files (and fail), it is possible to retry them
-            if (transferStatus.getState() == TransferStatus.State.Failed &&
-                    transferStatus.getDirection() == TransferStatus.Direction.Send) {
-
-                // Ensure the error notification is replaced by the next transfer (I have no idea
-                // why the first line is required but it works :P)
-                intent.setClass(mService, TransferService.class);
-                intent.putExtra(TransferService.EXTRA_ID, transferStatus.getId());
-
-                // Add the action
-                builder.addAction(
-                        new NotificationCompat.Action.Builder(
-                                R.drawable.ic_action_retry,
-                                mService.getString(R.string.service_transfer_action_retry),
-                                PendingIntent.getService(
-                                        mService, transferStatus.getId(),
-                                        intent, PendingIntent.FLAG_ONE_SHOT
-                                )
-                        ).build()
-                );
-            }
-
-            // Show the notification
-            mNotificationManager.notify(transferStatus.getId(), builder.build());
 
             mNumTransfers--;
 
