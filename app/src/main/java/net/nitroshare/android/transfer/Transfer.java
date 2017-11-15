@@ -218,15 +218,18 @@ public class Transfer implements Runnable {
         }
     }
 
-    // TODO: add better error handling for this method [2017-03-07] (does this still apply?)
-
     /**
      * Process the header for an individual item
      */
     private void processItemHeader() throws IOException {
         Type type = new TypeToken<Map<String, Object>>(){}.getType();
-        Map<String, Object> map = mGson.fromJson(new String(
-                mReceivingPacket.getBuffer().array(), Charset.forName("UTF-8")), type);
+        Map<String, Object> map;
+        try {
+            map = mGson.fromJson(new String(
+                    mReceivingPacket.getBuffer().array(), Charset.forName("UTF-8")), type);
+        } catch (JsonSyntaxException e) {
+            throw new IOException(e.getMessage());
+        }
         String itemType = (String) map.get(Item.TYPE);
         if (itemType == null) {
             itemType = FileItem.TYPE_NAME;
