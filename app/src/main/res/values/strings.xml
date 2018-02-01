@@ -29,6 +29,8 @@
 
     <!-- Explorer activity -->
     <string name="activity_explorer">Send Items</string>
+    <string name="activity_explorer_internal">Internal Storage</string>
+    <string name="activity_explorer_removable">Removable Storage (%1$s)</string>
     <string name="activity_explorer_hint">Long press to send multiple items</string>
     <string name="activity_explorer_error">Unable to open directory:\n%1$s</string>
     <string name="activity_explorer_kb">%1$d KB</string>

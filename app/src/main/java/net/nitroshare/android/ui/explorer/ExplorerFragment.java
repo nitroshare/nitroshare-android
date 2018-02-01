@@ -1,9 +1,11 @@
 package net.nitroshare.android.ui.explorer;
 
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ListFragment;
+import android.util.Log;
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,6 +26,8 @@ import java.util.ArrayList;
 public class ExplorerFragment extends ListFragment
         implements ActionMode.Callback, DirectoryAdapter.Listener {
 
+    private static final String TAG = "ExplorerFragment";
+
     static final String DIRECTORY = "directory";
 
     interface Listener {
@@ -31,9 +35,33 @@ public class ExplorerFragment extends ListFragment
         void onSendUris(ArrayList<Uri> uris);
     }
 
+    /**
+     * Storage directory (internal, SD card, etc.)
+     */
+    private class StorageDirectory {
+
+        private String mName;
+        private String mPath;
+
+        StorageDirectory(String name, String path) {
+            mName = name;
+            mPath = path;
+        }
+
+        String name() {
+            return mName;
+        }
+
+        String path() {
+            return mPath;
+        }
+    }
+
     private Listener mListener;
     private DirectoryAdapter mDirectoryAdapter;
     private ActionMode mActionMode;
+
+    private ArrayList<StorageDirectory> mDirectories;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -42,6 +70,47 @@ public class ExplorerFragment extends ListFragment
 
         setHasOptionsMenu(true);
 
+        // TODO: it might be better to move parts of this into onResume()
+
+        // (Re)initialize the list of directories
+        mDirectories = new ArrayList<>();
+
+        // Finding the path to the storage directories is very difficult - for
+        // API 19+, use the getExternalFilesDirs() method and extract the path
+        // from the app-specific path returned; older devices cannot access
+        // removably media :(
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+            // Enumerate all of the storage directories
+            File files[] = getActivity().getExternalFilesDirs(null);
+            for (int i = 0; i < files.length; ++i) {
+
+                String path = files[i].getAbsolutePath();
+
+                // The path should contain Android/data and the portion of the
+                // path preceding that is the root (a hack, but it works)
+                int rootIndex = path.indexOf("Android/data");
+                if (rootIndex == -1) {
+                    break;
+                }
+                path = path.substring(0, rootIndex);
+
+                // Assume that the first directory is for internal storage and
+                // the others are removable (either card slots or USB OTG)
+
+                Log.i(TAG, String.format("found storage directory: \"%s\"", path));
+
+                mDirectories.add(new StorageDirectory(
+                        i == 0 ?
+                                getActivity().getString(R.string.activity_explorer_internal) :
+                                getActivity().getString(R.string.activity_explorer_removable, new File(path).getName()),
+                        path
+                ));
+            }
+        }
+
+        // Use the directory argument if provided or default to the first one found
         String directory = null;
         if (getArguments() != null) {
             directory = getArguments().getString(DIRECTORY);
@@ -50,6 +119,7 @@ public class ExplorerFragment extends ListFragment
             directory = Environment.getExternalStorageDirectory().getPath();
         }
 
+        // Create the adapter for the directory
         mDirectoryAdapter = new DirectoryAdapter(directory, getActivity(), this);
         setListAdapter(mDirectoryAdapter);
     }
@@ -91,16 +161,28 @@ public class ExplorerFragment extends ListFragment
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.menu_explorer_options, menu);
+
+        // Create menu options for each of the storage directories
+        if (mDirectories.size() > 1) {
+            for (int i = 0; i < mDirectories.size(); ++i) {
+                menu.add(Menu.NONE, i, Menu.NONE, mDirectories.get(i).name());
+            }
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
+        int itemId = item.getItemId();
+        switch (itemId) {
             case R.id.option_show_hidden:
                 boolean isChecked = !item.isChecked();
                 item.setChecked(isChecked);
                 mDirectoryAdapter.toggleHidden(isChecked);
                 return true;
+        }
+        if (itemId < mDirectories.size()) {
+            mListener.onBrowseDirectory(mDirectories.get(itemId).path());
+            return true;
         }
         return super.onOptionsItemSelected(item);
     }
