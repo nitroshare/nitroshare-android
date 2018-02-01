@@ -2,9 +2,12 @@ package net.nitroshare.android.ui.explorer;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
@@ -12,6 +15,7 @@ import net.nitroshare.android.R;
 import net.nitroshare.android.ui.ShareActivity;
 import net.nitroshare.android.util.Settings;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -19,17 +23,56 @@ import java.util.ArrayList;
  */
 public class ExplorerActivity extends AppCompatActivity implements ExplorerFragment.Listener {
 
+    private static final String TAG = "ExplorerActivity";
     private static final int SHARE_REQUEST = 1;
 
-    private void showDirectory(String directory) {
-        ExplorerFragment explorerFragment = new ExplorerFragment();
+    /**
+     * Storage directory (internal, SD card, etc.)
+     */
+    private class StorageDirectory {
+
+        private String mName;
+        private String mPath;
+
+        StorageDirectory(String name, String path) {
+            mName = name;
+            mPath = path;
+        }
+
+        String name() {
+            return mName;
+        }
+
+        String path() {
+            return mPath;
+        }
+    }
+
+    private ExplorerFragment mFragment;
+    private boolean mShowHidden = false;
+    private ArrayList<StorageDirectory> mDirectories;
+
+    /**
+     * Create and display a fragment for the specified directory
+     * @param directory path to directory
+     * @param clearStack clear the back stack with this item
+     */
+    private void showDirectory(String directory, boolean clearStack) {
+        mFragment = new ExplorerFragment();
+
+        // If directory is not empty, pass it along to the fragment
         if (directory != null) {
             Bundle arguments = new Bundle();
             arguments.putString(ExplorerFragment.DIRECTORY, directory);
-            explorerFragment.setArguments(arguments);
+            arguments.putBoolean(ExplorerFragment.SHOW_HIDDEN, mShowHidden);
+            mFragment.setArguments(arguments);
         }
+
+        // Begin a transaction to insert the fragment
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        if (directory != null) {
+
+        // If the stack isn't being cleared, animate the transaction
+        if (!clearStack) {
             transaction.setCustomAnimations(
                     R.anim.enter_from_right,
                     R.anim.exit_to_left,
@@ -37,10 +80,16 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
                     R.anim.exit_to_right
             );
         }
-        transaction.replace(R.id.directory_container, explorerFragment);
-        if (directory != null) {
+
+        // Insert the new fragment
+        transaction.replace(R.id.directory_container, mFragment);
+
+        // If the stack isn't being cleared, add this one to the back
+        if (!clearStack) {
             transaction.addToBackStack(null);
         }
+
+        // Commit the transaction
         transaction.commit();
     }
 
@@ -51,15 +100,91 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
         setContentView(R.layout.activity_explorer);
 
         if(savedInstanceState == null) {
-            showDirectory(null);
+            showDirectory(null, true);
             Toast.makeText(this, getText(R.string.activity_explorer_hint),
                     Toast.LENGTH_SHORT).show();
         }
     }
 
     @Override
+    protected void onResume() {
+
+        // (Re)initialize the list of directories
+        mDirectories = new ArrayList<>();
+
+        // Finding the path to the storage directories is very difficult - for
+        // API 19+, use the getExternalFilesDirs() method and extract the path
+        // from the app-specific path returned; older devices cannot access
+        // removably media :(
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+            // Enumerate all of the storage directories
+            File files[] = getExternalFilesDirs(null);
+            for (int i = 0; i < files.length; ++i) {
+
+                String path = files[i].getAbsolutePath();
+
+                // The path should contain Android/data and the portion of the
+                // path preceding that is the root (a hack, but it works)
+                int rootIndex = path.indexOf("Android/data");
+                if (rootIndex == -1) {
+                    break;
+                }
+                path = path.substring(0, rootIndex);
+
+                // Assume that the first directory is for internal storage and
+                // the others are removable (either card slots or USB OTG)
+
+                Log.i(TAG, String.format("found storage directory: \"%s\"", path));
+
+                mDirectories.add(new StorageDirectory(
+                        i == 0 ?
+                                getString(R.string.activity_explorer_internal) :
+                                getString(R.string.activity_explorer_removable, new File(path).getName()),
+                        path
+                ));
+            }
+        }
+
+        // Invoke the parent method
+        super.onResume();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_explorer_options, menu);
+
+        // Create menu options for each of the storage directories
+        if (mDirectories.size() > 1) {
+            for (int i = 0; i < mDirectories.size(); ++i) {
+                menu.add(Menu.NONE, i, Menu.NONE, mDirectories.get(i).name());
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemId = item.getItemId();
+        switch (itemId) {
+            case R.id.option_show_hidden:
+                mShowHidden = !item.isChecked();
+                item.setChecked(mShowHidden);
+                mFragment.showHidden(mShowHidden);
+                return true;
+        }
+        if (itemId < mDirectories.size()) {
+            showDirectory(mDirectories.get(itemId).path(), true);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onBrowseDirectory(String directory) {
-        showDirectory(directory);
+        showDirectory(directory, false);
     }
 
     @Override

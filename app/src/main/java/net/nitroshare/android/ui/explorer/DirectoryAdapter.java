@@ -40,7 +40,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     private Context mContext;
     private Listener mListener;
     private String mDirectory;
-    private boolean mShowHidden = false;
+    private boolean mShowHidden;
     private boolean mCheckboxes = false;
     private SparseArray<File> mChecked = new SparseArray<>();
 
@@ -72,11 +72,12 @@ class DirectoryAdapter extends ArrayAdapter<File> {
         }
     }
 
-    DirectoryAdapter(String directory, Context context, Listener listener) {
+    DirectoryAdapter(String directory, boolean showHidden, Context context, Listener listener) {
         super(context, R.layout.view_simple_list_item_explorer, android.R.id.text1);
         mContext = context;
         mListener = listener;
         mDirectory = directory;
+        mShowHidden = showHidden;
 
         TypedValue typedValue = new TypedValue();
         mContext.getTheme().resolveAttribute(R.attr.colorControlNormal, typedValue, true);
