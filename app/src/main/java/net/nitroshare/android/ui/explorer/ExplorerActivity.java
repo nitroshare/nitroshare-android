@@ -123,13 +123,17 @@ public class ExplorerActivity extends AppCompatActivity implements ExplorerFragm
             File files[] = getExternalFilesDirs(null);
             for (int i = 0; i < files.length; ++i) {
 
+                // If the directory is usable, retrieve its path
+                if (files[i] == null) {
+                    continue;
+                }
                 String path = files[i].getAbsolutePath();
 
                 // The path should contain Android/data and the portion of the
                 // path preceding that is the root (a hack, but it works)
                 int rootIndex = path.indexOf("Android/data");
                 if (rootIndex == -1) {
-                    break;
+                    continue;
                 }
                 path = path.substring(0, rootIndex);
 
