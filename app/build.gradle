@@ -7,8 +7,8 @@ android {
         applicationId "net.nitroshare.android"
         minSdkVersion 16
         targetSdkVersion 27
-        versionCode 37
-        versionName "0.4.0.36"
+        versionCode 38
+        versionName "0.4.0.37"
     }
     buildTypes {
         release {
