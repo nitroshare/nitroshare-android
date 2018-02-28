@@ -60,7 +60,7 @@
     <string name="activity_settings_pref_notification_sound">Notification Sound</string>
     <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
     <string name="activity_settings_darkTheme" translatable="false">Dark theme</string>
-    <string name="activity_settings_darkTheme_summary" translatable="false">Enable the alternate dark theme instead of the standard light theme</string>
+    <string name="activity_settings_darkTheme_summary" translatable="false">Enables the alternate dark theme instead of the standard light theme</string>
 
     <!-- Directory fragment -->
     <string name="dialog_directory_message">Tap on a directory name to open it. Long press to select.</string>
