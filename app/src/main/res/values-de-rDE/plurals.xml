@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <plurals name="activity_explorer_folder">
+        <item quantity="one">%1$d Objekt</item>
+        <item quantity="other">%1$d Objekte</item>
+    </plurals>
+
+    <plurals name="activity_explorer_bytes">
+        <item quantity="one">%1$d Byte</item>
+        <item quantity="other">%1$d Byte</item>
+    </plurals>
+
+    <plurals name="service_transfer_server_transferring_text">
+        <item quantity="one">%1$d Übertragung aktiv</item>
+        <item quantity="other">%1$d Übertragungen aktiv</item>
+    </plurals>
+
+</resources>
