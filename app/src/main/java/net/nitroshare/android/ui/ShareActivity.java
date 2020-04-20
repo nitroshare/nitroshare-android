@@ -216,8 +216,7 @@ public class ShareActivity extends AppCompatActivity {
      */
     private boolean isValidIntent() {
         return (getIntent().getAction().equals(Intent.ACTION_SEND_MULTIPLE) ||
-                getIntent().getAction().equals(Intent.ACTION_SEND)) &&
-                getIntent().hasExtra(Intent.EXTRA_STREAM);
+                getIntent().getAction().equals(Intent.ACTION_SEND));
     }
 
     /**
@@ -228,8 +227,13 @@ public class ShareActivity extends AppCompatActivity {
         if (getIntent().getAction().equals(Intent.ACTION_SEND_MULTIPLE)) {
             return getIntent().getParcelableArrayListExtra(Intent.EXTRA_STREAM);
         } else {
+
             ArrayList<Uri> uriList = new ArrayList<>();
-            uriList.add((Uri) getIntent().getParcelableExtra(Intent.EXTRA_STREAM));
+            if (getIntent().hasExtra(Intent.EXTRA_STREAM)) {
+                uriList.add((Uri) getIntent().getParcelableExtra(Intent.EXTRA_STREAM));
+            } else if (getIntent().hasExtra(Intent.EXTRA_TEXT)) {
+                uriList.add(android.net.Uri.parse(getIntent().getStringExtra(Intent.EXTRA_TEXT)));
+            }
             return uriList;
         }
     }
