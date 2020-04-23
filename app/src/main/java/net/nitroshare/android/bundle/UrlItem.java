@@ -15,7 +15,6 @@ import java.util.Map;
 public class UrlItem extends Item {
 
     public static final String TYPE_NAME = "url";
-
     private Map<String, Object> mProperties;
 
     /**
@@ -32,8 +31,9 @@ public class UrlItem extends Item {
     public UrlItem(Uri uri) {
         mProperties = new HashMap<>();
         mProperties.put(TYPE, TYPE_NAME);
+        mProperties.put(TYPE_NAME, uri.toString());
         mProperties.put(NAME, uri.toString());
-        mProperties.put(SIZE, 0);
+        mProperties.put(SIZE, "0");
     }
 
     /**

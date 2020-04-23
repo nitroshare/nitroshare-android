@@ -15,6 +15,7 @@ import android.util.Log;
 
 import net.nitroshare.android.bundle.Bundle;
 import net.nitroshare.android.bundle.FileItem;
+import net.nitroshare.android.bundle.UrlItem;
 import net.nitroshare.android.discovery.Device;
 import net.nitroshare.android.util.Settings;
 
@@ -204,6 +205,9 @@ public class TransferService extends Service {
                     } else {
                         bundle.addItem(new FileItem(file));
                     }
+                    break;
+                default:
+                    bundle.addItem(new UrlItem(uri));
                     break;
             }
         }
