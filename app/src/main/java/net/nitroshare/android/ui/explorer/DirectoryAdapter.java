@@ -1,11 +1,11 @@
 package net.nitroshare.android.ui.explorer;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
+
 import android.text.format.DateUtils;
 import android.util.SparseArray;
 import android.util.TypedValue;
@@ -16,6 +16,9 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -49,6 +52,7 @@ class DirectoryAdapter extends ArrayAdapter<File> {
     /**
      * Initialize the list of files
      */
+    @SuppressLint("StringFormatInvalid")
     private void init() {
         File[] files = new File(mDirectory).listFiles();
         if (files == null) {

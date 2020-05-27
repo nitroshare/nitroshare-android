@@ -3,17 +3,20 @@ package net.nitroshare.android.ui;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.annotation.ColorInt;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
 
 import com.github.paolorotolo.appintro.AppIntro;
 import com.github.paolorotolo.appintro.AppIntroBaseFragment;
@@ -22,10 +25,13 @@ import com.github.paolorotolo.appintro.AppIntroFragment;
 import net.nitroshare.android.R;
 import net.nitroshare.android.util.Permissions;
 
+
+
 /**
  * Display an interactive introduction to the application
  */
 public class IntroActivity extends AppIntro {
+
 
     /**
      * Custom fragment that adds a button for visiting the website

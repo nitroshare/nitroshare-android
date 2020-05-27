@@ -4,8 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Environment;
 import android.preference.DialogPreference;
-import android.support.annotation.NonNull;
-import android.support.v4.content.ContextCompat;
+
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +14,9 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 
 import net.nitroshare.android.R;
 
