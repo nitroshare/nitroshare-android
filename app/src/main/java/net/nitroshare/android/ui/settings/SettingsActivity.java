@@ -7,8 +7,10 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceScreen;
-import android.support.annotation.StringRes;
+
 import android.view.MenuItem;
+
+import androidx.annotation.StringRes;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;

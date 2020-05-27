@@ -3,7 +3,7 @@ package net.nitroshare.android.ui.explorer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.app.ListFragment;
+
 import android.view.ActionMode;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -11,6 +11,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+
+import androidx.fragment.app.ListFragment;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.util.Settings;

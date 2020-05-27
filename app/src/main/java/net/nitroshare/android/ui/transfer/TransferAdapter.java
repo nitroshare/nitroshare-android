@@ -2,8 +2,7 @@ package net.nitroshare.android.ui.transfer;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.RecyclerView;
+
 import android.text.format.Formatter;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
@@ -12,6 +11,9 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 
 import net.nitroshare.android.R;
 import net.nitroshare.android.transfer.TransferService;
