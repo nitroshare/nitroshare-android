@@ -125,6 +125,7 @@ public class SettingsActivity extends AppCompatSettingsActivity {
             general.addPreference(createDirectoryPreference(R.string.activity_settings_pref_transfer_directory, Settings.Key.TRANSFER_DIRECTORY));
             general.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_behavior_receive, R.string.activity_settings_pref_behavior_receive_summary, Settings.Key.BEHAVIOR_RECEIVE));
             general.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_behavior_overwrite, R.string.activity_settings_pref_behavior_overwrite_summary, Settings.Key.BEHAVIOR_OVERWRITE));
+            general.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_behavior_autostart, R.string.activity_settings_pref_behavior_autostart_summary, Settings.Key.BEHAVIOR_AUTOSTART));
             appearance.addPreference(createCheckBoxPreference(R.string.activity_settings_darkTheme, R.string.activity_settings_darkTheme_summary, Settings.Key.UI_DARK));
             notifications.addPreference(createCheckBoxPreference(R.string.activity_settings_pref_notification_sound, R.string.activity_settings_pref_notification_sound_summary, Settings.Key.TRANSFER_NOTIFICATION));
 

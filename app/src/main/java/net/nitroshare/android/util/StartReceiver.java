@@ -13,7 +13,8 @@ public class StartReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        if (new Settings(context).getBoolean(Settings.Key.BEHAVIOR_RECEIVE)) {
+        if (new Settings(context).getBoolean(Settings.Key.BEHAVIOR_AUTOSTART)
+            && new Settings(context).getBoolean(Settings.Key.BEHAVIOR_RECEIVE)) {
             TransferService.startStopService(context, true);
         }
     }

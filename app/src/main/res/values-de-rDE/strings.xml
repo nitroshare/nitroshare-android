@@ -77,4 +77,6 @@
     <string name="adapter_transfer_bytes">%1$s / %2$s</string>
     <string name="adapter_transfer_stop">Stopp</string>
     <string name="adapter_transfer_retry">Erneut versuchen</string>
+    <string name="activity_settings_pref_behavior_autostart">Auto start</string>
+    <string name="activity_settings_pref_behavior_autostart_summary">Auto start when device starts</string>
 </resources>
