@@ -21,6 +21,7 @@ public class Settings {
     public enum Key {
         BEHAVIOR_RECEIVE,      // Listen for incoming transfers
         BEHAVIOR_OVERWRITE,    // Overwrite files with identical names
+        BEHAVIOR_AUTOSTART,    // Run at device startup
         DEVICE_NAME,           // Device name broadcast via mDNS
         DEVICE_UUID,           // Unique identifier for the device
         INTRO_SHOWN,           // Intro has been shown to user?
@@ -51,6 +52,8 @@ public class Settings {
                 return true;
             case BEHAVIOR_OVERWRITE:
                 return false;
+            case BEHAVIOR_AUTOSTART:
+                return true;
             case DEVICE_NAME:
                 return Build.MODEL;
             case DEVICE_UUID:

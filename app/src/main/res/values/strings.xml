@@ -56,6 +56,8 @@
     <string name="activity_settings_pref_behavior_receive_summary">Accept incoming transfers from other devices</string>
     <string name="activity_settings_pref_behavior_overwrite">Overwrite</string>
     <string name="activity_settings_pref_behavior_overwrite_summary">Replace existing files with the same name</string>
+    <string name="activity_settings_pref_behavior_autostart">Auto start</string>
+    <string name="activity_settings_pref_behavior_autostart_summary">Auto start when device starts</string>
     <string name="activity_settings_category_notifications">Notifications</string>
     <string name="activity_settings_pref_notification_sound">Notification Sound</string>
     <string name="activity_settings_pref_notification_sound_summary">Play sound when a transfer completes</string>
